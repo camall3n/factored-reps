@@ -3,8 +3,8 @@ import numpy as np
 import seeding
 from sklearn.neighbors import KernelDensity
 
-from markov_abstr.gridworld.visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld
-from markov_abstr.gridworld.visgrid.sensors import *
+from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld
+from visgrid.sensors import *
 
 seeding.seed(0, np)
 

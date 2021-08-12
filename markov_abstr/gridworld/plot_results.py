@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import seaborn as sns
 
-from visgrid.utils import load_experiment, get_parser
+from visgrid.utils import get_parser
 
 parser = get_parser()
 # yapf: disable

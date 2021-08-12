@@ -8,10 +8,10 @@ import sys
 import torch
 from tqdm import tqdm
 
-from models.featurenet import FeatureNet
-from models.autoencoder import AutoEncoder
-from models.pixelpredictor import PixelPredictor
-from repvis import RepVisualization, CleanVisualization
+from markov_abstr.gridworld.models.featurenet import FeatureNet
+from markov_abstr.gridworld.models.autoencoder import AutoEncoder
+from markov_abstr.gridworld.models.pixelpredictor import PixelPredictor
+from markov_abstr.gridworld.repvis import RepVisualization, CleanVisualization
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.utils import get_parser, MI
 from visgrid.sensors import *

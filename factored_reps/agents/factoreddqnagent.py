@@ -3,8 +3,8 @@ import torch
 import torch.nn.functional as F
 
 from factored_reps.models.factoredqnet import FactoredQNet
-from markov_abstr.visgrid.models.nnutils import one_hot, extract
-from markov_abstr.visgrid.agents.dqnagent import DQNAgent, tch
+from markov_abstr.gridworld.models.nnutils import one_hot, extract
+from markov_abstr.gridworld.agents.dqnagent import DQNAgent, tch
 
 class FactoredDQNAgent(DQNAgent):
     def __init__(self,

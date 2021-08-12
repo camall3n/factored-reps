@@ -6,8 +6,8 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from markov_abstr.gridworld.visgrid.gridworld import GridWorld
-from markov_abstr.gridworld.visgrid.sensors import *
+from visgrid.gridworld import GridWorld
+from visgrid.sensors import *
 from factored_reps.models.factoredqnet import FactoredQNet
 
 seeding.seed(0, np, torch)

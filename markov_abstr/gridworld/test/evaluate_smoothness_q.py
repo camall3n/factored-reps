@@ -10,8 +10,8 @@ from tqdm import tqdm
 from visgrid.gridworld import GridWorld, MazeWorld, SpiralWorld
 from visgrid.utils import get_parser
 from visgrid.sensors import *
-from gridworld.models.phinet import PhiNet
-from gridworld.agents.dqnagent import DQNAgent
+from markov_abstr.gridworld.models.phinet import PhiNet
+from markov_abstr.gridworld.agents.dqnagent import DQNAgent
 
 parser = get_parser()
 # parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)

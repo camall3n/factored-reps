@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from visgrid.gridworld import GridWorld
 from visgrid.sensors import *
-from gridworld.models.qnet import QNet
+from markov_abstr.gridworld.models.qnet import QNet
 
 seeding.seed(0, np, torch)
 

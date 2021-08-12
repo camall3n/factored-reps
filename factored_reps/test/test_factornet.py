@@ -6,9 +6,9 @@ from tqdm import tqdm
 
 from markov_abstr.gridworld.models.nullabstraction import NullAbstraction
 from factored_reps.models.factornet import FactorNet
-from markov_abstr.gridworld.visgrid.gridworld import GridWorld
-from markov_abstr.gridworld.visgrid.utils import MI
-from markov_abstr.gridworld.visgrid.sensors import *
+from visgrid.gridworld import GridWorld
+from visgrid.utils import MI
+from visgrid.sensors import *
 
 #%% ------------------ Define MDP ------------------
 seeding.seed(0, np)
