@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn
 
-from markov_abstr.visgrid.models.nnutils import Network, one_hot, extract
-from markov_abstr.visgrid.models.qnet import QNet
+from markov_abstr.gridworld.models.nnutils import Network, one_hot, extract
+from markov_abstr.gridworld.models.qnet import QNet
 
 class FactoredQNet(Network):
     def __init__(self, n_features, n_actions, n_hidden_layers=1, n_units_per_layer=32):

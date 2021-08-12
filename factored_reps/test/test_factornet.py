@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import seeding
 from tqdm import tqdm
 
-from markov_abstr.visgrid.models.nullabstraction import NullAbstraction
+from markov_abstr.gridworld.models.nullabstraction import NullAbstraction
 from factored_reps.models.factornet import FactorNet
-from visgrid.gridworld import GridWorld
-from visgrid.utils import MI
-from visgrid.sensors import *
+from markov_abstr.gridworld.visgrid.gridworld import GridWorld
+from markov_abstr.gridworld.visgrid.utils import MI
+from markov_abstr.gridworld.visgrid.sensors import *
 
 #%% ------------------ Define MDP ------------------
 seeding.seed(0, np)

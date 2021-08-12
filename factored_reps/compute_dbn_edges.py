@@ -3,8 +3,8 @@ import seeding
 from sklearn.neighbors import KernelDensity
 import sys
 
-from factored_reps import vigorito
-import gridworlds.sensors as sensors
+from factored_reps.envs import vigorito
+import markov_abstr.gridworld.visgrid.sensors as sensors
 
 def fit_kde(x, bw=0.03):
     kde = KernelDensity(bandwidth=bw)
