@@ -17,8 +17,8 @@ seeding.seed(1, np, random, torch)
 env = MazeWorld.load_maze(rows=6, cols=6, seed=1)
 env = GridWorld(rows=10, cols=10)
 env.plot()
-env.reset_goal(position=(3,3))
-env.reset_agent(position=(0,0))
+env.reset_goal(position=(3, 3))
+env.reset_agent(position=(0, 0))
 
 sensor_list = [NoisySensor(sigma=0.2, truncation=0.4)]
 sensor = SensorChain(sensor_list)
@@ -85,36 +85,7 @@ x = sensor.observe(s)
 plt.imshow(x)
 plt.axis('off')
 plt.savefig('x0-at-corner.png')
-#%%
-m = FullPairwiseContrastiveNet(4, 32)
 
-ce = torch.nn.CrossEntropyLoss()
-logits = torch.tensor([[1] * 128]).float()
-targets = torch.as_tensor([0]).long()
-ce(logits, targets) / 7
-
-bce = torch.nn.BCEWithLogitsLoss()
-logits = torch.tensor([0]).float()
-targets = torch.as_tensor([0]).float()
-bce(logits, targets)
-
-input1 = torch.randn(128, 4)
-input2 = torch.randn(128, 4)
-output = m(input1, input2)
-print(output.size())
-batchsize = 128
-ndims = 4
-W = torch.randn(1, ndims, ndims)
-b = torch.randn(1)
-x = torch.randn(batchsize, ndims)  #.unsqueeze(1).expand(batchsize, batchsize, ndims)
-print(x.shape)
-y = torch.randn(batchsize, ndims)  #.unsqueeze(0).expand(batchsize, batchsize, ndims)
-print(y.shape)
-output = torch.nn.functional.bilinear(x, y, W, b)
-print(output.size())
-(x @ W @ y.t() + b).squeeze().shape
-bounds = torch.sqrt(torch.tensor(ndims).float())
-torch.distributions.Uniform(-bounds, bounds).sample((ndims, ndims))
 #%%
 rows, cols = 6, 6
 env = GridWorld(rows, cols)
@@ -225,9 +196,6 @@ plt.imshow(x)
 
 #%%
 
-vertices, edges = list(zip(*[(n**3, count_edges(n)) for n in range(2, 20)]))
-plt.loglog(vertices, edges, '.-')
-
 def count_edges(n):
     n = 5
     inner_edges = 2 * n * (n - 1)
@@ -236,6 +204,9 @@ def count_edges(n):
     level_edges = 2 * inner_edges + outer_edges + corner_edges
     inter_level_edges = n * n * (n - 1)
     return n * level_edges + 2 * inter_level_edges
+
+vertices, edges = list(zip(*[(n**3, count_edges(n)) for n in range(2, 20)]))
+plt.loglog(vertices, edges, '.-')
 
 #%%
 T_x = np.array([[.1, .2, .7, 0, 0, 0, 0, 0, 0], [0, 0, 0, .5, .4, .1, 0, 0, 0],
@@ -367,7 +338,7 @@ Tb = np.array([
     [.75, .25, 0, 0],
     [.5, .5, 0, 0],
 ])
-P0 = np.ones(len(T0)) / len(T0)
+P0 = np.ones(len(Ta)) / len(Ta)
 P = P0
 for i in range(20):
     if i % 2 == 0:
