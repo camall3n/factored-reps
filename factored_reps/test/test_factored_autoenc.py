@@ -50,8 +50,8 @@ MI_max = MI(s0, s0)
 z0 = phi(sensor.observe(s0))
 z1 = phi(sensor.observe(s1))
 
-entangler = FactorNet(lr=0.03, coefs={'L_fac': -0.1})
-disentangler = FactorNet(lr=0.03, coefs={'L_fac': 0.1})
+entangler = FactoredAutoencoder(lr=0.03, coefs={'L_fac': -0.1})
+disentangler = FactoredAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
 
 #%% ------------------ Train entangler ------------------
 for update in tqdm(range(1000)):
@@ -86,7 +86,7 @@ def get_frame(ax, rep, title, save=''):
 
 #%% ------------------ Train disentangler ------------------
 seeding.seed(1, np)
-disentangler = FactorNet(lr=0.03, coefs={'L_fac': 0.1})
+disentangler = FactoredAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
 fig, ax = plt.subplots(figsize=(8, 8))
 frames = []
 e0no = sensor.observe(e0n)
