@@ -5,7 +5,7 @@ import seeding
 from tqdm import tqdm
 
 from markov_abstr.gridworld.models.nullabstraction import NullAbstraction
-from factored_reps.models.factornet import FactorNet
+from factored_reps.models.factored_autoenc import FactoredAutoencoder
 from visgrid.gridworld import GridWorld
 from visgrid.utils import MI
 from visgrid.sensors import *

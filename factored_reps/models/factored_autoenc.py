@@ -6,7 +6,7 @@ import torch.nn
 from markov_abstr.gridworld.models.nnutils import Network
 from markov_abstr.gridworld.models.simplenet import SimpleNet
 
-class FactorNet(Network):
+class FactoredAutoencoder(Network):
     def __init__(self, n_latent_dims=2, lr=0.001, coefs=None):
         super().__init__()
         self.n_latent_dims = n_latent_dims
