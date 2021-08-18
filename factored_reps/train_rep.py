@@ -3,6 +3,7 @@ import json
 #!! do not import matplotlib until you check input arguments
 import numpy as np
 import os
+import random
 import seeding
 import sys
 import torch
@@ -95,7 +96,7 @@ log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
 with open(log_dir + '/args-{}.txt'.format(args.seed), 'w') as arg_file:
     arg_file.write(repr(args))
 
-seeding.seed(args.seed)
+seeding.seed(args.seed, np, random, torch)
 
 #% ------------------ Define MDP ------------------
 if args.walls == 'maze':
