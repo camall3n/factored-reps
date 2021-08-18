@@ -226,14 +226,14 @@ if args.video:
         repvis = RepVisualization(env,
                                   obs,
                                   batch_size=n_test_samples,
-                                  n_dims=2,
+                                  n_dims=args.latent_dims,
                                   colors=test_c,
                                   cmap=cmap)
     else:
         repvis = CleanVisualization(env,
                                     obs,
                                     batch_size=n_test_samples,
-                                    n_dims=2,
+                                    n_dims=args.latent_dims,
                                     colors=test_c,
                                     cmap=cmap)
 
