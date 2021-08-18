@@ -102,9 +102,9 @@ class RepVisualization:
         return ax
 
     def update_plots(self, z0, z1_hat, z1, a, a_hat, text):
-        self.inv_sc.set_offsets(z0)
-        self.fwd_sc.set_offsets(z1_hat)
-        self.true_sc.set_offsets(z1)
+        self.inv_sc.set_offsets(z0[:, :2])
+        self.fwd_sc.set_offsets(z1_hat[:, :2])
+        self.true_sc.set_offsets(z1[:, :2])
 
         self.text.set_text(text)
 
@@ -155,7 +155,7 @@ class CleanVisualization:
         return ax, sc
 
     def update_plots(self, z0, z1_hat, z1, a, a_hat, text):
-        self.inv_sc.set_offsets(z0)
+        self.inv_sc.set_offsets(z0[:, :2])
         plt.rcParams.update({'font.size': 22})
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
