@@ -253,8 +253,8 @@ def test_rep(fnet, step):
         if args.type in ['markov', 'factored']:
             z0 = fnet.phi(test_x0)
             z1 = fnet.phi(test_x1)
-            z1_hat = fnet.fwd_model(z0, test_a)
-            parents = fnet.parents_model(z0, test_a)
+            parent_dependencies, parent_likelihood = fnet.parents_model(z0, test_a)
+            z1_hat = fnet.fwd_model(z0 * parent_dependencies, test_a)
 
             # yapf: disable
             loss_info = {
@@ -263,8 +263,8 @@ def test_rep(fnet, step):
                 'L_fwd': fnet.compute_fwd_loss(z1, z1_hat).numpy().tolist(),
                 'L_rat': fnet.ratio_loss(z0, z1).numpy().tolist(),
                 'L_dis': fnet.distance_loss(z0, z1).numpy().tolist(),
-                'L_fac': fnet.compute_factored_loss(parents).numpy().tolist(),
-                'L': fnet.compute_loss(z0, test_a, parents, z1, z1_hat).numpy().tolist(),
+                'L_fac': fnet.compute_factored_loss(parent_likelihood).numpy().tolist(),
+                'L': fnet.compute_loss(z0, test_a, parent_likelihood, z1, z1_hat).numpy().tolist(),
             }
             # yapf: enable
         elif args.type == 'autoencoder':

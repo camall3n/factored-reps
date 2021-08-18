@@ -46,4 +46,4 @@ class ParentsNet(Network):
         # - gradients act like soft_decisions
         parents = hard_decisions + soft_decisions - soft_decisions.detach()
 
-        return parents
+        return parents, soft_decisions

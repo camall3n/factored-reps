@@ -91,17 +91,17 @@ class FactorNet(Network):
         excess = torch.nn.functional.relu(dz - max_dz)
         return self.mse(excess, torch.zeros_like(excess))
 
-    def compute_factored_loss(self, parents):
+    def compute_factored_loss(self, parent_likelihood):
         if self.coefs['L_fac'] == 0.0:
             return torch.tensor(0.0)
 
         # TODO: how to compute factored loss?
 
         # 1. mean?
-        loss = torch.mean(parents, dim=-1)
+        loss = torch.mean(parent_likelihood, dim=-1)
 
         # 2. sum?
-        # loss = torch.sum(parents, dim=-1)
+        # loss = torch.sum(parent_likelihood, dim=-1)
 
         # 3. ???
 
@@ -117,24 +117,24 @@ class FactorNet(Network):
         # a_logits = self.inv_model(z0, z1)
         # return torch.argmax(a_logits, dim=-1)
 
-    def compute_loss(self, z0, a, parents, z1, z1_hat):
+    def compute_loss(self, z0, a, parent_likelihood, z1, z1_hat):
         loss = 0
         loss += self.coefs['L_inv'] * self.inverse_loss(z0, z1, a)
         loss += self.coefs['L_rat'] * self.ratio_loss(z0, z1)
         loss += self.coefs['L_dis'] * self.distance_loss(z0, z1)
         loss += self.coefs['L_fwd'] * self.compute_fwd_loss(z1, z1_hat)
-        loss += self.coefs['L_fac'] * self.compute_factored_loss(parents)
+        loss += self.coefs['L_fac'] * self.compute_factored_loss(parent_likelihood)
         return loss
 
     def train_batch(self, x0, a, x1):
         self.train()
         self.optimizer.zero_grad()
         z0 = self.phi(x0)
-        parents = self.parents_model(z0, a)
-        z1_hat = self.fwd_model(z0 * parents, a)
+        parent_dependencies, parent_likelihood = self.parents_model(z0, a)
+        z1_hat = self.fwd_model(z0 * parent_dependencies, a)
 
         z1 = self.phi(x1)
-        loss = self.compute_loss(z0, a, parents, z1, z1_hat)
+        loss = self.compute_loss(z0, a, parent_likelihood, z1, z1_hat)
         loss.backward()
         self.optimizer.step()
         return loss
