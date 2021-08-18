@@ -27,16 +27,17 @@ class ParentsNet(Network):
         a_onehot = one_hot(a, depth=self.n_actions)
         context = torch.cat((z, a_onehot), -1)
         parent_logits = self.model(context)
-        soft_decisions = torch.tanh(parent_logits)
+        soft_decisions = torch.sigmoid(parent_logits)
 
         # TODO: How should hard_decisions be computed?
 
         # 1. saturate?
         with torch.no_grad():
-            hard_decisions = torch.sign(soft_decisions)
+            hard_decisions = (soft_decisions > 0.5).float()
 
         # 2. sampling?
-        # ???
+        # with torch.no_grad():
+        #     hard_decisions = torch.bernoulli(soft_decisions).float()
 
         # 3. ???
         # ??????

@@ -5,10 +5,11 @@ import torch.nn
 from .nnutils import Network, one_hot
 
 class FwdNet(Network):
-    def __init__(self, n_actions, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32):
+    def __init__(self, n_actions, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32, predict_deltas=False):
         super().__init__()
         self.n_actions = n_actions
         self.frozen = False
+        self.predict_deltas = predict_deltas
 
         self.fwd_layers = []
         if n_hidden_layers == 0:
@@ -23,5 +24,8 @@ class FwdNet(Network):
     def forward(self, z, a):
         a_onehot = one_hot(a, depth=self.n_actions)
         context = torch.cat((z, a_onehot), -1)
-        z_hat = self.fwd_model(context)
+        if self.predict_deltas:
+            z_hat = z + self.fwd_model(context)
+        else:
+            z_hat = self.fwd_model(context)
         return z_hat

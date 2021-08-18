@@ -47,7 +47,8 @@ class FactorNet(Network):
         self.fwd_model = FwdNet(n_actions=n_actions,
                                 n_latent_dims=n_latent_dims,
                                 n_hidden_layers=n_hidden_layers,
-                                n_units_per_layer=n_units_per_layer)
+                                n_units_per_layer=n_units_per_layer,
+                                predict_deltas=True)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
