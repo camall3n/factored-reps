@@ -36,7 +36,7 @@ parser.add_argument('-l','--latent_dims', type=int, default=2,
                     help='Number of latent dimensions to use for representation')
 parser.add_argument('--L_inv', type=float, default=1.0,
                     help='Coefficient for inverse-model-matching loss')
-parser.add_argument('--L_fwd', type=float, default=1.0,
+parser.add_argument('--L_fwd', type=float, default=0.1,
                     help='Coefficient for forward dynamics loss')
 parser.add_argument('--L_rat', type=float, default=1.0,
                     help='Coefficient for ratio-matching loss')
