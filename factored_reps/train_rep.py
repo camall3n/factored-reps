@@ -298,16 +298,14 @@ def test_rep(fnet, step):
 #% ------------------ Run Experiment ------------------
 data = []
 for frame_idx in tqdm(range(n_frames + 1)):
-    for _ in range(n_updates_per_frame):
-        tx0, tx1, ta, idx = get_next_batch()
-        # h = np.histogram(tdist, bins=36)[0]
-
-        fnet.train_batch(tx0, ta, tx1)
-
     test_results = test_rep(fnet, frame_idx * n_updates_per_frame)
     if args.video:
         frame = repvis.update_plots(*test_results)
         data.append(frame)
+
+    for _ in range(n_updates_per_frame):
+        tx0, tx1, ta, idx = get_next_batch()
+        fnet.train_batch(tx0, ta, tx1)
 
 if args.video:
     imageio.mimwrite(video_filename, data, fps=15)
