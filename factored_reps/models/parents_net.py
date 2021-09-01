@@ -32,12 +32,12 @@ class ParentsNet(Network):
         # TODO: How should hard_decisions be computed?
 
         # 1. threshold?
-        with torch.no_grad():
-            hard_decisions = (soft_decisions > 0.5).float()
+        # with torch.no_grad():
+        #     hard_decisions = (soft_decisions > 0.5).float()
 
         # 2. sampling?
-        # with torch.no_grad():
-        #     hard_decisions = torch.bernoulli(soft_decisions).float()
+        with torch.no_grad():
+            hard_decisions = torch.bernoulli(soft_decisions).float()
 
         # 3. ???
         # ??????
