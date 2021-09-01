@@ -23,10 +23,10 @@ class ParentsNet(Network):
         n_outputs = n_latent_dims + (n_actions if include_parent_actions else 0)
 
         if not self.factored:
-            self.model = SimpleNet(n_inputs, n_outputs, n_units_per_layer, n_hidden_layers)
+            self.model = SimpleNet(n_inputs, n_outputs, n_hidden_layers, n_units_per_layer)
         else:
             self.models = nn.ModuleList([
-                SimpleNet(n_inputs, n_outputs, n_units_per_layer, n_hidden_layers)
+                SimpleNet(n_inputs, n_outputs, n_hidden_layers, n_units_per_layer)
                 for _ in range(n_latent_dims)
             ])
 
