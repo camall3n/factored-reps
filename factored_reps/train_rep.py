@@ -315,5 +315,6 @@ if args.video:
 
 if args.save:
     fnet.phi.save('phi-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
+    fnet.save('fnet-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
 
 log.close()
