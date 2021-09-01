@@ -255,7 +255,8 @@ def test_rep(fnet, step):
             z0 = fnet.phi(test_x0)
             z1 = fnet.phi(test_x1)
             parent_dependencies, parent_likelihood = fnet.parents_model(z0, test_a)
-            z1_hat = fnet.fwd_model(z0 * parent_dependencies, test_a)
+            dz_hat = fnet.fwd_model(z0, test_a, parent_dependencies)
+            z1_hat = z0 + dz_hat
 
             # yapf: disable
             loss_info = {

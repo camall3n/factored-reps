@@ -11,22 +11,32 @@ class ParentsNet(Network):
                  n_latent_dims,
                  n_units_per_layer,
                  n_hidden_layers,
-                 include_parent_actions=False):
+                 include_parent_actions=False,
+                 factored=False):
         super().__init__()
         self.n_actions = n_actions
         self.n_latent_dims = n_latent_dims
         self.include_parent_actions = include_parent_actions
-        self.model = SimpleNet(
-            n_inputs=(n_latent_dims + n_actions),
-            n_outputs=(n_latent_dims + (n_actions if include_parent_actions else 0)),
-            n_units_per_layer=n_units_per_layer,
-            n_hidden_layers=n_hidden_layers,
-        )
+        self.factored = factored
+
+        n_inputs = n_latent_dims + n_actions
+        n_outputs = n_latent_dims + (n_actions if include_parent_actions else 0)
+
+        if not self.factored:
+            self.model = SimpleNet(n_inputs, n_outputs, n_units_per_layer, n_hidden_layers)
+        else:
+            self.models = nn.ModuleList([
+                SimpleNet(n_inputs, n_outputs, n_units_per_layer, n_hidden_layers)
+                for _ in range(n_latent_dims)
+            ])
 
     def forward(self, z, a):
         a_onehot = one_hot(a, depth=self.n_actions)
         context = torch.cat((z, a_onehot), -1)
-        parent_logits = self.model(context)
+        if not self.factored:
+            parent_logits = self.model(context)
+        else:
+            parent_logits = torch.stack([model(context) for model in self.models], dim=0)
         soft_decisions = torch.sigmoid(parent_logits)
 
         # TODO: How should hard_decisions be computed?

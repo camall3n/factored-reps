@@ -2,30 +2,41 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network, one_hot
+from .nnutils import Network, one_hot, extract
+from .simplenet import SimpleNet
 
 class FwdNet(Network):
-    def __init__(self, n_actions, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32, predict_deltas=False):
+    def __init__(self,
+                 n_actions,
+                 n_latent_dims=4,
+                 n_hidden_layers=1,
+                 n_units_per_layer=32,
+                 factored=False):
         super().__init__()
         self.n_actions = n_actions
+        self.factored = factored
         self.frozen = False
-        self.predict_deltas = predict_deltas
 
-        self.fwd_layers = []
-        if n_hidden_layers == 0:
-            self.fwd_layers.extend([torch.nn.Linear(n_latent_dims+self.n_actions, n_latent_dims)])
+        n_inputs = n_latent_dims + self.n_actions
+
+        if not self.factored:
+            self.fwd_model = SimpleNet(n_inputs, n_latent_dims, n_hidden_layers, n_units_per_layer)
         else:
-            self.fwd_layers.extend([torch.nn.Linear(n_latent_dims + self.n_actions, n_units_per_layer), torch.nn.Tanh()])
-            self.fwd_layers.extend([torch.nn.Linear(n_units_per_layer, n_units_per_layer), torch.nn.Tanh()] * (n_hidden_layers-1))
-            self.fwd_layers.extend([torch.nn.Linear(n_units_per_layer, n_latent_dims)])
-        # self.fwd_layers.extend([torch.nn.BatchNorm1d(n_latent_dims, affine=False)])
-        self.fwd_model = torch.nn.Sequential(*self.fwd_layers)
+            self.fwd_models = torch.nn.ModuleList([
+                SimpleNet(n_inputs, 1, n_hidden_layers, n_units_per_layer)
+                for _ in range(n_latent_dims)
+            ])
 
-    def forward(self, z, a):
+    def forward(self, z, a, parent_dependencies):
         a_onehot = one_hot(a, depth=self.n_actions)
-        context = torch.cat((z, a_onehot), -1)
-        if self.predict_deltas:
-            z_hat = z + self.fwd_model(context)
-        else:
+        if not self.factored:
+            z_masked = z * parent_dependencies
+            context = torch.cat((z_masked, a_onehot), -1)
             z_hat = self.fwd_model(context)
+        else:
+            contexts = torch.stack(
+                [torch.cat((z * mask, a_onehot), -1) for mask in parent_dependencies], dim=0)
+            z_hat = torch.stack(
+                [model(context).squeeze(-1) for model, context in zip(self.fwd_models, contexts)],
+                dim=1)
         return z_hat

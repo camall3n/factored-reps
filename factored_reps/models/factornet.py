@@ -43,12 +43,13 @@ class FactorNet(Network):
         self.parents_model = ParentsNet(n_actions=n_actions,
                                         n_latent_dims=n_latent_dims,
                                         n_units_per_layer=n_units_per_layer,
-                                        n_hidden_layers=n_hidden_layers)
+                                        n_hidden_layers=n_hidden_layers,
+                                        factored=True)
         self.fwd_model = FwdNet(n_actions=n_actions,
                                 n_latent_dims=n_latent_dims,
                                 n_hidden_layers=n_hidden_layers,
                                 n_units_per_layer=n_units_per_layer,
-                                predict_deltas=True)
+                                factored=True)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
@@ -100,6 +101,8 @@ class FactorNet(Network):
 
         # 1. mean?
         loss = torch.mean(parent_likelihood, dim=-1)
+        if parent_likelihood.ndim > 2:
+            loss = torch.mean(loss, dim=0)
 
         # 2. sum?
         # loss = torch.sum(parent_likelihood, dim=-1)
@@ -132,7 +135,8 @@ class FactorNet(Network):
         self.optimizer.zero_grad()
         z0 = self.phi(x0)
         parent_dependencies, parent_likelihood = self.parents_model(z0, a)
-        z1_hat = self.fwd_model(z0 * parent_dependencies, a)
+        dz_hat = self.fwd_model(z0, a, parent_dependencies)
+        z1_hat = z0 + dz_hat
 
         z1 = self.phi(x1)
         loss = self.compute_loss(z0, a, parent_likelihood, z1, z1_hat)
