@@ -10,6 +10,7 @@ import torch
 from tqdm import tqdm
 
 from factored_reps.models.factornet import FactorNet
+from factored_reps.models.factored_fwd_model import FactoredFwdModel
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from markov_abstr.gridworld.models.autoencoder import AutoEncoder
 from markov_abstr.gridworld.models.pixelpredictor import PixelPredictor
@@ -21,8 +22,8 @@ from visgrid.sensors import *
 parser = get_parser()
 # parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)
 # yapf: disable
-parser.add_argument('--type', type=str, default='factored',
-                    choices=['factored', 'markov', 'autoencoder', 'pixel-predictor'],
+parser.add_argument('--type', type=str, default='factored-split',
+                    choices=['factored-split', 'factored-combined', 'markov', 'autoencoder', 'pixel-predictor'],
                     help='Which type of representation learning method')
 parser.add_argument('-n','--n_updates', type=int, default=3000,
                     help='Number of training updates')
@@ -36,7 +37,7 @@ parser.add_argument('-l','--latent_dims', type=int, default=2,
                     help='Number of latent dimensions to use for representation')
 parser.add_argument('--L_inv', type=float, default=1.0,
                     help='Coefficient for inverse-model-matching loss')
-parser.add_argument('--L_fwd', type=float, default=0.1,
+parser.add_argument('--L_fwd', type=float, default=1.0,
                     help='Coefficient for forward dynamics loss')
 parser.add_argument('--L_rat', type=float, default=1.0,
                     help='Coefficient for ratio-matching loss')
@@ -44,6 +45,8 @@ parser.add_argument('--L_fac', type=float, default=0.03,
                     help='Coefficient for factorization loss')
 parser.add_argument('--L_dis', type=float, default=1.0,
                     help='Coefficient for planning-distance loss')
+parser.add_argument('--max_dz', type=float, default=0.1,
+                    help='Distance threshold for planning-distance loss')
 parser.add_argument('-lr','--learning_rate', type=float, default=0.003,
                     help='Learning rate for Adam optimizer')
 parser.add_argument('--batch_size', type=int, default=2048,
@@ -171,15 +174,26 @@ coefs = {
     'L_rat': args.L_rat,
     'L_fac': args.L_fac,
     'L_dis': args.L_dis,
+    'L_ora': 0.0,
+    'L_coinv': 0.0,
 }
 
-if args.type == 'factored':
+if args.type == 'factored-split':
+    fnet = FactoredFwdModel(n_actions=4,
+                            input_shape=x0.shape[1:],
+                            n_latent_dims=args.latent_dims,
+                            n_hidden_layers=1,
+                            n_units_per_layer=32,
+                            lr=args.learning_rate,
+                            coefs=coefs)
+elif args.type == 'factored-combined':
     fnet = FactorNet(n_actions=4,
                      input_shape=x0.shape[1:],
                      n_latent_dims=args.latent_dims,
                      n_hidden_layers=1,
                      n_units_per_layer=32,
                      lr=args.learning_rate,
+                     max_dz=args.max_dz,
                      coefs=coefs)
 elif args.type == 'markov':
     fnet = FeatureNet(n_actions=4,
@@ -251,31 +265,15 @@ get_next_batch = (
 def test_rep(fnet, step):
     with torch.no_grad():
         fnet.eval()
-        if args.type in ['markov', 'factored']:
-            z0 = fnet.phi(test_x0)
-            z1 = fnet.phi(test_x1)
-            parent_dependencies, parent_likelihood = fnet.parents_model(z0, test_a)
-            dz_hat = fnet.fwd_model(z0, test_a, parent_dependencies)
-            z1_hat = z0 + dz_hat
-
-            # yapf: disable
-            loss_info = {
-                'step': step,
-                'L_inv': fnet.inverse_loss(z0, z1, test_a).numpy().tolist(),
-                'L_fwd': fnet.compute_fwd_loss(z1, z1_hat).numpy().tolist(),
-                'L_rat': fnet.ratio_loss(z0, z1).numpy().tolist(),
-                'L_dis': fnet.distance_loss(z0, z1).numpy().tolist(),
-                'L_fac': fnet.compute_factored_loss(parent_likelihood).numpy().tolist(),
-                'L': fnet.compute_loss(z0, test_a, parent_likelihood, z1, z1_hat).numpy().tolist(),
-            }
-            # yapf: enable
+        if args.type in ['markov', 'factored-combined', 'factored-split']:
+            with torch.no_grad():
+                z0, z1, loss_info = fnet.train_batch(test_x0, test_a, test_x1, test=True)
         elif args.type == 'autoencoder':
             z0 = fnet.encode(test_x0)
             z1 = fnet.encode(test_x1)
 
             loss_info = {
-                'step': step,
-                'L': fnet.compute_loss(test_x0).numpy().tolist(),
+                'L': fnet.compute_loss(test_x0),
             }
 
         elif args.type == 'pixel-predictor':
@@ -283,9 +281,12 @@ def test_rep(fnet, step):
             z1 = fnet.encode(test_x1)
 
             loss_info = {
-                'step': step,
-                'L': fnet.compute_loss(test_x0, test_a, test_x1).numpy().tolist(),
+                'L': fnet.compute_loss(test_x0, test_a, test_x1),
             }
+
+        for loss_type, loss_value in loss_info.items():
+            loss_info[loss_type] = loss_value.numpy().tolist()
+        loss_info['step'] = step
 
     json_str = json.dumps(loss_info)
     log.write(json_str + '\n')
@@ -293,7 +294,7 @@ def test_rep(fnet, step):
 
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
 
-    results = [z0, z1, z1, test_a, test_a]
+    results = [z0, test_a, z1]
     return [r.numpy() for r in results] + [text]
 
 #% ------------------ Run Experiment ------------------

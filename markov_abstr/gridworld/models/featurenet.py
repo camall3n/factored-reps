@@ -18,11 +18,13 @@ class FeatureNet(Network):
                  n_hidden_layers=1,
                  n_units_per_layer=32,
                  lr=0.001,
+                 max_dz=0.1,
                  coefs=None):
         super().__init__()
         self.n_actions = n_actions
         self.n_latent_dims = n_latent_dims
         self.lr = lr
+        self.max_dz = max_dz
         self.coefs = defaultdict(lambda: 1.0)
         if coefs is not None:
             for k, v in coefs.items():
@@ -96,9 +98,7 @@ class FeatureNet(Network):
         if self.coefs['L_dis'] == 0.0:
             return torch.tensor(0.0)
         dz = torch.norm(z1 - z0, dim=-1, p=2)
-        with torch.no_grad():
-            max_dz = 0.1
-        excess = torch.nn.functional.relu(dz - max_dz)
+        excess = torch.nn.functional.relu(dz - self.max_dz)
         return self.mse(excess, torch.zeros_like(excess))
 
     def oracle_loss(self, z0, z1, d):
@@ -120,6 +120,10 @@ class FeatureNet(Network):
         # loss = -torch.nn.functional.cosine_similarity(dz, d, 0)
         return loss
 
+    def encode(self, x):
+        z = self.phi(x)
+        return z
+
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -129,22 +133,28 @@ class FeatureNet(Network):
         # return torch.argmax(a_logits, dim=-1)
 
     def compute_loss(self, z0, z1, a, d):
+        loss_info = {
+            'L_coinv': self.contrastive_inverse_loss(z0, z1, a),
+            'L_inv': self.inverse_loss(z0, z1, a),
+            'L_rat': self.ratio_loss(z0, z1),
+            'L_dis': self.distance_loss(z0, z1),
+            'L_ora': self.oracle_loss(z0, z1, d),
+        }
         loss = 0
-        loss += self.coefs['L_coinv'] * self.contrastive_inverse_loss(z0, z1, a)
-        loss += self.coefs['L_inv'] * self.inverse_loss(z0, z1, a)
-        # loss += self.coefs['L_fwd'] * self.compute_fwd_loss(z0, z1, z1_hat)
-        loss += self.coefs['L_rat'] * self.ratio_loss(z0, z1)
-        loss += self.coefs['L_dis'] * self.distance_loss(z0, z1)
-        loss += self.coefs['L_ora'] * self.oracle_loss(z0, z1, d)
-        return loss
+        for loss_type in ['L_coinv', 'L_inv', 'L_rat', 'L_dis', 'L_ora']:
+            loss += self.coefs[loss_type] * loss_info[loss_type]
+        loss_info['L'] = loss
 
-    def train_batch(self, x0, x1, a, d):
-        self.train()
-        self.optimizer.zero_grad()
+        return loss_info
+
+    def train_batch(self, x0, a, x1, d=None, test=False):
+        if not test:
+            self.train()
+            self.optimizer.zero_grad()
         z0 = self.phi(x0)
         z1 = self.phi(x1)
-        # z1_hat = self.fwd_model(z0, a)
-        loss = self.compute_loss(z0, z1, a, d)
-        loss.backward()
-        self.optimizer.step()
-        return loss
+        loss_info = self.compute_loss(z0, z1, a, d)
+        if not test:
+            loss_info['L'].backward()
+            self.optimizer.step()
+        return z0, z1, loss_info

@@ -16,7 +16,7 @@ class RepVisualization:
         self.text_ax.axis('off')
         self.text_ax.set_ylim([0, 1])
         self.text_ax.set_xlim([0, 1])
-        self.text = self.text_ax.text(0.05, 0.1, '')
+        self.text = self.text_ax.text(0.05, 0.12, '')
 
         self.env_ax = self.fig.add_subplot(4, 4, 4)
         env.plot(self.env_ax)
@@ -114,7 +114,7 @@ class RepVisualization:
         plt.setp(ax.collections, alpha=.7)
         return ax
 
-    def update_plots(self, z0, z1_hat, z1, a, a_hat, text):
+    def update_plots(self, z0, a, z1, text):
         for row in range(4):
             for col in range(row + 1):
                 if (row + 1) < self.n_dims:
@@ -128,8 +128,8 @@ class RepVisualization:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-        self._plot_effects(z0, z1_hat, a, ax=self.effects, title=r'$T(\phi(x),a) - \phi(x)$')
-        # self._plot_effects(z0, z1, a, ax=self.effects, title=r'$\phi(x\') - \phi(x)$')
+        # self._plot_effects(z0, z1_hat, a, ax=self.effects, title=r'$T(\phi(x),a) - \phi(x)$')
+        self._plot_effects(z0, z1, a, ax=self.effects, title=r'$\phi(x\') - \phi(x)$')
 
         frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
         frame = frame.reshape(self.fig.canvas.get_width_height()[::-1] + (3, ))
@@ -143,7 +143,6 @@ class CleanVisualization:
         self.colors = colors
 
         z0 = np.zeros((batch_size, n_dims))
-        z1_hat = np.zeros((batch_size, n_dims))
         z1 = np.zeros((batch_size, n_dims))
 
         plt.rcParams.update({'font.size': 22})
@@ -167,7 +166,7 @@ class CleanVisualization:
         ax.set_title(title)
         return ax, sc
 
-    def update_plots(self, z0, z1_hat, z1, a, a_hat, text):
+    def update_plots(self, z0, a, z1, text):
         self.phi_scat.set_offsets(z0[:, :2])
         plt.rcParams.update({'font.size': 22})
         self.fig.canvas.draw()

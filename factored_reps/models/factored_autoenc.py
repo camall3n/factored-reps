@@ -30,6 +30,10 @@ class FactoredAutoencoder(Network):
             for k, v in coefs.items():
                 self.coefs[k] = v
 
+    def encode(self, x):
+        z = self.encoder(x)
+        return z
+
     def forward(self, x):
         return self.encoder(x)
 
