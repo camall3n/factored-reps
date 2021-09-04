@@ -129,7 +129,7 @@ class RepVisualization:
         self.fig.canvas.flush_events()
 
         # self._plot_effects(z0, z1_hat, a, ax=self.effects, title=r'$T(\phi(x),a) - \phi(x)$')
-        self._plot_effects(z0, z1, a, ax=self.effects, title=r'$\phi(x\') - \phi(x)$')
+        self._plot_effects(z0, z1, a, ax=self.effects, title=r"$\phi({x'}) - \phi(x)$")
 
         frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
         frame = frame.reshape(self.fig.canvas.get_width_height()[::-1] + (3, ))

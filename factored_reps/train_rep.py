@@ -23,7 +23,7 @@ parser = get_parser()
 # parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)
 # yapf: disable
 parser.add_argument('--type', type=str, default='factored-split',
-                    choices=['factored-split', 'factored-combined', 'markov', 'autoencoder', 'pixel-predictor'],
+                    choices=['factored-split', 'factored-combined', 'factored-autoenc', 'markov', 'autoencoder', 'pixel-predictor'],
                     help='Which type of representation learning method')
 parser.add_argument('-n','--n_updates', type=int, default=3000,
                     help='Number of training updates')
@@ -41,7 +41,7 @@ parser.add_argument('--L_fwd', type=float, default=1.0,
                     help='Coefficient for forward dynamics loss')
 parser.add_argument('--L_rat', type=float, default=1.0,
                     help='Coefficient for ratio-matching loss')
-parser.add_argument('--L_fac', type=float, default=0.03,
+parser.add_argument('--L_fac', type=float, default=0.003,
                     help='Coefficient for factorization loss')
 parser.add_argument('--L_dis', type=float, default=1.0,
                     help='Coefficient for planning-distance loss')
@@ -195,6 +195,15 @@ elif args.type == 'factored-combined':
                      lr=args.learning_rate,
                      max_dz=args.max_dz,
                      coefs=coefs)
+elif args.type == 'factored-autoenc':
+    fnet = FactorNet(n_actions=4,
+                     input_shape=x0.shape[1:],
+                     n_latent_dims=args.latent_dims,
+                     n_hidden_layers=1,
+                     n_units_per_layer=32,
+                     lr=args.learning_rate,
+                     max_dz=args.max_dz,
+                     coefs=coefs)
 elif args.type == 'markov':
     fnet = FeatureNet(n_actions=4,
                       input_shape=x0.shape[1:],
@@ -265,7 +274,7 @@ get_next_batch = (
 def test_rep(fnet, step):
     with torch.no_grad():
         fnet.eval()
-        if args.type in ['markov', 'factored-combined', 'factored-split']:
+        if args.type in ['markov', 'factored-combined', 'factored-split', 'factored-autoenc']:
             with torch.no_grad():
                 z0, z1, loss_info = fnet.train_batch(test_x0, test_a, test_x1, test=True)
         elif args.type == 'autoencoder':
