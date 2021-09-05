@@ -6,14 +6,9 @@ import torch
 import torch.nn
 
 from markov_abstr.gridworld.models.nnutils import Network
-from markov_abstr.gridworld.models.phinet import PhiNet
-from markov_abstr.gridworld.models.invnet import InvNet
-from markov_abstr.gridworld.models.fwdnet import FwdNet
 from markov_abstr.gridworld.models.simplenet import SimpleNet
-from markov_abstr.gridworld.models.contrastivenet import ContrastiveNet
-from markov_abstr.gridworld.models.invdiscriminator import InvDiscriminator
 
-class FactoredAutoencoder(Network):
+class FocusedAutoencoder(Network):
     def __init__(self,
                  n_actions,
                  input_shape=2,
@@ -64,12 +59,12 @@ class FactoredAutoencoder(Network):
             return torch.tensor(0.0)
         return (self.mse(z0, z0_hat) + self.mse(z1, z1_hat)) / 2.0
 
-    def compute_factored_loss(self, z0, z1):
+    def compute_focused_loss(self, z0, z1):
         eps = 1e-6
         dz = z1 - z0
         l1 = torch.sum(torch.abs(dz), dim=-1)
         lmax = torch.max(torch.abs(dz), dim=-1)[0]
-        return torch.mean(l1 / lmax)
+        return torch.mean(l1 / (lmax + eps))
 
     def encode(self, x):
         z = self.phi(x)
@@ -82,10 +77,10 @@ class FactoredAutoencoder(Network):
     def compute_loss(self, z0, z0_factored, z0_hat, z1, z1_factored, z1_hat):
         loss_info = {
             'L_rec': self.compute_reconstruction_loss(z0, z0_hat, z1, z1_hat),
-            'L_fac': self.compute_factored_loss(z0_factored, z1_factored),
+            'L_foc': self.compute_focused_loss(z0_factored, z1_factored),
         }
         loss = 0
-        for loss_type in ['L_rec', 'L_fac']:
+        for loss_type in ['L_rec', 'L_foc']:
             loss += self.coefs[loss_type] * loss_info[loss_type]
         loss_info['L'] = loss
 

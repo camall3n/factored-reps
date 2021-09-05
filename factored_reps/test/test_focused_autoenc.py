@@ -5,7 +5,7 @@ import seeding
 from tqdm import tqdm
 
 from markov_abstr.gridworld.models.nullabstraction import NullAbstraction
-from factored_reps.models.factored_autoenc import FactoredAutoencoder
+from factored_reps.models.focused_autoenc import FocusedAutoencoder
 from visgrid.gridworld import GridWorld
 from visgrid.utils import MI
 from visgrid.sensors import *
@@ -50,8 +50,8 @@ MI_max = MI(s0, s0)
 z0 = phi(sensor.observe(s0))
 z1 = phi(sensor.observe(s1))
 
-entangler = FactoredAutoencoder(lr=0.03, coefs={'L_fac': -0.1})
-disentangler = FactoredAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
+entangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': -0.1})
+disentangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
 
 #%% ------------------ Train entangler ------------------
 for update in tqdm(range(1000)):
@@ -86,7 +86,7 @@ def get_frame(ax, rep, title, save=''):
 
 #%% ------------------ Train disentangler ------------------
 seeding.seed(1, np)
-disentangler = FactoredAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
+disentangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
 fig, ax = plt.subplots(figsize=(8, 8))
 frames = []
 e0no = sensor.observe(e0n)

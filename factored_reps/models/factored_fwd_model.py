@@ -95,6 +95,20 @@ class FactoredFwdModel(Network):
 
         return loss
 
+    def compute_reconstruction_loss(self, z0, z0_hat, z1, z1_hat):
+        if self.coefs['L_rec'] == 0.0:
+            return torch.tensor(0.0)
+        return (self.mse(z0, z0_hat) + self.mse(z1, z1_hat)) / 2.0
+
+    def compute_focused_loss(self, z0, z1):
+        if self.coefs['L_foc'] == 0.0:
+            return torch.tensor(0.0)
+        eps = 1e-6
+        dz = z1 - z0
+        l1 = torch.sum(torch.abs(dz), dim=-1)
+        lmax = torch.max(torch.abs(dz), dim=-1)[0]
+        return torch.mean(l1 / (lmax + eps))
+
     def encode(self, x):
         z = self.phi(x)
         z_fac = self.encoder(z)
@@ -103,13 +117,16 @@ class FactoredFwdModel(Network):
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
-    def compute_loss(self, parent_likelihood, z1, z1_hat):
+    def compute_loss(self, z0, z0_rec, z0_factored, z1, z1_rec, z1_factored, z1_hat,
+                     parent_likelihood):
         loss_info = {
             'L_fwd': self.compute_fwd_loss(z1, z1_hat),
             'L_fac': self.compute_factored_loss(parent_likelihood),
+            'L_foc': self.compute_focused_loss(z0_factored, z1_factored),
+            'L_rec': self.compute_reconstruction_loss(z0, z0_rec, z1, z1_rec)
         }
         loss = 0
-        for loss_type in ['L_fwd', 'L_fac']:
+        for loss_type in ['L_fwd', 'L_fac', 'L_foc']:
             loss += self.coefs[loss_type] * loss_info[loss_type]
         loss_info['L'] = loss
 
@@ -133,7 +150,11 @@ class FactoredFwdModel(Network):
         z1_factored_hat = z0_factored + dz_hat
         z1_hat = self.decoder(z1_factored_hat)
 
-        loss_info = self.compute_loss(parent_likelihood, z1, z1_hat)
+        z0_rec = self.decoder(z0_factored)
+        z1_rec = self.decoder(z1_factored)
+
+        loss_info = self.compute_loss(z0, z0_rec, z0_factored, z1, z1_rec, z1_factored, z1_hat,
+                                      parent_likelihood)
         if not test:
             loss_info['L'].backward()
             self.optimizer.step()
