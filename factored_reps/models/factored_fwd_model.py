@@ -6,12 +6,8 @@ import torch
 import torch.nn
 
 from markov_abstr.gridworld.models.nnutils import Network
-from markov_abstr.gridworld.models.phinet import PhiNet
-from markov_abstr.gridworld.models.invnet import InvNet
 from markov_abstr.gridworld.models.fwdnet import FwdNet
 from markov_abstr.gridworld.models.simplenet import SimpleNet
-from markov_abstr.gridworld.models.contrastivenet import ContrastiveNet
-from markov_abstr.gridworld.models.invdiscriminator import InvDiscriminator
 
 class FactoredFwdModel(Network):
     def __init__(self,
@@ -42,12 +38,12 @@ class FactoredFwdModel(Network):
 
         self.encoder = SimpleNet(n_inputs=n_latent_dims,
                                  n_outputs=n_latent_dims,
-                                 n_hidden_layers=1,
+                                 n_hidden_layers=2,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
         self.decoder = SimpleNet(n_inputs=n_latent_dims,
                                  n_outputs=n_latent_dims,
-                                 n_hidden_layers=1,
+                                 n_hidden_layers=2,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
         self.parents_model = ParentsNet(n_actions=n_actions,
