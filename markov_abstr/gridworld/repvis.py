@@ -10,19 +10,19 @@ class RepVisualization:
         self.colors = colors
         self.n_dims = n_dims
 
-        self.text_ax = self.fig.add_subplot(4, 4, 7)
+        self.text_ax = self.fig.add_subplot(4, 4, 4)
         self.text_ax.set_xticks([])
         self.text_ax.set_yticks([])
         self.text_ax.axis('off')
         self.text_ax.set_ylim([0, 1])
         self.text_ax.set_xlim([0, 1])
-        self.text = self.text_ax.text(0.05, 0.12, '')
+        self.text = self.text_ax.text(-0.2, -0.1, '')
 
-        self.env_ax = self.fig.add_subplot(4, 4, 4)
+        self.env_ax = self.fig.add_subplot(4, 4, 8)
         env.plot(self.env_ax)
         self.env_ax.set_title('Environment')
 
-        self.obs_ax = self.fig.add_subplot(4, 4, 8)
+        self.obs_ax = self.fig.add_subplot(4, 4, 12)
         self.obs_ax.imshow(obs)
         self.obs_ax.set_xticks([])
         self.obs_ax.set_yticks([])
@@ -129,7 +129,7 @@ class RepVisualization:
         self.fig.canvas.flush_events()
 
         # self._plot_effects(z0, z1_hat, a, ax=self.effects, title=r'$T(\phi(x),a) - \phi(x)$')
-        self._plot_effects(z0, z1, a, ax=self.effects, title=r"$\phi({x'}) - \phi(x)$")
+        self._plot_effects(z0, z1, a, ax=self.effects, title=r"$\phi({x'}) - \phi(x)$", noise=0.05)
 
         frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
         frame = frame.reshape(self.fig.canvas.get_width_height()[::-1] + (3, ))
