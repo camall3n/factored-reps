@@ -15,12 +15,16 @@ from visgrid.utils import get_parser
 #%% Setup
 if 'ipykernel' not in sys.argv[0]:
     parser = get_parser()
-    parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
+    parser.add_argument('-t', '--tag', type=str, required=True, help='Name of experiment')
     args = parser.parse_args()
 else:
-    class Args: pass
-    args=Args()
-    args.tag = 'episodes-2000_steps-10_passengers-1'
+
+    class Args:
+        pass
+
+    args = Args()
+    args.tag = 'episodes-1000_steps-20_passengers-1'
+    # args.tag = 'episodes-2000_steps-10_passengers-1'
 
 #%% Load results
 results_dir = os.path.join('results', 'taxi-experiences', args.tag)

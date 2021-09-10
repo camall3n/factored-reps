@@ -21,7 +21,7 @@ if 'ipykernel' not in sys.argv[0]:
 
     parser = get_parser()
     parser.add_argument('-e','--n_episodes', type=int, default=1, help='Number of episodes')
-    parser.add_argument('-n','--n_steps_per_episode', type=int, default=10, help='Number of steps per episode')
+    parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Number of steps per episode')
     parser.add_argument('-s','--seed', type=int, default=0, help='Random seed')
     parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
     args = parser.parse_args()
@@ -33,7 +33,7 @@ else:
     args.n_episodes = 1
     args.n_steps_per_episode = 10
     args.seed = 1
-    args.tag = 'episodes-2000_steps-10_passengers-1'
+    args.tag = 'episodes-1000_steps-20_passengers-1'
 
 seeding.seed(args.seed, np, random)
 
@@ -67,6 +67,7 @@ for episode in tqdm(range(args.n_episodes)):
     for step in range(args.n_steps_per_episode):
         action = random.choice(env.actions)
         next_ob, _, _ = env.step(action)
+        next_ob = sensor.observe(next_ob)
         reward = 0
         done = False
         next_state = env.get_state()
