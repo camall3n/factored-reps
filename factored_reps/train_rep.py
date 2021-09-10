@@ -1,8 +1,10 @@
+import glob
 import imageio
 import json
 #!! do not import matplotlib until you check input arguments
 import numpy as np
 import os
+import pickle
 import random
 import seeding
 import sys
@@ -17,7 +19,8 @@ from markov_abstr.gridworld.models.autoencoder import AutoEncoder
 from markov_abstr.gridworld.models.pixelpredictor import PixelPredictor
 from markov_abstr.gridworld.repvis import RepVisualization, CleanVisualization
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
-from visgrid.utils import get_parser, MI
+from visgrid.taxi import VisTaxi5x5
+from visgrid.utils import get_parser
 from visgrid.sensors import *
 
 parser = get_parser()
@@ -32,7 +35,7 @@ parser.add_argument('-r','--rows', type=int, default=6,
                     help='Number of gridworld rows')
 parser.add_argument('-c','--cols', type=int, default=6,
                     help='Number of gridworld columns')
-parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop'],
+parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop', 'taxi'],
                     help='The wall configuration mode of gridworld')
 parser.add_argument('--markov_dims', type=int, default=None,
                     help='Number of latent dimensions to use for Markov representation')
@@ -119,6 +122,9 @@ elif args.walls == 'spiral':
     env = SpiralWorld(rows=args.rows, cols=args.cols)
 elif args.walls == 'loop':
     env = LoopWorld(rows=args.rows, cols=args.cols)
+elif args.walls == 'taxi':
+    env = VisTaxi5x5()
+    env.reset()
 else:
     env = GridWorld(rows=args.rows, cols=args.cols)
 # env = RingWorld(2,4)
@@ -129,49 +135,80 @@ else:
 cmap = None
 
 #% ------------------ Generate experiences ------------------
-n_samples = 20000
-states = [env.get_state()]
-actions = []
-for t in range(n_samples):
-    a = np.random.choice(env.actions)
-    s, _, _ = env.step(a)
-    states.append(s)
-    actions.append(a)
-states = np.stack(states)
-s0 = np.asarray(states[:-1, :])
-c0 = s0[:, 0] * env._cols + s0[:, 1]
-s1 = np.asarray(states[1:, :])
-a = np.asarray(actions)
+if args.walls != 'taxi':
+    n_samples = 20000
+    states = [env.get_state()]
+    actions = []
+    for t in range(n_samples):
+        a = np.random.choice(env.actions)
+        s, _, _ = env.step(a)
+        states.append(s)
+        actions.append(a)
+    states = np.stack(states)
+    s0 = np.asarray(states[:-1, :])
+    c0 = s0[:, 0] * env._cols + s0[:, 1]
+    s1 = np.asarray(states[1:, :])
+    a = np.asarray(actions)
 
-MI_max = MI(s0, s0)
+    ax = env.plot()
+    xx = s0[:, 1] + 0.5
+    yy = s0[:, 0] + 0.5
+    ax.scatter(xx, yy, c=c0)
+    if args.video:
+        plt.savefig(maze_file)
 
-ax = env.plot()
-xx = s0[:, 1] + 0.5
-yy = s0[:, 0] + 0.5
-ax.scatter(xx, yy, c=c0)
-if args.video:
-    plt.savefig(maze_file)
+    # Confirm that we're covering the state space relatively evenly
+    # np.histogram2d(states[:,0], states[:,1], bins=6)
 
-# Confirm that we're covering the state space relatively evenly
-# np.histogram2d(states[:,0], states[:,1], bins=6)
+    #% ------------------ Define sensor ------------------
+    sensor_list = []
+    if args.rearrange_xy:
+        sensor_list.append(RearrangeXYPositionsSensor((env._rows, env._cols)))
+    if not args.no_sigma:
+        sensor_list += [
+            OffsetSensor(offset=(0.5, 0.5)),
+            NoisySensor(sigma=0.05),
+            ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=3),
+            # ResampleSensor(scale=2.0),
+            BlurSensor(sigma=0.6, truncate=1.),
+            NoisySensor(sigma=0.01)
+        ]
+    sensor = SensorChain(sensor_list)
 
-#% ------------------ Define sensor ------------------
-sensor_list = []
-if args.rearrange_xy:
-    sensor_list.append(RearrangeXYPositionsSensor((env._rows, env._cols)))
-if not args.no_sigma:
-    sensor_list += [
-        OffsetSensor(offset=(0.5, 0.5)),
-        NoisySensor(sigma=0.05),
-        ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=3),
-        # ResampleSensor(scale=2.0),
-        BlurSensor(sigma=0.6, truncate=1.),
-        NoisySensor(sigma=0.01)
-    ]
-sensor = SensorChain(sensor_list)
+    x0 = sensor.observe(s0)
+    x1 = sensor.observe(s1)
 
-x0 = sensor.observe(s0)
-x1 = sensor.observe(s1)
+    env.reset_agent()
+
+else:
+    tag = 'episodes-1000_steps-20_passengers-1'
+    results_dir = os.path.join('results', 'taxi-experiences', tag)
+    filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
+
+    results_files = glob.glob(filename_pattern)
+
+    experiences = []
+    for results_file in sorted(results_files):
+        with open(results_file, 'rb') as file:
+            current_experiences = pickle.load(file)
+            experiences.extend(current_experiences)
+
+    def extract_array(experiences, key):
+        return [experience[key] for experience in experiences]
+
+    n_samples = len(experiences)
+    obs = extract_array(experiences, 'ob')
+    states = extract_array(experiences, 'state')
+    actions = extract_array(experiences, 'action')
+    next_obs = extract_array(experiences, 'next_ob')
+    next_states = extract_array(experiences, 'next_state')
+
+    s0 = np.stack(states)
+    s1 = np.stack(next_states)
+    a = np.asarray(actions)
+    x0 = np.stack(obs)
+    x1 = np.stack(next_obs)
+    c0 = s0[:, 0] * env._cols + s0[:, 1]
 
 #% ------------------ Setup experiment ------------------
 n_updates_per_frame = 100
@@ -258,9 +295,8 @@ test_a = torch.as_tensor(a[-n_test_samples:]).long().to(device)
 test_i = torch.arange(n_test_samples).long().to(device)
 test_c = c0[-n_test_samples:]
 
-env.reset_agent()
-state = env.get_state()
-obs = sensor.observe(state)
+state = s0[0]
+obs = x0[0]
 
 if args.video:
     if not args.cleanvis:
