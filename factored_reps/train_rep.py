@@ -46,7 +46,7 @@ parser.add_argument('--L_dis', type=float, default=1.0,
                     help='Coefficient for planning-distance loss')
 parser.add_argument('--L_fwd', type=float, default=1.0,
                     help='Coefficient for forward dynamics loss')
-parser.add_argument('--L_fac', type=float, default=0.003,
+parser.add_argument('--L_fac', type=float, default=0.0,
                     help='Coefficient for factorization loss')
 parser.add_argument('--L_foc', type=float, default=0.003,
                     help='Coefficient for focused loss')
