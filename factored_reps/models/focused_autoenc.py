@@ -12,6 +12,7 @@ class FocusedAutoencoder(Network):
     def __init__(self,
                  n_actions,
                  input_shape=2,
+                 n_markov_dims=10,
                  n_latent_dims=4,
                  n_hidden_layers=1,
                  n_units_per_layer=32,
@@ -28,20 +29,20 @@ class FocusedAutoencoder(Network):
 
         self.featurenet = FeatureNet(n_actions=n_actions,
                                      input_shape=input_shape,
-                                     n_latent_dims=n_latent_dims,
+                                     n_latent_dims=n_markov_dims,
                                      n_hidden_layers=n_hidden_layers,
                                      n_units_per_layer=n_units_per_layer,
                                      lr=lr,
                                      coefs=coefs)
         self.phi = self.featurenet.phi
 
-        self.encoder = SimpleNet(n_inputs=n_latent_dims,
+        self.encoder = SimpleNet(n_inputs=n_markov_dims,
                                  n_outputs=n_latent_dims,
                                  n_hidden_layers=1,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
         self.decoder = SimpleNet(n_inputs=n_latent_dims,
-                                 n_outputs=n_latent_dims,
+                                 n_outputs=n_markov_dims,
                                  n_hidden_layers=1,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)

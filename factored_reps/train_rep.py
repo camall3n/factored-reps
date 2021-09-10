@@ -34,7 +34,9 @@ parser.add_argument('-c','--cols', type=int, default=6,
                     help='Number of gridworld columns')
 parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop'],
                     help='The wall configuration mode of gridworld')
-parser.add_argument('-l','--latent_dims', type=int, default=2,
+parser.add_argument('--markov_dims', type=int, default=None,
+                    help='Number of latent dimensions to use for Markov representation')
+parser.add_argument('-l','--latent_dims', type=int, default=5,
                     help='Number of latent dimensions to use for representation')
 parser.add_argument('--L_inv', type=float, default=1.0,
                     help='Coefficient for inverse-model-matching loss')
@@ -81,6 +83,10 @@ if 'ipykernel' in sys.argv[0]:
     args = parser.parse_args(arglist)
 else:
     args = parser.parse_args()
+
+assert (args.markov_dims is None
+        or args.type in ['factored-split', 'focused-autoenc'
+                         ]), "'markov_dims' arg not valid for network type {}".format(args.type)
 
 if args.no_graphics:
     import matplotlib
@@ -186,15 +192,16 @@ coefs = {
 }
 
 if args.type == 'factored-split':
-    fnet = FactoredFwdModel(n_actions=4,
+    fnet = FactoredFwdModel(n_actions=len(env.actions),
                             input_shape=x0.shape[1:],
+                            n_markov_dims=args.markov_dims,
                             n_latent_dims=args.latent_dims,
                             n_hidden_layers=1,
                             n_units_per_layer=32,
                             lr=args.learning_rate,
                             coefs=coefs)
 elif args.type == 'factored-combined':
-    fnet = FactorNet(n_actions=4,
+    fnet = FactorNet(n_actions=len(env.actions),
                      input_shape=x0.shape[1:],
                      n_latent_dims=args.latent_dims,
                      n_hidden_layers=1,
@@ -203,15 +210,16 @@ elif args.type == 'factored-combined':
                      max_dz=args.max_dz,
                      coefs=coefs)
 elif args.type == 'focused-autoenc':
-    fnet = FocusedAutoencoder(n_actions=4,
+    fnet = FocusedAutoencoder(n_actions=len(env.actions),
                               input_shape=x0.shape[1:],
+                              n_markov_dims=args.markov_dims,
                               n_latent_dims=args.latent_dims,
                               n_hidden_layers=1,
                               n_units_per_layer=32,
                               lr=args.learning_rate,
                               coefs=coefs)
 elif args.type == 'markov':
-    fnet = FeatureNet(n_actions=4,
+    fnet = FeatureNet(n_actions=len(env.actions),
                       input_shape=x0.shape[1:],
                       n_latent_dims=args.latent_dims,
                       n_hidden_layers=1,
@@ -219,7 +227,7 @@ elif args.type == 'markov':
                       lr=args.learning_rate,
                       coefs=coefs)
 elif args.type == 'autoencoder':
-    fnet = AutoEncoder(n_actions=4,
+    fnet = AutoEncoder(n_actions=len(env.actions),
                        input_shape=x0.shape[1:],
                        n_latent_dims=args.latent_dims,
                        n_hidden_layers=1,
@@ -227,7 +235,7 @@ elif args.type == 'autoencoder':
                        lr=args.learning_rate,
                        coefs=coefs)
 elif args.type == 'pixel-predictor':
-    fnet = PixelPredictor(n_actions=4,
+    fnet = PixelPredictor(n_actions=len(env.actions),
                           input_shape=x0.shape[1:],
                           n_latent_dims=args.latent_dims,
                           n_hidden_layers=1,
