@@ -56,13 +56,13 @@ class FeatureNet(Network):
 
     def inverse_loss(self, z0, z1, a):
         if self.coefs['L_inv'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         a_hat = self.inv_model(z0, z1)
         return self.cross_entropy(input=a_hat, target=a)
 
     def contrastive_inverse_loss(self, z0, z1, a):
         if self.coefs['L_coinv'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
         idx = torch.randperm(N)  #BUG: why is this never being used?
@@ -81,7 +81,7 @@ class FeatureNet(Network):
 
     def ratio_loss(self, z0, z1):
         if self.coefs['L_rat'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
         idx = torch.randperm(N)
@@ -99,14 +99,14 @@ class FeatureNet(Network):
 
     def distance_loss(self, z0, z1):
         if self.coefs['L_dis'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         dz = torch.norm(z1 - z0, dim=-1, p=2)
         excess = torch.nn.functional.relu(dz - self.max_dz)
         return self.mse(excess, torch.zeros_like(excess))
 
     def oracle_loss(self, z0, z1, d):
         if self.coefs['L_ora'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
 
         dz = torch.cat(
             [torch.norm(z1 - z0, dim=-1, p=2),

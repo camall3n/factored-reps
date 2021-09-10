@@ -72,12 +72,12 @@ class FactoredFwdModel(Network):
 
     def compute_fwd_loss(self, z1, z1_hat):
         if self.coefs['L_fwd'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         return self.mse(z1, z1_hat)
 
     def compute_factored_loss(self, parent_likelihood):
         if self.coefs['L_fac'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
 
         # TODO: how to compute factored loss?
 
@@ -97,12 +97,12 @@ class FactoredFwdModel(Network):
 
     def compute_reconstruction_loss(self, z0, z0_hat, z1, z1_hat):
         if self.coefs['L_rec'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         return (self.mse(z0, z0_hat) + self.mse(z1, z1_hat)) / 2.0
 
     def compute_focused_loss(self, z0, z1):
         if self.coefs['L_foc'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         eps = 1e-6
         dz = z1 - z0
         l1 = torch.sum(torch.abs(dz), dim=-1)

@@ -61,13 +61,13 @@ class FactorNet(Network):
 
     def inverse_loss(self, z0, z1, a):
         if self.coefs['L_inv'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         a_hat = self.inv_model(z0, z1)
         return self.cross_entropy(input=a_hat, target=a)
 
     def ratio_loss(self, z0, z1):
         if self.coefs['L_rat'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
         idx = torch.randperm(N)
@@ -85,19 +85,19 @@ class FactorNet(Network):
 
     def compute_fwd_loss(self, z1, z1_hat):
         if self.coefs['L_fwd'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         return self.mse(z1, z1_hat)
 
     def distance_loss(self, z0, z1):
         if self.coefs['L_dis'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
         dz = torch.norm(z1 - z0, dim=-1, p=2)
         excess = torch.nn.functional.relu(dz - self.max_dz)
         return self.mse(excess, torch.zeros_like(excess))
 
     def compute_factored_loss(self, parent_likelihood):
         if self.coefs['L_fac'] == 0.0:
-            return torch.tensor(0.0)
+            return torch.tensor(0.0).to(self.device)
 
         # TODO: how to compute factored loss?
 
