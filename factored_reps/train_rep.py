@@ -243,15 +243,19 @@ elif args.type == 'pixel-predictor':
                           lr=args.learning_rate,
                           coefs=coefs)
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('device: {}'.format(device))
+fnet.to(device)
+
 fnet.print_summary()
 
 n_test_samples = 2000
 test_s0 = s0[-n_test_samples:, :]
 test_s1 = s1[-n_test_samples:, :]
-test_x0 = torch.as_tensor(x0[-n_test_samples:, :]).float()
-test_x1 = torch.as_tensor(x1[-n_test_samples:, :]).float()
-test_a = torch.as_tensor(a[-n_test_samples:]).long()
-test_i = torch.arange(n_test_samples).long()
+test_x0 = torch.as_tensor(x0[-n_test_samples:, :]).float().to(device)
+test_x1 = torch.as_tensor(x1[-n_test_samples:, :]).float().to(device)
+test_a = torch.as_tensor(a[-n_test_samples:]).long().to(device)
+test_i = torch.arange(n_test_samples).long().to(device)
 test_c = c0[-n_test_samples:]
 
 env.reset_agent()
@@ -276,10 +280,10 @@ if args.video:
 
 def get_batch(x0, x1, a, batch_size=batch_size):
     idx = np.random.choice(len(a), batch_size, replace=False)
-    tx0 = torch.as_tensor(x0[idx]).float()
-    tx1 = torch.as_tensor(x1[idx]).float()
-    ta = torch.as_tensor(a[idx]).long()
-    ti = torch.as_tensor(idx).long()
+    tx0 = torch.as_tensor(x0[idx]).float().to(device)
+    tx1 = torch.as_tensor(x1[idx]).float().to(device)
+    ta = torch.as_tensor(a[idx]).long().to(device)
+    ti = torch.as_tensor(idx).long().to(device)
     return tx0, tx1, ta, idx
 
 get_next_batch = (
