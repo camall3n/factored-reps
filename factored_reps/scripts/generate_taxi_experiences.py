@@ -61,13 +61,12 @@ os.makedirs(results_dir, exist_ok=True)
 experiences = []
 seeding.seed(args.seed, np, random)
 for episode in tqdm(range(args.n_episodes)):
-    ob = env.reset(goal=False, explore=True)
+    ob = sensor.observe(env.reset(goal=False, explore=True))
     state = env.get_state()
     goal = env.get_goal_state()
     for step in range(args.n_steps_per_episode):
         action = random.choice(env.actions)
-        next_ob, _, _ = env.step(action)
-        next_ob = sensor.observe(next_ob)
+        next_ob = sensor.observe(env.step(action)[0])
         reward = 0
         done = False
         next_state = env.get_state()
