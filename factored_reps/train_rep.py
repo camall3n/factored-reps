@@ -113,7 +113,9 @@ log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
 with open(log_dir + '/args-{}.txt'.format(args.seed), 'w') as arg_file:
     arg_file.write(repr(args))
 
-seeding.seed(args.seed, np, random, torch)
+seeding.seed(args.seed, np, random)
+torch.manual_seed(args.seed)
+torch.backends.cudnn.benchmark = False
 
 #% ------------------ Define MDP ------------------
 if args.walls == 'maze':
