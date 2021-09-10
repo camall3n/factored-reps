@@ -355,7 +355,7 @@ def test_rep(fnet, step):
             }
 
         for loss_type, loss_value in loss_info.items():
-            loss_info[loss_type] = loss_value.numpy().tolist()
+            loss_info[loss_type] = loss_value.cpu().numpy().tolist()
         loss_info['step'] = step
 
     json_str = json.dumps(loss_info)
@@ -365,7 +365,7 @@ def test_rep(fnet, step):
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
 
     results = [z0, test_a, z1]
-    return [r.numpy() for r in results] + [text]
+    return [r.cpu().numpy() for r in results] + [text]
 
 #% ------------------ Run Experiment ------------------
 data = []
