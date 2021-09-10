@@ -17,12 +17,14 @@ class FocusedAutoencoder(Network):
                  n_hidden_layers=1,
                  n_units_per_layer=32,
                  lr=0.001,
-                 coefs=None):
+                 coefs=None,
+                 device='cpu'):
         super().__init__()
         self.n_actions = n_actions
         self.n_latent_dims = n_latent_dims
         self.lr = lr
         self.coefs = defaultdict(lambda: 1.0)
+        self.device = device
         if coefs is not None:
             for k, v in coefs.items():
                 self.coefs[k] = v
@@ -61,6 +63,8 @@ class FocusedAutoencoder(Network):
         return (self.mse(z0, z0_hat) + self.mse(z1, z1_hat)) / 2.0
 
     def compute_focused_loss(self, z0, z1):
+        if self.coefs['L_foc'] == 0.0:
+            return torch.tensor(0.0)
         eps = 1e-6
         dz = z1 - z0
         l1 = torch.sum(torch.abs(dz), dim=-1)

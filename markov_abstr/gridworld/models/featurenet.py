@@ -19,13 +19,15 @@ class FeatureNet(Network):
                  n_units_per_layer=32,
                  lr=0.001,
                  max_dz=0.1,
-                 coefs=None):
+                 coefs=None,
+                 device='cpu'):
         super().__init__()
         self.n_actions = n_actions
         self.n_latent_dims = n_latent_dims
         self.lr = lr
         self.max_dz = max_dz
         self.coefs = defaultdict(lambda: 1.0)
+        self.device = device
         if coefs is not None:
             for k, v in coefs.items():
                 self.coefs[k] = v
@@ -63,7 +65,7 @@ class FeatureNet(Network):
             return torch.tensor(0.0)
         N = len(z0)
         # shuffle next states
-        idx = torch.randperm(N)
+        idx = torch.randperm(N)  #BUG: why is this never being used?
 
         a_neg = torch.randint_like(a, low=0, high=self.n_actions)
 
@@ -88,11 +90,12 @@ class FeatureNet(Network):
         # concatenate positive and negative examples
         z0_extended = torch.cat([z0, z0], dim=0)
         z1_pos_neg = torch.cat([z1, z1_neg], dim=0)
-        is_fake = torch.cat([torch.zeros(N), torch.ones(N)], dim=0)
+        with torch.no_grad():
+            is_fake = torch.cat([torch.zeros(N), torch.ones(N)], dim=0).float().to(self.device)
 
         # Compute which ones are fakes
         fakes = self.discriminator(z0_extended, z1_pos_neg)
-        return self.bce_loss(input=fakes, target=is_fake.float())
+        return self.bce_loss(input=fakes, target=is_fake)
 
     def distance_loss(self, z0, z1):
         if self.coefs['L_dis'] == 0.0:

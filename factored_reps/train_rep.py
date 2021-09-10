@@ -230,6 +230,9 @@ coefs = {
     'L_coinv': 0.0,
 }
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('device: {}'.format(device))
+
 if args.type == 'factored-split':
     fnet = FactoredFwdModel(n_actions=len(env.actions),
                             input_shape=x0.shape[1:],
@@ -238,7 +241,8 @@ if args.type == 'factored-split':
                             n_hidden_layers=1,
                             n_units_per_layer=32,
                             lr=args.learning_rate,
-                            coefs=coefs)
+                            coefs=coefs,
+                            device=device)
 elif args.type == 'factored-combined':
     fnet = FactorNet(n_actions=len(env.actions),
                      input_shape=x0.shape[1:],
@@ -247,7 +251,8 @@ elif args.type == 'factored-combined':
                      n_units_per_layer=32,
                      lr=args.learning_rate,
                      max_dz=args.max_dz,
-                     coefs=coefs)
+                     coefs=coefs,
+                     device=device)
 elif args.type == 'focused-autoenc':
     fnet = FocusedAutoencoder(n_actions=len(env.actions),
                               input_shape=x0.shape[1:],
@@ -256,7 +261,8 @@ elif args.type == 'focused-autoenc':
                               n_hidden_layers=1,
                               n_units_per_layer=32,
                               lr=args.learning_rate,
-                              coefs=coefs)
+                              coefs=coefs,
+                              device=device)
 elif args.type == 'markov':
     fnet = FeatureNet(n_actions=len(env.actions),
                       input_shape=x0.shape[1:],
@@ -264,7 +270,8 @@ elif args.type == 'markov':
                       n_hidden_layers=1,
                       n_units_per_layer=32,
                       lr=args.learning_rate,
-                      coefs=coefs)
+                      coefs=coefs,
+                      device=device)
 elif args.type == 'autoencoder':
     fnet = AutoEncoder(n_actions=len(env.actions),
                        input_shape=x0.shape[1:],
@@ -282,8 +289,6 @@ elif args.type == 'pixel-predictor':
                           lr=args.learning_rate,
                           coefs=coefs)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print('device: {}'.format(device))
 fnet.to(device)
 
 fnet.print_summary()

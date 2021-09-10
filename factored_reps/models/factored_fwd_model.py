@@ -18,12 +18,14 @@ class FactoredFwdModel(Network):
                  n_hidden_layers=1,
                  n_units_per_layer=32,
                  lr=0.001,
-                 coefs=None):
+                 coefs=None,
+                 device='cpu'):
         super().__init__()
         self.n_actions = n_actions
         self.n_latent_dims = n_latent_dims
         self.lr = lr
         self.coefs = defaultdict(lambda: 1.0)
+        self.device = device
         if coefs is not None:
             for k, v in coefs.items():
                 self.coefs[k] = v
@@ -34,7 +36,8 @@ class FactoredFwdModel(Network):
                                      n_hidden_layers=n_hidden_layers,
                                      n_units_per_layer=n_units_per_layer,
                                      lr=lr,
-                                     coefs=coefs)
+                                     coefs=coefs,
+                                     device=self.device)
         self.phi = self.featurenet.phi
 
         self.encoder = SimpleNet(n_inputs=n_markov_dims,
