@@ -10,6 +10,7 @@ class SimpleNet(Network):
                  n_outputs,
                  n_hidden_layers=1,
                  n_units_per_layer=32,
+                 activation=torch.nn.Tanh,
                  final_activation=None):
         super().__init__()
         self.n_outputs = n_outputs
@@ -19,10 +20,10 @@ class SimpleNet(Network):
         if n_hidden_layers == 0:
             self.layers.extend([torch.nn.Linear(n_inputs, n_outputs)])
         else:
-            self.layers.extend([torch.nn.Linear(n_inputs, n_units_per_layer), torch.nn.Tanh()])
+            self.layers.extend([torch.nn.Linear(n_inputs, n_units_per_layer), activation()])
             self.layers.extend(
                 [torch.nn.Linear(n_units_per_layer, n_units_per_layer),
-                 torch.nn.Tanh()] * (n_hidden_layers - 1))
+                 activation()] * (n_hidden_layers - 1))
             self.layers.extend([torch.nn.Linear(n_units_per_layer, n_outputs)])
 
         if final_activation is not None:

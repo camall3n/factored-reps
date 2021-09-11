@@ -18,6 +18,7 @@ class FocusedAutoencoder(Network):
                  n_units_per_layer=32,
                  lr=0.001,
                  coefs=None,
+                 network_arch='mlp',
                  device='cpu'):
         super().__init__()
         self.n_actions = n_actions
@@ -35,7 +36,8 @@ class FocusedAutoencoder(Network):
                                      n_hidden_layers=n_hidden_layers,
                                      n_units_per_layer=n_units_per_layer,
                                      lr=lr,
-                                     coefs=coefs)
+                                     coefs=coefs,
+                                     network_arch=network_arch)
         self.phi = self.featurenet.phi
 
         self.encoder = SimpleNet(n_inputs=n_markov_dims,

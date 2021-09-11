@@ -41,6 +41,8 @@ parser.add_argument('--markov_dims', type=int, default=None,
                     help='Number of latent dimensions to use for Markov representation')
 parser.add_argument('-l','--latent_dims', type=int, default=5,
                     help='Number of latent dimensions to use for representation')
+parser.add_argument('--network_arch', type=str, default='mlp', choices=['mlp', 'curl'],
+                    help='Network architecture to use for feature encoder')
 parser.add_argument('--L_inv', type=float, default=1.0,
                     help='Coefficient for inverse-model-matching loss')
 parser.add_argument('--L_rat', type=float, default=1.0,
@@ -205,11 +207,20 @@ else:
     next_obs = extract_array(experiences, 'next_ob')
     next_states = extract_array(experiences, 'next_state')
 
+    sensor_list = []
+    if not args.no_sigma:
+        sensor_list += [
+            AsTypeSensor(np.float32),
+            MultiplySensor(scale=1 / 255),
+            MoveAxisSensor(-1, 1)  # Move image channels to front (after batch dim)
+        ]
+    sensor = SensorChain(sensor_list)
+
     s0 = np.stack(states)
     s1 = np.stack(next_states)
     a = np.asarray(actions)
-    x0 = np.stack(obs)
-    x1 = np.stack(next_obs)
+    x0 = sensor.observe(np.stack(obs))
+    x1 = sensor.observe(np.stack(next_obs))
     c0 = s0[:, 0] * env._cols + s0[:, 1]
 
 #% ------------------ Setup experiment ------------------
@@ -242,6 +253,7 @@ if args.type == 'factored-split':
                             n_units_per_layer=32,
                             lr=args.learning_rate,
                             coefs=coefs,
+                            network_arch=args.network_arch,
                             device=device)
 elif args.type == 'factored-combined':
     fnet = FactorNet(n_actions=len(env.actions),
@@ -252,6 +264,7 @@ elif args.type == 'factored-combined':
                      lr=args.learning_rate,
                      max_dz=args.max_dz,
                      coefs=coefs,
+                     network_arch=args.network_arch,
                      device=device)
 elif args.type == 'focused-autoenc':
     fnet = FocusedAutoencoder(n_actions=len(env.actions),
@@ -262,6 +275,7 @@ elif args.type == 'focused-autoenc':
                               n_units_per_layer=32,
                               lr=args.learning_rate,
                               coefs=coefs,
+                              network_arch=args.network_arch,
                               device=device)
 elif args.type == 'markov':
     fnet = FeatureNet(n_actions=len(env.actions),
@@ -271,6 +285,7 @@ elif args.type == 'markov':
                       n_units_per_layer=32,
                       lr=args.learning_rate,
                       coefs=coefs,
+                      network_arch=args.network_arch,
                       device=device)
 elif args.type == 'autoencoder':
     fnet = AutoEncoder(n_actions=len(env.actions),

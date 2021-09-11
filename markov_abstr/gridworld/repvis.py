@@ -23,7 +23,11 @@ class RepVisualization:
         self.env_ax.set_title('Environment')
 
         self.obs_ax = self.fig.add_subplot(4, 4, 12)
-        self.obs_ax.imshow(obs)
+        if obs.ndim == 3:
+            obs = np.moveaxis(obs, 0, -1)
+            self.obs_ax.imshow(obs)
+        else:
+            self.obs_ax.imshow(obs)
         self.obs_ax.set_xticks([])
         self.obs_ax.set_yticks([])
         self.obs_ax.set_title('Sampled observation (x)')
