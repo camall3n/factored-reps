@@ -31,7 +31,10 @@ class Reshape(torch.nn.Module):
         return s
 
     def forward(self, input):
-        return input.view(*self.shape)
+        try:
+            return input.view(*self.shape)
+        except RuntimeError:
+            return input.reshape(*self.shape)
 
 class Network(torch.nn.Module):
     """Module that, when printed, shows its total number of parameters
