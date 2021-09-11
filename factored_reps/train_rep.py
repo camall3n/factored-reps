@@ -311,9 +311,9 @@ fnet.print_summary()
 n_test_samples = 2000
 test_s0 = s0[-n_test_samples:, :]
 test_s1 = s1[-n_test_samples:, :]
-test_x0 = torch.as_tensor(x0[-n_test_samples:, :]).float().to(device)
-test_x1 = torch.as_tensor(x1[-n_test_samples:, :]).float().to(device)
-test_a = torch.as_tensor(a[-n_test_samples:]).long().to(device)
+test_x0 = torch.as_tensor(x0)[-n_test_samples:].float().to(device)
+test_x1 = torch.as_tensor(x1)[-n_test_samples:].float().to(device)
+test_a = torch.as_tensor(a)[-n_test_samples:].long().to(device)
 test_i = torch.arange(n_test_samples).long().to(device)
 test_c = c0[-n_test_samples:]
 
