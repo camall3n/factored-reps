@@ -23,6 +23,7 @@ if 'ipykernel' not in sys.argv[0]:
     # yapf: disable
     parser.add_argument('-e','--n_episodes', type=int, default=1, help='Number of episodes')
     parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Number of steps per episode')
+    parser.add_argument('-p','--n_passengers', type=int, default=1, help='Number of passengers')
     parser.add_argument('-s','--seed', type=int, default=0, help='Random seed')
     parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
     # yapf: enable
@@ -34,13 +35,14 @@ else:
     args = SimpleNamespace(
         n_episodes=1,
         n_steps_per_episode=10,
+        n_passengers=0,
         seed=1,
         tag='episodes-1000_steps-20_passengers-0',
     )
 
 seeding.seed(args.seed, np, random)
 
-env = VisTaxi5x5(n_passengers=0)
+env = VisTaxi5x5(n_passengers=args.n_passengers)
 s = env.reset(goal=False, explore=True)
 # env.plot(linewidth_multiplier=2)
 # plt.show()
