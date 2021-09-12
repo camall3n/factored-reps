@@ -20,24 +20,27 @@ if 'ipykernel' not in sys.argv[0]:
     import matplotlib.pyplot as plt
 
     parser = get_parser()
+    # yapf: disable
     parser.add_argument('-e','--n_episodes', type=int, default=1, help='Number of episodes')
     parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Number of steps per episode')
     parser.add_argument('-s','--seed', type=int, default=0, help='Random seed')
     parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
+    # yapf: enable
     args = parser.parse_args()
 else:
     import matplotlib.pyplot as plt
 
-    class Args: pass
-    args=Args()
-    args.n_episodes = 1
-    args.n_steps_per_episode = 10
-    args.seed = 1
-    args.tag = 'episodes-1000_steps-20_passengers-1'
+    from types import SimpleNamespace
+    args = SimpleNamespace(
+        n_episodes=1,
+        n_steps_per_episode=10,
+        seed=1,
+        tag='episodes-1000_steps-20_passengers-0',
+    )
 
 seeding.seed(args.seed, np, random)
 
-env = VisTaxi5x5()
+env = VisTaxi5x5(n_passengers=0)
 s = env.reset(goal=False, explore=True)
 # env.plot(linewidth_multiplier=2)
 # plt.show()
