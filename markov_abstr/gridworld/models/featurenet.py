@@ -42,7 +42,7 @@ class FeatureNet(Network):
         self.inv_model = InvNet(n_actions=n_actions,
                                 n_latent_dims=n_latent_dims,
                                 n_units_per_layer=n_units_per_layer,
-                                n_hidden_layers=n_hidden_layers)
+                                n_hidden_layers=2)
         self.inv_discriminator = InvDiscriminator(n_actions=n_actions,
                                                   n_latent_dims=n_latent_dims,
                                                   n_units_per_layer=n_units_per_layer,
