@@ -19,7 +19,7 @@ class FactoredFwdModel(Network):
                  n_units_per_layer=32,
                  lr=0.001,
                  coefs=None,
-                 network_arch='mlp',
+                 encoder_arch='mlp',
                  device='cpu'):
         super().__init__()
         self.n_actions = n_actions
@@ -38,7 +38,7 @@ class FactoredFwdModel(Network):
                                      n_units_per_layer=n_units_per_layer,
                                      lr=lr,
                                      coefs=coefs,
-                                     network_arch=network_arch,
+                                     encoder_arch=encoder_arch,
                                      device=self.device)
         self.phi = self.featurenet.phi
 

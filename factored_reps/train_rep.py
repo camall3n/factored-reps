@@ -216,7 +216,7 @@ if args.type == 'factored-split':
                             n_units_per_layer=32,
                             lr=args.learning_rate,
                             coefs=coefs,
-                            network_arch=args.network_arch,
+                            encoder_arch=args.encoder_arch,
                             device=device)
 elif args.type == 'factored-combined':
     fnet = FactorNet(n_actions=len(env.actions),
@@ -227,7 +227,7 @@ elif args.type == 'factored-combined':
                      lr=args.learning_rate,
                      max_dz=args.max_dz,
                      coefs=coefs,
-                     network_arch=args.network_arch,
+                     encoder_arch=args.encoder_arch,
                      device=device)
 elif args.type == 'focused-autoenc':
     fnet = FocusedAutoencoder(n_actions=len(env.actions),
@@ -238,7 +238,7 @@ elif args.type == 'focused-autoenc':
                               n_units_per_layer=32,
                               lr=args.learning_rate,
                               coefs=coefs,
-                              network_arch=args.network_arch,
+                              encoder_arch=args.encoder_arch,
                               device=device)
 elif args.type == 'markov':
     fnet = FeatureNet(n_actions=len(env.actions),
@@ -248,7 +248,7 @@ elif args.type == 'markov':
                       n_units_per_layer=32,
                       lr=args.learning_rate,
                       coefs=coefs,
-                      network_arch=args.network_arch,
+                      encoder_arch=args.encoder_arch,
                       device=device)
 elif args.type == 'autoencoder':
     fnet = AutoEncoder(n_actions=len(env.actions),

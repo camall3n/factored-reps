@@ -20,7 +20,7 @@ class FeatureNet(Network):
                  lr=0.001,
                  max_dz=0.1,
                  coefs=None,
-                 network_arch='mlp',
+                 encoder_arch='mlp',
                  device='cpu'):
         super().__init__()
         self.n_actions = n_actions
@@ -37,7 +37,7 @@ class FeatureNet(Network):
                           n_latent_dims=n_latent_dims,
                           n_units_per_layer=n_units_per_layer,
                           n_hidden_layers=n_hidden_layers,
-                          network_arch=network_arch)
+                          network_arch=encoder_arch)
         # self.fwd_model = FwdNet(n_actions=n_actions, n_latent_dims=n_latent_dims, n_hidden_layers=n_hidden_layers, n_units_per_layer=n_units_per_layer)
         self.inv_model = InvNet(n_actions=n_actions,
                                 n_latent_dims=n_latent_dims,
