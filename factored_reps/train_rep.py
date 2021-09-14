@@ -28,8 +28,8 @@ parser = utils.get_parser()
 parser.add_argument('--model_type', type=str, default='factored-split',
                     choices=['factored-split', 'factored-combined', 'focused-autoenc', 'markov', 'autoencoder', 'pixel-predictor'],
                     help='Which type of representation learning method')
-parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop', 'taxi'],
-                    help='The wall configuration mode of gridworld')
+# parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop', 'taxi'],
+#                     help='The wall configuration mode of gridworld')
 parser.add_argument('-s','--seed', type=int, default=0,
                     help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True,
