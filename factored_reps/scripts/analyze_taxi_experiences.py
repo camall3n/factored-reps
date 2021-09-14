@@ -70,3 +70,9 @@ plt.show()
 plt.hist(s[:, 4], bins=2)
 plt.title('passenger in taxi?')
 plt.show()
+
+#%% Check that observations look reasonable
+
+for i in range(10):
+    plt.imshow(obs[i])
+    plt.show()
