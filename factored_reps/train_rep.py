@@ -1,3 +1,4 @@
+from argparse import Namespace
 import glob
 import imageio
 import json
@@ -53,9 +54,7 @@ parser.add_argument('--rearrange_xy', action='store_true',
 args = utils.parse_args_and_load_hyperparams(parser)
 
 # Move all loss coefficients to a sub-namespace
-coefs = utils.SimpleNamespace(
-    **{name: value
-       for (name, value) in vars(args).items() if name[:2] == 'L_'})
+coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
 for coef_name in vars(coefs):
     delattr(args, coef_name)
 args.coefs = coefs
@@ -82,7 +81,8 @@ if args.video:
     image_filename = vid_dir + '/final-{}.png'.format(args.seed)
     maze_file = maze_dir + '/maze-{}.png'.format(args.seed)
 
-log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
+train_log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
+test_log = open(log_dir + '/test-{}.txt'.format(args.seed), 'w')
 with open(log_dir + '/args-{}.txt'.format(args.seed), 'w') as arg_file:
     arg_file.write(repr(args))
 
@@ -268,6 +268,15 @@ def get_batch(x0, x1, a, batch_size=batch_size):
 get_next_batch = (
     lambda: get_batch(x0[:n_samples // 2, :], x1[:n_samples // 2, :], a[:n_samples // 2]))
 
+def log_loss_info(log_file, loss_info, step):
+    for loss_type, loss_value in loss_info.items():
+        loss_info[loss_type] = loss_value.detach().cpu().numpy().tolist()
+    loss_info['step'] = step
+
+    json_str = json.dumps(loss_info)
+    log_file.write(json_str + '\n')
+    log_file.flush()
+
 def test_rep(fnet, step):
     with torch.no_grad():
         fnet.eval()
@@ -290,13 +299,7 @@ def test_rep(fnet, step):
                 'L': fnet.compute_loss(test_x0, test_a, test_x1),
             }
 
-        for loss_type, loss_value in loss_info.items():
-            loss_info[loss_type] = loss_value.cpu().numpy().tolist()
-        loss_info['step'] = step
-
-    json_str = json.dumps(loss_info)
-    log.write(json_str + '\n')
-    log.flush()
+    log_loss_info(test_log, loss_info, step)
 
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
 
@@ -305,15 +308,17 @@ def test_rep(fnet, step):
 
 #% ------------------ Run Experiment ------------------
 data = []
-for frame_idx in tqdm(range(n_frames + 1)):
-    test_results = test_rep(fnet, frame_idx * n_updates_per_frame)
-    if args.video:
-        frame = repvis.update_plots(*test_results)
-        data.append(frame)
+for step in range(args.n_updates):
+    test_results = test_rep(fnet, step)
 
-    for _ in range(n_updates_per_frame):
-        tx0, tx1, ta, idx = get_next_batch()
-        fnet.train_batch(tx0, ta, tx1)
+    if step % n_updates_per_frame == 0:
+        if args.video:
+            frame = repvis.update_plots(*test_results)
+            data.append(frame)
+
+    tx0, tx1, ta, idx = get_next_batch()
+    train_loss_info = fnet.train_batch(tx0, ta, tx1)[-1]
+    log_loss_info(train_log, train_loss_info, step)
 
 if args.video:
     imageio.mimwrite(video_filename, data, fps=15)
@@ -323,4 +328,5 @@ if args.save:
     fnet.phi.save('phi-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
     fnet.save('fnet-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
 
-log.close()
+train_log.close()
+test_log.close()
