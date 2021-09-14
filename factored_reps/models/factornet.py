@@ -1,4 +1,3 @@
-from collections import defaultdict
 from factored_reps.models.parents_net import ParentsNet
 import numpy as np
 import torch
@@ -11,64 +10,49 @@ from markov_abstr.gridworld.models.fwdnet import FwdNet
 from markov_abstr.gridworld.models.contrastivenet import ContrastiveNet
 
 class FactorNet(Network):
-    def __init__(self,
-                 n_actions,
-                 input_shape=2,
-                 n_latent_dims=4,
-                 n_hidden_layers=1,
-                 n_units_per_layer=32,
-                 lr=0.001,
-                 max_dz=0.1,
-                 coefs=None,
-                 encoder_arch='mlp',
-                 device='cpu'):
+    def __init__(self, args, n_actions, input_shape=2, device='cpu'):
         super().__init__()
         self.n_actions = n_actions
-        self.n_latent_dims = n_latent_dims
-        self.lr = lr
-        self.max_dz = max_dz
-        self.coefs = defaultdict(lambda: 1.0)
+        self.max_dz = args.max_dz
+        self.coefs = args.coefs
         self.device = device
-        if coefs is not None:
-            for k, v in coefs.items():
-                self.coefs[k] = v
 
         self.phi = PhiNet(input_shape=input_shape,
-                          n_latent_dims=n_latent_dims,
-                          n_units_per_layer=n_units_per_layer,
-                          n_hidden_layers=n_hidden_layers,
-                          network_arch=encoder_arch)
+                          n_latent_dims=args.latent_dims,
+                          n_units_per_layer=args.n_units_per_layer,
+                          n_hidden_layers=args.n_hidden_layers,
+                          network_arch=args.encoder_arch)
         self.inv_model = InvNet(n_actions=n_actions,
-                                n_latent_dims=n_latent_dims,
-                                n_units_per_layer=n_units_per_layer,
-                                n_hidden_layers=n_hidden_layers)
-        self.discriminator = ContrastiveNet(n_latent_dims=n_latent_dims,
-                                            n_hidden_layers=1,
-                                            n_units_per_layer=n_units_per_layer)
+                                n_latent_dims=args.latent_dims,
+                                n_units_per_layer=args.n_units_per_layer,
+                                n_hidden_layers=args.n_hidden_layers)
+        self.discriminator = ContrastiveNet(n_latent_dims=args.latent_dims,
+                                            n_hidden_layers=args.n_hidden_layers_contrastive,
+                                            n_units_per_layer=args.n_units_per_layer)
         self.parents_model = ParentsNet(n_actions=n_actions,
-                                        n_latent_dims=n_latent_dims,
-                                        n_units_per_layer=n_units_per_layer,
-                                        n_hidden_layers=n_hidden_layers,
+                                        n_latent_dims=args.latent_dims,
+                                        n_units_per_layer=args.n_units_per_layer,
+                                        n_hidden_layers=args.n_hidden_layers,
                                         factored=True)
         self.fwd_model = FwdNet(n_actions=n_actions,
-                                n_latent_dims=n_latent_dims,
-                                n_hidden_layers=n_hidden_layers,
-                                n_units_per_layer=n_units_per_layer,
+                                n_latent_dims=args.latent_dims,
+                                n_hidden_layers=args.n_hidden_layers,
+                                n_units_per_layer=args.n_units_per_layer,
                                 factored=True)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
         self.mse = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=args.learning_rate)
 
     def inverse_loss(self, z0, z1, a):
-        if self.coefs['L_inv'] == 0.0:
+        if self.coefs.L_inv == 0.0:
             return torch.tensor(0.0).to(self.device)
         a_hat = self.inv_model(z0, z1)
         return self.cross_entropy(input=a_hat, target=a)
 
     def ratio_loss(self, z0, z1):
-        if self.coefs['L_rat'] == 0.0:
+        if self.coefs.L_rat == 0.0:
             return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
@@ -86,19 +70,19 @@ class FactorNet(Network):
         return self.bce_loss(input=fakes, target=is_fake)
 
     def compute_fwd_loss(self, z1, z1_hat):
-        if self.coefs['L_fwd'] == 0.0:
+        if self.coefs.L_fwd == 0.0:
             return torch.tensor(0.0).to(self.device)
         return self.mse(z1, z1_hat)
 
     def distance_loss(self, z0, z1):
-        if self.coefs['L_dis'] == 0.0:
+        if self.coefs.L_dis == 0.0:
             return torch.tensor(0.0).to(self.device)
         dz = torch.norm(z1 - z0, dim=-1, p=2)
         excess = torch.nn.functional.relu(dz - self.max_dz)
         return self.mse(excess, torch.zeros_like(excess))
 
     def compute_factored_loss(self, parent_likelihood):
-        if self.coefs['L_fac'] == 0.0:
+        if self.coefs.L_fac == 0.0:
             return torch.tensor(0.0).to(self.device)
 
         # TODO: how to compute factored loss?
@@ -138,8 +122,8 @@ class FactorNet(Network):
             'L_fac': self.compute_factored_loss(parent_likelihood),
         }
         loss = 0
-        for loss_type in ['L_inv', 'L_rat', 'L_dis', 'L_fwd', 'L_fac']:
-            loss += self.coefs[loss_type] * loss_info[loss_type]
+        for loss_type in sorted(loss_info.keys()):
+            loss += vars(self.coefs)[loss_type] * loss_info[loss_type]
         loss_info['L'] = loss
 
         return loss_info

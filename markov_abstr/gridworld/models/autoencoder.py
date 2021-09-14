@@ -7,34 +7,24 @@ from .nnutils import Network, Reshape
 from .phinet import PhiNet
 
 class AutoEncoder(Network):
-    def __init__(self,
-                 n_actions,
-                 input_shape=2,
-                 n_latent_dims=4,
-                 n_hidden_layers=1,
-                 n_units_per_layer=32,
-                 lr=0.001,
-                 coefs=None):
+    def __init__(self, args, n_actions, input_shape=2):
         super().__init__()
         self.n_actions = n_actions
-        self.n_latent_dims = n_latent_dims
-        self.lr = lr
-        self.coefs = defaultdict(lambda: 1.0)
+
+        self.coefs = args.coefs
         self.phi = PhiNet(input_shape=input_shape,
-                          n_latent_dims=n_latent_dims,
-                          n_units_per_layer=n_units_per_layer,
-                          n_hidden_layers=n_hidden_layers)
-        self.reverse_phi = PhiNet(input_shape=input_shape,
-                                  n_latent_dims=n_latent_dims,
-                                  n_units_per_layer=n_units_per_layer,
-                                  n_hidden_layers=n_hidden_layers)
-        self.reverse_phi.phi = nn.Sequential(
-            *reversed([Reshape(-1, *input_shape), nn.Tanh()] + [
-                nn.Linear(l.out_features, l.in_features) if isinstance(l, nn.Linear) else l
-                for l in self.reverse_phi.layers[1:-1]
-            ]))
+                          n_latent_dims=args.latent_dims,
+                          n_units_per_layer=args.n_units_per_layer,
+                          n_hidden_layers=args.n_hidden_layers)
+        self.reverse_phi = nn.Sequential(
+            PhiNet(input_shape=args.latent_dims,
+                   n_latent_dims=self.phi.layers[0].shape[-1],
+                   n_units_per_layer=args.n_units_per_layer,
+                   n_hidden_layers=args.n_hidden_layers),
+            Reshape(-1, *input_shape),
+        )
         self.mse = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=args.learning_rate)
 
     def forward(self, *args, **kwargs):
         raise NotImplementedError

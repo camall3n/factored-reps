@@ -1,4 +1,3 @@
-from collections import defaultdict
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.models.parents_net import ParentsNet
 import numpy as np
@@ -9,44 +8,22 @@ from markov_abstr.gridworld.models.nnutils import Network
 from markov_abstr.gridworld.models.simplenet import SimpleNet
 
 class FocusedAutoencoder(Network):
-    def __init__(self,
-                 n_actions,
-                 input_shape=2,
-                 n_markov_dims=10,
-                 n_latent_dims=4,
-                 n_hidden_layers=1,
-                 n_units_per_layer=32,
-                 lr=0.001,
-                 coefs=None,
-                 encoder_arch='mlp',
-                 device='cpu'):
+    def __init__(self, args, n_actions, input_shape=2, device='cpu'):
         super().__init__()
         self.n_actions = n_actions
-        self.n_latent_dims = n_latent_dims
-        self.lr = lr
-        self.coefs = defaultdict(lambda: 1.0)
+        self.coefs = args.coefs
         self.device = device
-        if coefs is not None:
-            for k, v in coefs.items():
-                self.coefs[k] = v
 
-        self.featurenet = FeatureNet(n_actions=n_actions,
-                                     input_shape=input_shape,
-                                     n_latent_dims=n_markov_dims,
-                                     n_hidden_layers=n_hidden_layers,
-                                     n_units_per_layer=n_units_per_layer,
-                                     lr=lr,
-                                     coefs=coefs,
-                                     encoder_arch=encoder_arch)
+        self.featurenet = FeatureNet(args, n_actions=n_actions, input_shape=input_shape)
         self.phi = self.featurenet.phi
 
-        self.encoder = SimpleNet(n_inputs=n_markov_dims,
-                                 n_outputs=n_latent_dims,
+        self.encoder = SimpleNet(n_inputs=args.markov_dims,
+                                 n_outputs=args.latent_dims,
                                  n_hidden_layers=1,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
-        self.decoder = SimpleNet(n_inputs=n_latent_dims,
-                                 n_outputs=n_markov_dims,
+        self.decoder = SimpleNet(n_inputs=args.latent_dims,
+                                 n_outputs=args.markov_dims,
                                  n_hidden_layers=1,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
@@ -57,15 +34,15 @@ class FocusedAutoencoder(Network):
 
         # don't include featurenet/phi parameters in optimizer
         parameters = (list(self.encoder.parameters()) + list(self.decoder.parameters()))
-        self.optimizer = torch.optim.Adam(parameters, lr=self.lr)
+        self.optimizer = torch.optim.Adam(parameters, lr=args.learning_rate)
 
     def compute_reconstruction_loss(self, z0, z0_hat, z1, z1_hat):
-        if self.coefs['L_rec'] == 0.0:
+        if self.coefs.L_rec == 0.0:
             return torch.tensor(0.0).to(self.device)
         return (self.mse(z0, z0_hat) + self.mse(z1, z1_hat)) / 2.0
 
     def compute_focused_loss(self, z0, z1):
-        if self.coefs['L_foc'] == 0.0:
+        if self.coefs.L_foc == 0.0:
             return torch.tensor(0.0).to(self.device)
         eps = 1e-6
         dz = z1 - z0
@@ -87,8 +64,8 @@ class FocusedAutoencoder(Network):
             'L_foc': self.compute_focused_loss(z0_factored, z1_factored),
         }
         loss = 0
-        for loss_type in ['L_rec', 'L_foc']:
-            loss += self.coefs[loss_type] * loss_info[loss_type]
+        for loss_type in sorted(loss_info.keys()):
+            loss += vars(self.coefs)[loss_type] * loss_info[loss_type]
         loss_info['L'] = loss
 
         return loss_info

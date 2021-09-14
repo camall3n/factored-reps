@@ -9,6 +9,9 @@ latent_dims,5,int
 markov_dims,5,int
 encoder_arch,curl,str
 n_hidden_layers,1,int
+n_hidden_layers_contrastive,1,int
+n_hidden_layers_inverse_model,2,int
+n_hidden_layers_factored_autoenc,2,int
 n_units_per_layer,32,int
 L_inv,1.0,float
 L_rat,1.0,float
@@ -17,4 +20,6 @@ L_fwd,0.0,float
 L_fac,1.0,float
 L_foc,0.003,float
 L_rec,1.0,float
+L_ora,0.0,float
+L_coinv,0.0,float
 max_dz,0.1,float

@@ -1,4 +1,3 @@
-from collections import defaultdict
 import numpy as np
 import torch
 import torch.nn
@@ -11,45 +10,31 @@ from .contrastivenet import ContrastiveNet
 from .invdiscriminator import InvDiscriminator
 
 class FeatureNet(Network):
-    def __init__(self,
-                 n_actions,
-                 input_shape=2,
-                 n_latent_dims=4,
-                 n_hidden_layers=1,
-                 n_units_per_layer=32,
-                 lr=0.001,
-                 max_dz=0.1,
-                 coefs=None,
-                 encoder_arch='mlp',
-                 device='cpu'):
+    def __init__(self, args, n_actions, input_shape=2, device='cpu'):
         super().__init__()
         self.n_actions = n_actions
-        self.n_latent_dims = n_latent_dims
-        self.lr = lr
-        self.max_dz = max_dz
-        self.coefs = defaultdict(lambda: 1.0)
+        self.lr = args.learning_rate
+        self.max_dz = args.max_dz
+        self.coefs = args.coefs
         self.device = device
-        if coefs is not None:
-            for k, v in coefs.items():
-                self.coefs[k] = v
 
         self.phi = PhiNet(input_shape=input_shape,
-                          n_latent_dims=n_latent_dims,
-                          n_units_per_layer=n_units_per_layer,
-                          n_hidden_layers=n_hidden_layers,
-                          network_arch=encoder_arch)
-        # self.fwd_model = FwdNet(n_actions=n_actions, n_latent_dims=n_latent_dims, n_hidden_layers=n_hidden_layers, n_units_per_layer=n_units_per_layer)
+                          n_latent_dims=args.latent_dims,
+                          n_units_per_layer=args.n_units_per_layer,
+                          n_hidden_layers=args.n_hidden_layers,
+                          network_arch=args.encoder_arch)
+        # self.fwd_model = FwdNet(n_actions=n_actions, n_latent_dims=args.latent_dims, n_hidden_layers=args.n_hidden_layers, n_units_per_layer=args.n_units_per_layer)
         self.inv_model = InvNet(n_actions=n_actions,
-                                n_latent_dims=n_latent_dims,
-                                n_units_per_layer=n_units_per_layer,
-                                n_hidden_layers=2)
+                                n_latent_dims=args.latent_dims,
+                                n_units_per_layer=args.n_units_per_layer,
+                                n_hidden_layers=args.n_hidden_layers_inverse_model)
         self.inv_discriminator = InvDiscriminator(n_actions=n_actions,
-                                                  n_latent_dims=n_latent_dims,
-                                                  n_units_per_layer=n_units_per_layer,
-                                                  n_hidden_layers=n_hidden_layers)
-        self.discriminator = ContrastiveNet(n_latent_dims=n_latent_dims,
+                                                  n_latent_dims=args.latent_dims,
+                                                  n_units_per_layer=args.n_units_per_layer,
+                                                  n_hidden_layers=args.n_hidden_layers)
+        self.discriminator = ContrastiveNet(n_latent_dims=args.latent_dims,
                                             n_hidden_layers=1,
-                                            n_units_per_layer=n_units_per_layer)
+                                            n_units_per_layer=args.n_units_per_layer)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
@@ -57,13 +42,13 @@ class FeatureNet(Network):
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
 
     def inverse_loss(self, z0, z1, a):
-        if self.coefs['L_inv'] == 0.0:
+        if self.coefs.L_inv == 0.0:
             return torch.tensor(0.0).to(self.device)
         a_hat = self.inv_model(z0, z1)
         return self.cross_entropy(input=a_hat, target=a)
 
     def contrastive_inverse_loss(self, z0, z1, a):
-        if self.coefs['L_coinv'] == 0.0:
+        if self.coefs.L_coinv == 0.0:
             return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
@@ -82,7 +67,7 @@ class FeatureNet(Network):
         return self.bce_loss(input=fakes, target=is_fake.float())
 
     def ratio_loss(self, z0, z1):
-        if self.coefs['L_rat'] == 0.0:
+        if self.coefs.L_rat == 0.0:
             return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
@@ -100,14 +85,14 @@ class FeatureNet(Network):
         return self.bce_loss(input=fakes, target=is_fake)
 
     def distance_loss(self, z0, z1):
-        if self.coefs['L_dis'] == 0.0:
+        if self.coefs.L_dis == 0.0:
             return torch.tensor(0.0).to(self.device)
         dz = torch.norm(z1 - z0, dim=-1, p=2)
         excess = torch.nn.functional.relu(dz - self.max_dz)
         return self.mse(excess, torch.zeros_like(excess))
 
     def oracle_loss(self, z0, z1, d):
-        if self.coefs['L_ora'] == 0.0:
+        if self.coefs.L_ora == 0.0:
             return torch.tensor(0.0).to(self.device)
 
         dz = torch.cat(
@@ -146,8 +131,8 @@ class FeatureNet(Network):
             'L_ora': self.oracle_loss(z0, z1, d),
         }
         loss = 0
-        for loss_type in ['L_coinv', 'L_inv', 'L_rat', 'L_dis', 'L_ora']:
-            loss += self.coefs[loss_type] * loss_info[loss_type]
+        for loss_type in sorted(loss_info.keys()):
+            loss += vars(self.coefs)[loss_type] * loss_info[loss_type]
         loss_info['L'] = loss
 
         return loss_info

@@ -52,6 +52,14 @@ parser.add_argument('--rearrange_xy', action='store_true',
 
 args = utils.parse_args_and_load_hyperparams(parser)
 
+# Move all loss coefficients to a sub-namespace
+coefs = utils.SimpleNamespace(
+    **{name: value
+       for (name, value) in vars(args).items() if name[:2] == 'L_'})
+for coef_name in vars(coefs):
+    delattr(args, coef_name)
+args.coefs = coefs
+
 if (args.markov_dims > 0 and args.model_type in ['factored-split', 'focused-autoenc']):
     print("Warning: 'markov_dims' arg not valid for network type {}. Ignoring...".format(
         args.model_type))
@@ -192,80 +200,30 @@ n_frames = args.n_updates // n_updates_per_frame
 
 batch_size = args.batch_size
 
-coefs = {
-    'L_inv': args.L_inv,
-    'L_rat': args.L_rat,
-    'L_dis': args.L_dis,
-    'L_fwd': args.L_fwd,
-    'L_fac': args.L_fac,
-    'L_foc': args.L_foc,
-    'L_rec': args.L_rec,
-    'L_ora': 0.0,
-    'L_coinv': 0.0,
-}
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
 if args.model_type == 'factored-split':
     fnet = FactoredFwdModel(n_actions=len(env.actions),
                             input_shape=x0.shape[1:],
-                            n_markov_dims=args.markov_dims,
-                            n_latent_dims=args.latent_dims,
-                            n_hidden_layers=1,
-                            n_units_per_layer=32,
-                            lr=args.learning_rate,
-                            coefs=coefs,
-                            encoder_arch=args.encoder_arch,
+                            args=args,
                             device=device)
 elif args.model_type == 'factored-combined':
     fnet = FactorNet(n_actions=len(env.actions),
                      input_shape=x0.shape[1:],
-                     n_latent_dims=args.latent_dims,
-                     n_hidden_layers=1,
-                     n_units_per_layer=32,
-                     lr=args.learning_rate,
-                     max_dz=args.max_dz,
-                     coefs=coefs,
-                     encoder_arch=args.encoder_arch,
+                     args=args,
                      device=device)
 elif args.model_type == 'focused-autoenc':
-    fnet = FocusedAutoencoder(n_actions=len(env.actions),
+    fnet = FocusedAutoencoder(args,
+                              n_actions=len(env.actions),
                               input_shape=x0.shape[1:],
-                              n_markov_dims=args.markov_dims,
-                              n_latent_dims=args.latent_dims,
-                              n_hidden_layers=1,
-                              n_units_per_layer=32,
-                              lr=args.learning_rate,
-                              coefs=coefs,
-                              encoder_arch=args.encoder_arch,
                               device=device)
 elif args.model_type == 'markov':
-    fnet = FeatureNet(n_actions=len(env.actions),
-                      input_shape=x0.shape[1:],
-                      n_latent_dims=args.latent_dims,
-                      n_hidden_layers=1,
-                      n_units_per_layer=32,
-                      lr=args.learning_rate,
-                      coefs=coefs,
-                      encoder_arch=args.encoder_arch,
-                      device=device)
+    fnet = FeatureNet(args, n_actions=len(env.actions), input_shape=x0.shape[1:], device=device)
 elif args.model_type == 'autoencoder':
-    fnet = AutoEncoder(n_actions=len(env.actions),
-                       input_shape=x0.shape[1:],
-                       n_latent_dims=args.latent_dims,
-                       n_hidden_layers=1,
-                       n_units_per_layer=32,
-                       lr=args.learning_rate,
-                       coefs=coefs)
+    fnet = AutoEncoder(args, n_actions=len(env.actions), input_shape=x0.shape[1:])
 elif args.model_type == 'pixel-predictor':
-    fnet = PixelPredictor(n_actions=len(env.actions),
-                          input_shape=x0.shape[1:],
-                          n_latent_dims=args.latent_dims,
-                          n_hidden_layers=1,
-                          n_units_per_layer=32,
-                          lr=args.learning_rate,
-                          coefs=coefs)
+    fnet = PixelPredictor(args, n_actions=len(env.actions), input_shape=x0.shape[1:])
 
 fnet.to(device)
 
