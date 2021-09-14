@@ -25,7 +25,7 @@ from visgrid.sensors import *
 
 parser = utils.get_parser()
 # yapf: disable
-parser.add_argument('--type', type=str, default='factored-split',
+parser.add_argument('--model_type', type=str, default='factored-split',
                     choices=['factored-split', 'factored-combined', 'focused-autoenc', 'markov', 'autoencoder', 'pixel-predictor'],
                     help='Which type of representation learning method')
 parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop', 'taxi'],
@@ -207,7 +207,7 @@ coefs = {
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-if args.type == 'factored-split':
+if args.model_type == 'factored-split':
     fnet = FactoredFwdModel(n_actions=len(env.actions),
                             input_shape=x0.shape[1:],
                             n_markov_dims=args.markov_dims,
@@ -218,7 +218,7 @@ if args.type == 'factored-split':
                             coefs=coefs,
                             encoder_arch=args.encoder_arch,
                             device=device)
-elif args.type == 'factored-combined':
+elif args.model_type == 'factored-combined':
     fnet = FactorNet(n_actions=len(env.actions),
                      input_shape=x0.shape[1:],
                      n_latent_dims=args.latent_dims,
@@ -229,7 +229,7 @@ elif args.type == 'factored-combined':
                      coefs=coefs,
                      encoder_arch=args.encoder_arch,
                      device=device)
-elif args.type == 'focused-autoenc':
+elif args.model_type == 'focused-autoenc':
     fnet = FocusedAutoencoder(n_actions=len(env.actions),
                               input_shape=x0.shape[1:],
                               n_markov_dims=args.markov_dims,
@@ -240,7 +240,7 @@ elif args.type == 'focused-autoenc':
                               coefs=coefs,
                               encoder_arch=args.encoder_arch,
                               device=device)
-elif args.type == 'markov':
+elif args.model_type == 'markov':
     fnet = FeatureNet(n_actions=len(env.actions),
                       input_shape=x0.shape[1:],
                       n_latent_dims=args.latent_dims,
@@ -250,7 +250,7 @@ elif args.type == 'markov':
                       coefs=coefs,
                       encoder_arch=args.encoder_arch,
                       device=device)
-elif args.type == 'autoencoder':
+elif args.model_type == 'autoencoder':
     fnet = AutoEncoder(n_actions=len(env.actions),
                        input_shape=x0.shape[1:],
                        n_latent_dims=args.latent_dims,
@@ -258,7 +258,7 @@ elif args.type == 'autoencoder':
                        n_units_per_layer=32,
                        lr=args.learning_rate,
                        coefs=coefs)
-elif args.type == 'pixel-predictor':
+elif args.model_type == 'pixel-predictor':
     fnet = PixelPredictor(n_actions=len(env.actions),
                           input_shape=x0.shape[1:],
                           n_latent_dims=args.latent_dims,
@@ -313,10 +313,10 @@ get_next_batch = (
 def test_rep(fnet, step):
     with torch.no_grad():
         fnet.eval()
-        if args.type in ['markov', 'factored-combined', 'factored-split', 'focused-autoenc']:
+        if args.model_type in ['markov', 'factored-combined', 'factored-split', 'focused-autoenc']:
             with torch.no_grad():
                 z0, z1, loss_info = fnet.train_batch(test_x0, test_a, test_x1, test=True)
-        elif args.type == 'autoencoder':
+        elif args.model_type == 'autoencoder':
             z0 = fnet.encode(test_x0)
             z1 = fnet.encode(test_x1)
 
@@ -324,7 +324,7 @@ def test_rep(fnet, step):
                 'L': fnet.compute_loss(test_x0),
             }
 
-        elif args.type == 'pixel-predictor':
+        elif args.model_type == 'pixel-predictor':
             z0 = fnet.encode(test_x0)
             z1 = fnet.encode(test_x1)
 
