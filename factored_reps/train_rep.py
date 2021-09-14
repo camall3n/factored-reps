@@ -14,59 +14,28 @@ from tqdm import tqdm
 from factored_reps.models.factornet import FactorNet
 from factored_reps.models.factored_fwd_model import FactoredFwdModel
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps import utils
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from markov_abstr.gridworld.models.autoencoder import AutoEncoder
 from markov_abstr.gridworld.models.pixelpredictor import PixelPredictor
 from markov_abstr.gridworld.repvis import RepVisualization, CleanVisualization
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.taxi import VisTaxi5x5
-from visgrid.utils import get_parser
 from visgrid.sensors import *
 
-parser = get_parser()
-# parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)
+parser = utils.get_parser()
 # yapf: disable
 parser.add_argument('--type', type=str, default='factored-split',
                     choices=['factored-split', 'factored-combined', 'focused-autoenc', 'markov', 'autoencoder', 'pixel-predictor'],
                     help='Which type of representation learning method')
-parser.add_argument('-n','--n_updates', type=int, default=3000,
-                    help='Number of training updates')
-parser.add_argument('-r','--rows', type=int, default=6,
-                    help='Number of gridworld rows')
-parser.add_argument('-c','--cols', type=int, default=6,
-                    help='Number of gridworld columns')
 parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop', 'taxi'],
                     help='The wall configuration mode of gridworld')
-parser.add_argument('--markov_dims', type=int, default=None,
-                    help='Number of latent dimensions to use for Markov representation')
-parser.add_argument('-l','--latent_dims', type=int, default=5,
-                    help='Number of latent dimensions to use for representation')
-parser.add_argument('--network_arch', type=str, default='mlp', choices=['mlp', 'curl'],
-                    help='Network architecture to use for feature encoder')
-parser.add_argument('--L_inv', type=float, default=1.0,
-                    help='Coefficient for inverse-model-matching loss')
-parser.add_argument('--L_rat', type=float, default=1.0,
-                    help='Coefficient for ratio-matching loss')
-parser.add_argument('--L_dis', type=float, default=1.0,
-                    help='Coefficient for planning-distance loss')
-parser.add_argument('--L_fwd', type=float, default=1.0,
-                    help='Coefficient for forward dynamics loss')
-parser.add_argument('--L_fac', type=float, default=0.0,
-                    help='Coefficient for factorization loss')
-parser.add_argument('--L_foc', type=float, default=0.003,
-                    help='Coefficient for focused loss')
-parser.add_argument('--L_rec', type=float, default=1.0,
-                    help='Coefficient for reconstruction loss')
-parser.add_argument('--max_dz', type=float, default=0.1,
-                    help='Distance threshold for planning-distance loss')
-parser.add_argument('-lr','--learning_rate', type=float, default=0.003,
-                    help='Learning rate for Adam optimizer')
-parser.add_argument('--batch_size', type=int, default=2048,
-                    help='Mini batch size for training updates')
 parser.add_argument('-s','--seed', type=int, default=0,
                     help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True,
                     help='Tag for identifying experiment')
+parser.add_argument('--hyperparams', type=str, default='hyperparams/taxi.csv',
+                    help='Path to hyperparameters csv file')
 parser.add_argument('-v','--video', action='store_true',
                     help="Save training video")
 parser.add_argument('--no_graphics', action='store_true',
@@ -79,19 +48,13 @@ parser.add_argument('--no_sigma', action='store_true',
                     help='Turn off sensors and just use true state; i.e. x=s')
 parser.add_argument('--rearrange_xy', action='store_true',
                     help='Rearrange discrete x-y positions to break smoothness')
-
 # yapf: enable
-if 'ipykernel' in sys.argv[0]:
-    arglist = [
-        '--spiral', '--tag', 'test-spiral', '-r', '6', '-c', '6', '--L_ora', '1.0', '--video'
-    ]
-    args = parser.parse_args(arglist)
-else:
-    args = parser.parse_args()
 
-assert (args.markov_dims is None
-        or args.type in ['factored-split', 'focused-autoenc'
-                         ]), "'markov_dims' arg not valid for network type {}".format(args.type)
+args = utils.parse_args_and_load_hyperparams(parser)
+
+if (args.markov_dims > 0 and args.model_type in ['factored-split', 'focused-autoenc']):
+    print("Warning: 'markov_dims' arg not valid for network type {}. Ignoring...".format(
+        args.model_type))
 
 if args.no_graphics:
     import matplotlib
