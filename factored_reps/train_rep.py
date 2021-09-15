@@ -156,7 +156,7 @@ if args.walls != 'taxi':
     env.reset_agent()
 
 else:
-    tag = 'episodes-1000_steps-20_passengers-0'
+    tag = 'episodes-5000_steps-20_passengers-0'
     results_dir = os.path.join('results', 'taxi-experiences', tag)
     filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
 
