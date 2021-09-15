@@ -16,6 +16,7 @@ class FeatureNet(Network):
         self.lr = args.learning_rate
         self.max_dz = args.max_dz
         self.coefs = args.coefs
+        self.max_gradient_norm = args.markov_max_gradient_norm
         self.device = device
 
         self.phi = PhiNet(input_shape=input_shape,
@@ -151,5 +152,7 @@ class FeatureNet(Network):
         loss_info = self.compute_loss(z0, z1, a, d)
         if not test:
             loss_info['L'].backward()
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.parameters(), self.max_gradient_norm)
+            loss_info['grad_norm'] = grad_norm
             self.optimizer.step()
         return z0, z1, loss_info
