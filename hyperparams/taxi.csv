@@ -13,6 +13,7 @@ n_hidden_layers_contrastive,1,int
 n_hidden_layers_inverse_model,2,int
 n_hidden_layers_factored_autoenc,2,int
 n_units_per_layer,32,int
+inverse_model_dropout_prob,0.3,float
 L_inv,1.0,float
 L_rat,1.0,float
 L_dis,1.0,float

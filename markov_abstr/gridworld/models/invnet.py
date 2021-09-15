@@ -5,7 +5,12 @@ import torch.nn
 from .nnutils import Network
 
 class InvNet(Network):
-    def __init__(self, n_actions, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32):
+    def __init__(self,
+                 n_actions,
+                 n_latent_dims=4,
+                 n_hidden_layers=1,
+                 n_units_per_layer=32,
+                 dropout_prob=0.0):
         super().__init__()
         self.n_actions = n_actions
 
@@ -16,9 +21,13 @@ class InvNet(Network):
             self.layers.extend(
                 [torch.nn.Linear(2 * n_latent_dims, n_units_per_layer),
                  torch.nn.Tanh()])
-            self.layers.extend(
-                [torch.nn.Linear(n_units_per_layer, n_units_per_layer),
-                 torch.nn.Tanh()] * (n_hidden_layers - 1))
+            if dropout_prob > 0:
+                self.layers.append(torch.nn.Dropout(dropout_prob))
+            remaining_layer_group = [
+                torch.nn.Linear(n_units_per_layer, n_units_per_layer),
+                torch.nn.Tanh()
+            ] + ([torch.nn.Dropout(dropout_prob)] if dropout_prob > 0 else [])
+            self.layers.extend(remaining_layer_group * (n_hidden_layers - 1))
             self.layers.extend([torch.nn.Linear(n_units_per_layer, n_actions)])
 
         self.inv_model = torch.nn.Sequential(*self.layers)

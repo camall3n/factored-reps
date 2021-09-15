@@ -27,7 +27,8 @@ class FeatureNet(Network):
         self.inv_model = InvNet(n_actions=n_actions,
                                 n_latent_dims=args.latent_dims,
                                 n_units_per_layer=args.n_units_per_layer,
-                                n_hidden_layers=args.n_hidden_layers_inverse_model)
+                                n_hidden_layers=args.n_hidden_layers_inverse_model,
+                                dropout_prob=args.inverse_model_dropout_prob)
         self.inv_discriminator = InvDiscriminator(n_actions=n_actions,
                                                   n_latent_dims=args.latent_dims,
                                                   n_units_per_layer=args.n_units_per_layer,
@@ -141,6 +142,8 @@ class FeatureNet(Network):
         if not test:
             self.train()
             self.optimizer.zero_grad()
+        else:
+            self.eval()
         z0 = self.phi(x0)
         z1 = self.phi(x1)
         loss_info = self.compute_loss(z0, z1, a, d)
