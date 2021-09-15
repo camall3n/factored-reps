@@ -40,7 +40,9 @@ class FeatureNet(Network):
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
         self.mse = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.parameters(),
+                                          lr=self.lr,
+                                          weight_decay=args.markov_weight_decay)
 
     def inverse_loss(self, z0, z1, a):
         if self.coefs.L_inv == 0.0:
