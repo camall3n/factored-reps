@@ -156,15 +156,14 @@ if args.walls != 'taxi':
     env.reset_agent()
 
 else:
-    tag = 'episodes-5000_steps-20_passengers-0'
-    results_dir = os.path.join('results', 'taxi-experiences', tag)
-    filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
+    experiences_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
+    filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
-    results_files = glob.glob(filename_pattern)
+    experience_files = glob.glob(filename_pattern)
 
     experiences = []
-    for results_file in sorted(results_files):
-        with open(results_file, 'rb') as file:
+    for experience_file in sorted(experience_files):
+        with open(experience_file, 'rb') as file:
             current_experiences = pickle.load(file)
             experiences.extend(current_experiences)
 

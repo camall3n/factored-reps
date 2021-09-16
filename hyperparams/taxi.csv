@@ -2,6 +2,7 @@ rows,5,int
 cols,5,int
 walls,taxi,str
 n_passengers,0,int
+taxi_experiences,episodes-1000_steps-20_passengers-0,str
 n_updates,3000,int
 learning_rate,3e-6,float
 batch_size,2048,int
