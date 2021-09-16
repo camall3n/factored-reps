@@ -29,7 +29,8 @@ class FeatureNet(Network):
                                 n_latent_dims=args.latent_dims,
                                 n_units_per_layer=args.n_units_per_layer,
                                 n_hidden_layers=args.n_hidden_layers_inverse_model,
-                                dropout_prob=args.inverse_model_dropout_prob)
+                                dropout_prob=args.inverse_model_dropout_prob,
+                                temperature=args.inverse_model_temperature)
         self.inv_discriminator = InvDiscriminator(n_actions=n_actions,
                                                   n_latent_dims=args.latent_dims,
                                                   n_units_per_layer=args.n_units_per_layer,

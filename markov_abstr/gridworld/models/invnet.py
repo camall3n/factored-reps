@@ -10,9 +10,11 @@ class InvNet(Network):
                  n_latent_dims=4,
                  n_hidden_layers=1,
                  n_units_per_layer=32,
-                 dropout_prob=0.0):
+                 dropout_prob=0.0,
+                 temperature=1.0):
         super().__init__()
         self.n_actions = n_actions
+        self.temperature = temperature
 
         self.layers = []
         if n_hidden_layers == 0:
@@ -34,5 +36,5 @@ class InvNet(Network):
 
     def forward(self, z0, z1):
         context = torch.cat((z0, z1), -1)
-        a_logits = self.inv_model(context)
+        a_logits = self.inv_model(context) / self.temperature
         return a_logits
