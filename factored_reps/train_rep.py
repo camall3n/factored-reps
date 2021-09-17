@@ -230,7 +230,6 @@ fnet.to(device)
 fnet.print_summary()
 
 n_test_samples = 2000
-n_train_samples = n_samples - n_test_samples
 test_s0 = s0[-n_test_samples:, :]
 test_s1 = s1[-n_test_samples:, :]
 test_x0 = torch.as_tensor(x0)[-n_test_samples:].float().to(device)
@@ -267,7 +266,7 @@ def get_batch(x0, x1, a, batch_size=batch_size):
     return tx0, tx1, ta, idx
 
 get_next_batch = (
-    lambda: get_batch(x0[:n_train_samples, :], x1[:n_train_samples, :], a[:n_train_samples]))
+    lambda: get_batch(x0[:n_samples // 2, :], x1[:n_samples // 2, :], a[:n_samples // 2]))
 
 def log_loss_info(log_file, loss_info, step):
     for loss_type, loss_value in loss_info.items():
