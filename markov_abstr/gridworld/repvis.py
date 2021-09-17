@@ -10,7 +10,7 @@ class RepVisualization:
         self.colors = colors
         self.n_dims = n_dims
 
-        self.text_ax = self.fig.add_subplot(4, 4, 4)
+        self.text_ax = self.fig.add_subplot(4, 4, 12)
         self.text_ax.set_xticks([])
         self.text_ax.set_yticks([])
         self.text_ax.axis('off')
@@ -18,11 +18,11 @@ class RepVisualization:
         self.text_ax.set_xlim([0, 1])
         self.text = self.text_ax.text(-0.2, -0.1, '')
 
-        self.env_ax = self.fig.add_subplot(4, 4, 8)
+        self.env_ax = self.fig.add_subplot(4, 4, 3)
         env.plot(self.env_ax)
         self.env_ax.set_title('Environment')
 
-        self.obs_ax = self.fig.add_subplot(4, 4, 12)
+        self.obs_ax = self.fig.add_subplot(4, 4, 7)
         if obs.ndim == 3:
             obs = np.moveaxis(obs, 0, -1)
             self.obs_ax.imshow(obs)
@@ -30,9 +30,9 @@ class RepVisualization:
             self.obs_ax.imshow(obs)
         self.obs_ax.set_xticks([])
         self.obs_ax.set_yticks([])
-        self.obs_ax.set_title('Sampled observation (x)')
+        self.obs_ax.set_title('Sampled Obs. (x)')
 
-        self.effects = self._setup_effects(subplot=(4, 4, 3))
+        self.effects = self._setup_effects(subplot=(4, 4, 2))
 
         z = np.zeros((batch_size, n_dims))
 

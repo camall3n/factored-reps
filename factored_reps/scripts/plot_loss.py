@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-experiment = 'exp44__learningrate_0.0003__markovweightdecay_1e-4__inversemodeltemperature_10.0'
+experiment = 'exp47-passenger-foc__learningrate_0.001'
 # experiment = 'exp00-debugger'
 # filepaths = glob.glob('results/logs/{}/train-2.txt'.format(experiment))
 

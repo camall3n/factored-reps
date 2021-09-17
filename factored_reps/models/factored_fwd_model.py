@@ -140,12 +140,12 @@ class FactoredFwdModel(Network):
         if not test:
             loss_info['L'].backward()
             self.optimizer.step()
-        else:
-            with torch.no_grad():
-                for loss_type, loss_value in fnet_loss_info.items():
-                    if loss_type == 'L':
-                        loss_info[loss_type] += loss_value
-                    elif loss_type in ['L_inv', 'L_rat', 'L_dis']:
-                        loss_info[loss_type] = loss_value
+
+        with torch.no_grad():
+            for loss_type, loss_value in fnet_loss_info.items():
+                if loss_type == 'L':
+                    loss_info[loss_type] += loss_value
+                elif loss_type in ['L_inv', 'L_rat', 'L_dis']:
+                    loss_info[loss_type] = loss_value
 
         return z0_factored, z1_factored, loss_info
