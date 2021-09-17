@@ -18,6 +18,7 @@ class FactoredFwdModel(Network):
         self.featurenet = FeatureNet(args,
                                      n_actions=n_actions,
                                      input_shape=input_shape,
+                                     latent_dims=args.markov_dims,
                                      device=self.device)
         self.phi = self.featurenet.phi
 

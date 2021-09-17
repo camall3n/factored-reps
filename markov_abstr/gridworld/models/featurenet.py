@@ -10,7 +10,7 @@ from .contrastivenet import ContrastiveNet
 from .invdiscriminator import InvDiscriminator
 
 class FeatureNet(Network):
-    def __init__(self, args, n_actions, input_shape=2, device='cpu'):
+    def __init__(self, args, n_actions, input_shape=2, latent_dims=2, device='cpu'):
         super().__init__()
         self.n_actions = n_actions
         self.lr = args.learning_rate
@@ -20,22 +20,22 @@ class FeatureNet(Network):
         self.device = device
 
         self.phi = PhiNet(input_shape=input_shape,
-                          n_latent_dims=args.latent_dims,
+                          n_latent_dims=latent_dims,
                           n_units_per_layer=args.n_units_per_layer,
                           n_hidden_layers=args.n_hidden_layers,
                           network_arch=args.encoder_arch)
-        # self.fwd_model = FwdNet(n_actions=n_actions, n_latent_dims=args.latent_dims, n_hidden_layers=args.n_hidden_layers, n_units_per_layer=args.n_units_per_layer)
+        # self.fwd_model = FwdNet(n_actions=n_actions, n_latent_dims=latent_dims, n_hidden_layers=args.n_hidden_layers, n_units_per_layer=args.n_units_per_layer)
         self.inv_model = InvNet(n_actions=n_actions,
-                                n_latent_dims=args.latent_dims,
+                                n_latent_dims=latent_dims,
                                 n_units_per_layer=args.n_units_per_layer,
                                 n_hidden_layers=args.n_hidden_layers_inverse_model,
                                 dropout_prob=args.inverse_model_dropout_prob,
                                 temperature=args.inverse_model_temperature)
         self.inv_discriminator = InvDiscriminator(n_actions=n_actions,
-                                                  n_latent_dims=args.latent_dims,
+                                                  n_latent_dims=latent_dims,
                                                   n_units_per_layer=args.n_units_per_layer,
                                                   n_hidden_layers=args.n_hidden_layers)
-        self.discriminator = ContrastiveNet(n_latent_dims=args.latent_dims,
+        self.discriminator = ContrastiveNet(n_latent_dims=latent_dims,
                                             n_hidden_layers=1,
                                             n_units_per_layer=args.n_units_per_layer)
 

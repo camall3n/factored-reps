@@ -14,7 +14,10 @@ class FocusedAutoencoder(Network):
         self.coefs = args.coefs
         self.device = device
 
-        self.featurenet = FeatureNet(args, n_actions=n_actions, input_shape=input_shape)
+        self.featurenet = FeatureNet(args,
+                                     n_actions=n_actions,
+                                     input_shape=input_shape,
+                                     latent_dims=args.markov_dims)
         self.phi = self.featurenet.phi
 
         self.encoder = SimpleNet(n_inputs=args.markov_dims,

@@ -59,7 +59,7 @@ for coef_name in vars(coefs):
     delattr(args, coef_name)
 args.coefs = coefs
 
-if (args.markov_dims > 0 and args.model_type in ['factored-split', 'focused-autoenc']):
+if (args.markov_dims > 0 and args.model_type not in ['factored-split', 'focused-autoenc']):
     print("Warning: 'markov_dims' arg not valid for network type {}. Ignoring...".format(
         args.model_type))
 
@@ -203,22 +203,23 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
 if args.model_type == 'factored-split':
-    fnet = FactoredFwdModel(n_actions=len(env.actions),
+    fnet = FactoredFwdModel(args,
+                            n_actions=len(env.actions),
                             input_shape=x0.shape[1:],
-                            args=args,
                             device=device)
 elif args.model_type == 'factored-combined':
-    fnet = FactorNet(n_actions=len(env.actions),
-                     input_shape=x0.shape[1:],
-                     args=args,
-                     device=device)
+    fnet = FactorNet(args, n_actions=len(env.actions), input_shape=x0.shape[1:], device=device)
 elif args.model_type == 'focused-autoenc':
     fnet = FocusedAutoencoder(args,
                               n_actions=len(env.actions),
                               input_shape=x0.shape[1:],
                               device=device)
 elif args.model_type == 'markov':
-    fnet = FeatureNet(args, n_actions=len(env.actions), input_shape=x0.shape[1:], device=device)
+    fnet = FeatureNet(args,
+                      n_actions=len(env.actions),
+                      input_shape=x0.shape[1:],
+                      latent_dims=args.latent_dims,
+                      device=device)
 elif args.model_type == 'autoencoder':
     fnet = AutoEncoder(args, n_actions=len(env.actions), input_shape=x0.shape[1:])
 elif args.model_type == 'pixel-predictor':
