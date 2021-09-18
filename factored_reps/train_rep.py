@@ -268,7 +268,7 @@ def get_batch(x0, x1, a, batch_size=batch_size):
 get_next_batch = (
     lambda: get_batch(x0[:n_samples // 2, :], x1[:n_samples // 2, :], a[:n_samples // 2]))
 
-def log_loss_info(log_file, loss_info, step):
+def convert_and_log_loss_info(log_file, loss_info, step):
     for loss_type, loss_value in loss_info.items():
         loss_info[loss_type] = loss_value.detach().cpu().numpy().tolist()
     loss_info['step'] = step
@@ -276,6 +276,8 @@ def log_loss_info(log_file, loss_info, step):
     json_str = json.dumps(loss_info)
     log_file.write(json_str + '\n')
     log_file.flush()
+
+best_model_test_loss = np.inf
 
 def test_rep(fnet, step):
     with torch.no_grad():
@@ -299,7 +301,21 @@ def test_rep(fnet, step):
                 'L': fnet.compute_loss(test_x0, test_a, test_x1),
             }
 
-    log_loss_info(test_log, loss_info, step)
+    convert_and_log_loss_info(test_log, loss_info, step)
+    if (args.save and args.save_model_every_n_steps > 0 and step > 0
+            and step % args.save_model_every_n_steps == 0):
+        global best_model_test_loss
+        is_best = False
+        current_loss = loss_info['L']
+        if current_loss < best_model_test_loss:
+            is_best = True
+            best_model_test_loss = current_loss
+        fnet.phi.save('phi-{}'.format(args.seed),
+                      'results/models/{}'.format(args.tag),
+                      is_best=is_best)
+        fnet.save('fnet-{}'.format(args.seed),
+                  'results/models/{}'.format(args.tag),
+                  is_best=is_best)
 
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
 
@@ -318,7 +334,7 @@ for step in range(args.n_updates):
 
     tx0, tx1, ta, idx = get_next_batch()
     train_loss_info = fnet.train_batch(tx0, ta, tx1)[-1]
-    log_loss_info(train_log, train_loss_info, step)
+    convert_and_log_loss_info(train_log, train_loss_info, step)
 
 if args.video:
     imageio.mimwrite(video_filename, data, fps=15)

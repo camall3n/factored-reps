@@ -4,6 +4,7 @@ walls,taxi,str
 n_passengers,0,int
 taxi_experiences,episodes-5000_steps-20_passengers-0,str
 n_updates,4000,int
+save_model_every_n_steps,200,int
 learning_rate,0.001,float
 batch_size,2048,int
 latent_dims,5,int

@@ -2,6 +2,7 @@ rows,6,int
 cols,6,int
 walls,empty,str
 n_updates,3000,int
+save_model_every_n_steps,-1,int
 learning_rate,0.003,float
 batch_size,2048,int
 latent_dims,2,int
