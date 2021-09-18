@@ -4,6 +4,7 @@ import json
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
@@ -50,20 +51,23 @@ def plot(seed=None):
     fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
     p = sns.color_palette(n_colors=len(subset['mode'].unique()))
     for ax, y_label in zip(axes, y_labels):
-        sns.lineplot(data=subset,
-                        x='step',
-                        y=y_label,
-                        units='seed',
-                        estimator=None,
-                        style='seed',
-                        hue='mode',
-                        palette=p,
-                        # legend=False,
-                        ax=ax)
+        sns.lineplot(
+            data=subset,
+            x='step',
+            y=y_label,
+            units='seed',
+            estimator=None,
+            style='seed',
+            hue='mode',
+            palette=p,
+            # legend=False,
+            ax=ax)
 
     results_dir = 'results/loss_plots/'
     os.makedirs(results_dir, exist_ok=True)
-    plt.savefig(results_dir + '{}{}.png'.format(experiment, plot_suffix), facecolor='white', edgecolor='white')
+    plt.savefig(results_dir + '{}{}.png'.format(experiment, plot_suffix),
+                facecolor='white',
+                edgecolor='white')
     plt.show()
 
 # for seed in range(1,11):
@@ -71,10 +75,10 @@ def plot(seed=None):
 
 plot()
 
-
 #%%
 
-seed =
-subset = data.query('seed == {} and step % 200 == 0 and mode == "test"'.format(seed))
-idx = np.argmin(subset['L'])
-subset.iloc[idx,:]['step']
+for seed in range(1, 11):
+    subset = data.query('seed == {} and step % 200 == 0 and mode == "test"'.format(seed))
+    idx = np.argmin(subset['L'])
+    record = subset.iloc[idx, :]
+    print(seed, record['step'], record['L'])
