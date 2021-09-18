@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-experiment = 'exp47-passenger-foc__learningrate_0.001'
+experiment = 'exp46-markov-passenger'
 # experiment = 'exp00-debugger'
 # filepaths = glob.glob('results/logs/{}/train-2.txt'.format(experiment))
 
@@ -18,8 +18,9 @@ for mode in modes:
     filepaths = glob.glob('results/logs/{}/{}-*.txt'.format(experiment, mode))
     for filepath in filepaths:
         df = pd.read_json(filepath, lines=True, orient='records')
-        for loss in ['L', 'L_inv', 'L_rat', 'L_dis']:
-            df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
+        for loss in ['L', 'L_inv', 'L_rat', 'L_dis', 'L_foc', 'L_fac', 'L_rec', 'L_fwd']:
+            if loss in df.columns:
+                df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
         argspath = filepath.replace(mode, 'args')
         with open(argspath, 'r') as argsfile:
             line = argsfile.readline()
@@ -41,7 +42,8 @@ def plot(seed=None):
         subset = data.query("seed == {}".format(seed))
         plot_suffix = '-seed{}'.format(seed)
 
-    y_labels = ['L', 'L_inv', 'L_rat', 'L_dis']
+    y_labels = ['L', 'L_inv', 'L_rat', 'L_dis', 'L_rec', 'L_foc']
+    y_labels = [label for label in y_labels if label in subset.columns]
     fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
     p = sns.color_palette(n_colors=len(subset['mode'].unique()))
     for ax, y_label in zip(axes, y_labels):
