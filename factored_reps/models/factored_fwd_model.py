@@ -21,7 +21,7 @@ class FactoredFwdModel(Network):
                                      latent_dims=args.markov_dims,
                                      device=self.device)
         if args.load_markov is not None:
-            self.featurenet.load(args.load_markov, force_cpu=(device == torch.device('cpu')))
+            self.featurenet.load(args.load_markov, to=self.device)
         self.phi = self.featurenet.phi
 
         self.freeze_markov = args.freeze_markov

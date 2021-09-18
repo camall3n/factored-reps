@@ -228,7 +228,7 @@ elif args.model_type == 'markov':
                       latent_dims=args.latent_dims,
                       device=device)
     if args.load_markov is not None:
-        fnet.load(args.load_markov, force_cpu=(device == 'cpu'))
+        fnet.load(args.load_markov, to=device)
     if args.freeze_markov:
         fnet.freeze()
 elif args.model_type == 'autoencoder':

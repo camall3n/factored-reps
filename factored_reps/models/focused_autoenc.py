@@ -17,9 +17,10 @@ class FocusedAutoencoder(Network):
         self.featurenet = FeatureNet(args,
                                      n_actions=n_actions,
                                      input_shape=input_shape,
-                                     latent_dims=args.markov_dims)
+                                     latent_dims=args.markov_dims,
+                                     device=self.device)
         if args.load_markov is not None:
-            self.featurenet.load(args.load_markov, force_cpu=(device == 'cpu'))
+            self.featurenet.load(args.load_markov, to=self.device)
         self.phi = self.featurenet.phi
 
         self.freeze_markov = args.freeze_markov

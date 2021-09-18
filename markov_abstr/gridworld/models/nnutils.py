@@ -65,10 +65,9 @@ class Network(torch.nn.Module):
             shutil.copyfile(model_file, best_file)
             logging.info('New best model! Model copied to {}'.format(best_file))
 
-    def load(self, model_file, force_cpu=False):
+    def load(self, model_file, to=None):
         logging.info('Loading model from {}...'.format(model_file))
-        map_loc = 'cpu' if force_cpu else None
-        state_dict = torch.load(model_file, map_location=map_loc)
+        state_dict = torch.load(model_file, map_location=to)
         self.load_state_dict(state_dict)
 
     def freeze(self):
