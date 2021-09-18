@@ -18,7 +18,14 @@ class FocusedAutoencoder(Network):
                                      n_actions=n_actions,
                                      input_shape=input_shape,
                                      latent_dims=args.markov_dims)
+        if args.load_markov is not None:
+            self.featurenet.load(args.load_markov, force_cpu=(device == 'cpu'))
         self.phi = self.featurenet.phi
+
+        self.freeze_markov = args.freeze_markov
+        if self.freeze_markov:
+            self.featurenet.freeze()
+            self.phi.freeze()
 
         self.encoder = SimpleNet(n_inputs=args.markov_dims,
                                  n_outputs=args.latent_dims,
@@ -74,7 +81,10 @@ class FocusedAutoencoder(Network):
         return loss_info
 
     def train_batch(self, x0, a, x1, test=False):
-        _, _, fnet_loss_info = self.featurenet.train_batch(x0, a, x1, d=None, test=test)
+        if self.freeze_markov:
+            fnet_loss_info = dict()
+        else:
+            _, _, fnet_loss_info = self.featurenet.train_batch(x0, a, x1, d=None, test=test)
 
         with torch.no_grad():
             z0 = self.phi(x0)

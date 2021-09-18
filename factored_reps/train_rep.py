@@ -29,6 +29,10 @@ parser = utils.get_parser()
 parser.add_argument('--model_type', type=str, default='factored-split',
                     choices=['factored-split', 'factored-combined', 'focused-autoenc', 'markov', 'autoencoder', 'pixel-predictor'],
                     help='Which type of representation learning method')
+parser.add_argument('--load_markov', type=str, default=None,
+                    help='Specifies a tag to load a pretrained Markov abstraction')
+parser.add_argument('--freeze_markov', action='store_true',
+                    help='Prevents Markov abstraction from training')
 # parser.add_argument('-w', '--walls', type=str, default='empty', choices=['empty', 'maze', 'spiral', 'loop', 'taxi'],
 #                     help='The wall configuration mode of gridworld')
 parser.add_argument('-s','--seed', type=int, default=0,
@@ -52,6 +56,8 @@ parser.add_argument('--rearrange_xy', action='store_true',
 # yapf: enable
 
 args = utils.parse_args_and_load_hyperparams(parser)
+if args.load_markov is not None and r'{seed}' in args.load_markov:
+    args.load_markov = args.load_markov.format(seed=args.seed)
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
@@ -221,6 +227,10 @@ elif args.model_type == 'markov':
                       input_shape=x0.shape[1:],
                       latent_dims=args.latent_dims,
                       device=device)
+    if args.load_markov is not None:
+        fnet.load(args.load_markov, force_cpu=(device == 'cpu'))
+    if args.freeze_markov:
+        fnet.freeze()
 elif args.model_type == 'autoencoder':
     fnet = AutoEncoder(args, n_actions=len(env.actions), input_shape=x0.shape[1:])
 elif args.model_type == 'pixel-predictor':
