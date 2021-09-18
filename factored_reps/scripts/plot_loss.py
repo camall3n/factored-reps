@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-experiment = 'exp46-markov-passenger'
+experiment = 'exp49-markov-save-best__learningrate_0.001'
 # experiment = 'exp00-debugger'
 # filepaths = glob.glob('results/logs/{}/train-2.txt'.format(experiment))
 
@@ -42,6 +42,9 @@ def plot(seed=None):
         subset = data.query("seed == {}".format(seed))
         plot_suffix = '-seed{}'.format(seed)
 
+    subset = subset.query("step % 200 == 0")
+    plot_suffix += '-mod200'
+
     y_labels = ['L', 'L_inv', 'L_rat', 'L_dis', 'L_rec', 'L_foc']
     y_labels = [label for label in y_labels if label in subset.columns]
     fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
@@ -67,3 +70,11 @@ def plot(seed=None):
 #     plot(seed)
 
 plot()
+
+
+#%%
+
+seed =
+subset = data.query('seed == {} and step % 200 == 0 and mode == "test"'.format(seed))
+idx = np.argmin(subset['L'])
+subset.iloc[idx,:]['step']
