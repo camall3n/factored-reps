@@ -56,8 +56,8 @@ parser.add_argument('--rearrange_xy', action='store_true',
 # yapf: enable
 
 args = utils.parse_args_and_load_hyperparams(parser)
-if args.load_markov is not None and r'{seed}' in args.load_markov:
-    args.load_markov = args.load_markov.format(seed=args.seed)
+if args.load_markov is not None:
+    args.load_markov = os.path.join(args.load_markov, 'fnet-{}_best.pytorch'.format(args.seed))
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
