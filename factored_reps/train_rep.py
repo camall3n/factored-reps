@@ -78,7 +78,8 @@ if args.video:
     os.makedirs(vid_dir, exist_ok=True)
     os.makedirs(maze_dir, exist_ok=True)
     video_filename = vid_dir + '/video-{}.mp4'.format(args.seed)
-    image_filename = vid_dir + '/final-{}.png'.format(args.seed)
+    final_image_filename = vid_dir + '/final-{}.png'.format(args.seed)
+    best_image_filename = vid_dir + '/best-{}.png'.format(args.seed)
     maze_file = maze_dir + '/maze-{}.png'.format(args.seed)
 
 train_log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
@@ -302,10 +303,10 @@ def test_rep(fnet, step):
             }
 
     convert_and_log_loss_info(test_log, loss_info, step)
+    is_best = False
     if (args.save and args.save_model_every_n_steps > 0 and step > 0
             and step % args.save_model_every_n_steps == 0):
         global best_model_test_loss
-        is_best = False
         current_loss = loss_info['L']
         if current_loss < best_model_test_loss:
             is_best = True
@@ -320,17 +321,20 @@ def test_rep(fnet, step):
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
 
     results = [z0, test_a, z1]
-    return [r.cpu().numpy() for r in results] + [text]
+    return [r.cpu().numpy() for r in results] + [text], is_best
 
 #% ------------------ Run Experiment ------------------
 data = []
+best_frame = 0
 for step in range(args.n_updates):
-    test_results = test_rep(fnet, step)
+    test_results, is_best = test_rep(fnet, step)
 
     if step % n_updates_per_frame == 0:
         if args.video:
             frame = repvis.update_plots(*test_results)
             data.append(frame)
+            if is_best:
+                best_frame = step
 
     tx0, tx1, ta, idx = get_next_batch()
     train_loss_info = fnet.train_batch(tx0, ta, tx1)[-1]
@@ -338,7 +342,8 @@ for step in range(args.n_updates):
 
 if args.video:
     imageio.mimwrite(video_filename, data, fps=15)
-    imageio.imwrite(image_filename, data[-1])
+    imageio.imwrite(final_image_filename, data[-1])
+    imageio.imwrite(best_image_filename, data[best_frame])
 
 if args.save:
     fnet.phi.save('phi-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
