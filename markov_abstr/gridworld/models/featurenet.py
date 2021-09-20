@@ -122,10 +122,12 @@ class FeatureNet(Network):
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
-    def predict_a(self, z0, z1):
-        raise NotImplementedError
-        # a_logits = self.inv_model(z0, z1)
-        # return torch.argmax(a_logits, dim=-1)
+    def predict_a(self, x0, x1):
+        with torch.no_grad():
+            z0 = self.phi(x0)
+            z1 = self.phi(x1)
+            a_logits = self.inv_model(z0, z1)
+        return torch.argmax(a_logits, dim=-1)
 
     def compute_loss(self, z0, z1, a, d):
         loss_info = {
