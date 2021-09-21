@@ -85,7 +85,7 @@ fnet.load(model_file, to=device)
 n_training = len(states)//2
 n_test = 2000
 
-a_hat = fnet.predict_a(torchify(x), torchify(xp)).numpy()
+a_hat = fnet.predict_a(x, xp).numpy()
 
 n_train_correct = (actions[:n_training] == a_hat[:n_training]).sum()
 n_test_correct = (actions[-n_test:] == a_hat[-n_test:]).sum()
