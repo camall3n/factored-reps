@@ -79,6 +79,7 @@ def torchify(x):
 x = torchify(obs[0])
 xp = torchify(next_obs[0])
 fnet = FeatureNet(args, n_actions=5, input_shape=x.squeeze(0).shape, latent_dims=args.latent_dims, device=device)
+fnet.to(device)
 fnet.load(model_file, to=device)
 
 #%%
