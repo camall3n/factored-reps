@@ -33,7 +33,7 @@ args.latent_dims = 5
 args.markov_dims = 5
 args.other_args = []
 
-output_dir = 'results/analyze_markov_accuracy'
+output_dir = 'results/analyze_markov_accuracy/{}'.format(args.tag)
 os.makedirs(output_dir, exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
