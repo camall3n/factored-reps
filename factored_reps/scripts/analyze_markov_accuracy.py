@@ -6,6 +6,7 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import seeding
 import torch
@@ -18,10 +19,13 @@ from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.utils import load_hyperparams_and_inject_args
 
 args = argparse.Namespace()
+args.quick = False
+# args.quick = True
 args.seed = 1
 args.hyperparams = 'hyperparams/taxi.csv'
 args.tag = 'exp49-markov-save-best__learningrate_0.001'
-# args.taxi_experiences = 'episodes-1000_steps-20_passengers-0'
+if args.quick:
+    args.taxi_experiences = 'episodes-1000_steps-20_passengers-0'
 args.latent_dims = 5
 args.markov_dims = 5
 args.other_args = []
@@ -75,7 +79,10 @@ goals = extract_array(experiences, 'goal')
 
 #%% ------------------ Load model ------------------
 def torchify(x):
-    return torch.as_tensor(np.moveaxis(x, -1, 0)).float().unsqueeze(0).to(device)
+    if x.ndim == 3:
+        x = np.expand_dims(x, axis=0)
+    result = torch.as_tensor(np.moveaxis(x, -1, 1)).float().to(device)
+    return result
 
 x = torchify(obs[0])
 xp = torchify(next_obs[0])
@@ -87,13 +94,21 @@ fnet.load(model_file, to=device)
 n_training = len(states)//2
 n_test = 2000
 
-a_hat = fnet.predict_a(torchify(obs).to(device), torchify(next_obs).to(device)).detach().cpu().numpy()
+if args.quick:
+    n_training = n_training // 100
+    n_test = n_test // 100
 
-n_train_correct = (actions[:n_training] == a_hat[:n_training]).sum()
-n_test_correct = (actions[-n_test:] == a_hat[-n_test:]).sum()
+def compute_accuracy(obs, actions, next_obs):
+    a_hat = fnet.predict_a(torchify(obs).to(device), torchify(next_obs).to(device)).detach().cpu().numpy()
+    n_correct = (actions == a_hat).sum()
+    accuracy = 100 * n_correct / len(obs)
+    return n_correct, accuracy, a_hat
 
-train_accuracy = 100 * n_train_correct / n_training
-test_accuracy = 100 * n_test_correct / n_test
+results = compute_accuracy(obs[:n_training], actions[:n_training], next_obs[:n_training])
+n_train_correct, train_accuracy, a_hat_train = results
+
+results = compute_accuracy(obs[-n_test:], actions[-n_test:], next_obs[-n_test:])
+n_test_correct, test_accuracy, a_hat_test = results
 
 print('Inverse model accuracy:')
 print('Training:', n_train_correct, 'correct out of', n_training, 'total = {}%'.format(train_accuracy))
@@ -103,8 +118,28 @@ print('Test:', n_test_correct, 'correct out of', n_test, 'total = {}%'.format(te
 # Training: 10043 correct out of 50000 total = 20.086%
 # Test: 401 correct out of 2000 total = 20.05%
 
-plt.figure()
-sns.histplot(a_hat, discrete=True)
-plt.title('predicted action')
+#%%
+fig, axes = plt.subplots(1, 2, figsize=(12,4))
+
+a = actions[:n_training]
+a_hat = a_hat_train
+def action_histogram(a_actual, a_predicted, ax, title):
+    dfs = []
+    for a, label in zip([a_actual, a_predicted], ['actual', 'predicted']):
+        df = pd.DataFrame(a, columns=['action'])
+        df['mode'] = label
+        dfs.append(df)
+    data = pd.concat(dfs, ignore_index=True)
+    sns.histplot(data=data, x='action', hue='mode', discrete=True, label='train', multiple='dodge', shrink=0.8, ax=ax)
+    ax.set_title(title)
+
+for a, a_hat, mode, ax in zip(
+        [actions[:n_training], actions[-n_test:]],
+        [a_hat_train, a_hat_test],
+        ['training', 'test'],
+        axes,
+    ):
+    action_histogram(a, a_hat, ax=ax, title=mode)
+
 plt.savefig('results/predicted_action.png')
 plt.show()
