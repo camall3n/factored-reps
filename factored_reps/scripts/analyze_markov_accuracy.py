@@ -30,9 +30,11 @@ args.latent_dims = 5
 args.markov_dims = 5
 args.other_args = []
 
+results_dir = 'results/analyze_markov_accuracy'
+os.makedirs(results_dir, exist_ok=True)
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
-
 
 params = load_hyperparams_and_inject_args(args)
 args = argparse.Namespace(**params)
@@ -131,8 +133,6 @@ print('Test:', n_test_correct, 'correct out of', n_test, 'total = {}%'.format(te
 #%%
 fig, axes = plt.subplots(1, 2, figsize=(12,4))
 
-a = actions[:n_training]
-a_hat = a_hat_train
 def action_histogram(a_actual, a_predicted, ax, title):
     dfs = []
     for a, label in zip([a_actual, a_predicted], ['actual', 'predicted']):
@@ -151,5 +151,35 @@ for a, a_hat, mode, ax in zip(
     ):
     action_histogram(a, a_hat, ax=ax, title=mode)
 
-plt.savefig('results/predicted_action.png')
+plt.savefig(os.path.join(results_dir, 'predicted_action.png'))
+plt.show()
+
+#%%
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+def action_confusion_matrix(a_actual, a_predicted, ax, title):
+    confusion_counts = list(zip(*np.unique(np.stack([a_actual[:n_training], a_predicted], 1), axis=0, return_counts=True)))
+    heatmap = np.zeros((5, 5))
+    for (a, ahat), count in confusion_counts:
+        heatmap[a, ahat] = count
+
+    im = ax.imshow(heatmap, interpolation='nearest')
+    ax.set_xlabel('predicted action')
+    ax.set_ylabel('actual action')
+    ax.set_title(title)
+    plt.colorbar(im, ax=ax, shrink=0.75)
+
+for a, a_hat, mode, ax in zip(
+        [actions[:n_training], actions[-n_test:]],
+        [a_hat_train, a_hat_test],
+        ['training', 'test'],
+        axes,
+    ):
+    action_confusion_matrix(a, a_hat, ax=ax, title=mode)
+
+fig.suptitle('Inverse model classifications')
+plt.tight_layout()
+plt.subplots_adjust(top=1.0)
+plt.savefig(os.path.join(results_dir, 'action_confusion_matrix.png'))
 plt.show()
