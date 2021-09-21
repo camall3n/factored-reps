@@ -98,17 +98,27 @@ if args.quick:
     n_training = n_training // 100
     n_test = n_test // 100
 
-def compute_accuracy(obs, actions, next_obs):
-    a_hat = fnet.predict_a(torchify(obs).to(device), torchify(next_obs).to(device)).detach().cpu().numpy()
+def get_action_predictions(obs, next_obs):
+    return fnet.predict_a(torchify(obs).to(device), torchify(next_obs).to(device)).detach().cpu().numpy()
+
+def compute_accuracy(actions, a_hat):
     n_correct = (actions == a_hat).sum()
-    accuracy = 100 * n_correct / len(obs)
+    accuracy = 100 * n_correct / len(actions)
     return n_correct, accuracy, a_hat
 
-results = compute_accuracy(obs[:n_training], actions[:n_training], next_obs[:n_training])
-n_train_correct, train_accuracy, a_hat_train = results
+results = []
+# divide training samples into batches, to save GPU memory
+n_batch_divisions = int(np.ceil(n_training/n_test)+1)
+batch_divisions = np.linspace(0, n_training, n_batch_divisions).astype(int)
+batch_starts = batch_divisions[:-1]
+batch_ends = batch_divisions[1:]
+for low, high in zip(tqdm(batch_starts), batch_ends):
+    results.append(get_action_predictions(obs[low:high], next_obs[low:high]))
+a_hat_train = np.concatenate(results)
+n_train_correct, train_accuracy, a_hat_train = compute_accuracy(actions[:n_training], a_hat_train)
 
-results = compute_accuracy(obs[-n_test:], actions[-n_test:], next_obs[-n_test:])
-n_test_correct, test_accuracy, a_hat_test = results
+a_hat_test = get_action_predictions(obs[-n_test:], next_obs[-n_test:])
+n_test_correct, test_accuracy, a_hat_test = compute_accuracy(actions[-n_test:], a_hat_test)
 
 print('Inverse model accuracy:')
 print('Training:', n_train_correct, 'correct out of', n_training, 'total = {}%'.format(train_accuracy))
