@@ -24,14 +24,17 @@ args.quick = False
 args.seed = 1
 args.hyperparams = 'hyperparams/taxi.csv'
 args.tag = 'exp49-markov-save-best__learningrate_0.001'
+args.passengers = 0
 if args.quick:
-    args.taxi_experiences = 'episodes-1000_steps-20_passengers-0'
+    args.taxi_experiences = 'episodes-1000_steps-20_passengers-{}'.format(args.passengers)
+else:
+    args.taxi_experiences = 'episodes-5000_steps-20_passengers-{}'.format(args.passengers)
 args.latent_dims = 5
 args.markov_dims = 5
 args.other_args = []
 
-results_dir = 'results/analyze_markov_accuracy'
-os.makedirs(results_dir, exist_ok=True)
+output_dir = 'results/analyze_markov_accuracy'
+os.makedirs(output_dir, exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
@@ -50,8 +53,8 @@ coefs = {
 args.coefs = coefs
 
 #%% ------------------ Load environment ------------------
-results_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
-filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
+experiences_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
+filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
 
@@ -151,7 +154,7 @@ for a, a_hat, mode, ax in zip(
     ):
     action_histogram(a, a_hat, ax=ax, title=mode)
 
-plt.savefig(os.path.join(results_dir, 'predicted_action.png'))
+plt.savefig(os.path.join(output_dir, 'predicted_action.png'))
 plt.show()
 
 #%%
@@ -181,5 +184,5 @@ for a, a_hat, mode, ax in zip(
 fig.suptitle('Inverse model classifications')
 plt.tight_layout()
 plt.subplots_adjust(top=1.0)
-plt.savefig(os.path.join(results_dir, 'action_confusion_matrix.png'))
+plt.savefig(os.path.join(output_dir, 'action_confusion_matrix.png'))
 plt.show()
