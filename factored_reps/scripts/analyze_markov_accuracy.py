@@ -6,6 +6,7 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import seeding
 import torch
 from tqdm import tqdm
@@ -86,7 +87,7 @@ fnet.load(model_file, to=device)
 n_training = len(states)//2
 n_test = 2000
 
-a_hat = fnet.predict_a(x.to(device), xp.to(device)).detach().cpu().numpy()
+a_hat = fnet.predict_a(torchify(obs).to(device), torchify(next_obs).to(device)).detach().cpu().numpy()
 
 n_train_correct = (actions[:n_training] == a_hat[:n_training]).sum()
 n_test_correct = (actions[-n_test:] == a_hat[-n_test:]).sum()
@@ -94,5 +95,16 @@ n_test_correct = (actions[-n_test:] == a_hat[-n_test:]).sum()
 train_accuracy = 100 * n_train_correct / n_training
 test_accuracy = 100 * n_test_correct / n_test
 
+print('Inverse model accuracy:')
 print('Training:', n_train_correct, 'correct out of', n_training, 'total = {}%'.format(train_accuracy))
-print('Training:', n_test_correct, 'correct out of', n_test, 'total = {}%'.format(test_accuracy))
+print('Test:', n_test_correct, 'correct out of', n_test, 'total = {}%'.format(test_accuracy))
+
+# Inverse model accuracy:
+# Training: 10043 correct out of 50000 total = 20.086%
+# Test: 401 correct out of 2000 total = 20.05%
+
+plt.figure()
+sns.histplot(a_hat, discrete=True)
+plt.title('predicted action')
+plt.savefig('results/predicted_action.png')
+plt.show()
