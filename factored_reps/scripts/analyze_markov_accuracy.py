@@ -23,13 +23,14 @@ args.quick = False
 # args.quick = True
 args.seed = 1
 args.hyperparams = 'hyperparams/taxi.csv'
-args.tag = 'exp49-markov-save-best__learningrate_0.001'
-args.passengers = 0
+# args.tag = 'exp49-markov-save-best__learningrate_0.001'
+args.tag = 'exp51-markov-best-passenger'
+args.passengers = 1
 if args.quick:
     args.taxi_experiences = 'episodes-1000_steps-20_passengers-{}'.format(args.passengers)
 else:
     args.taxi_experiences = 'episodes-5000_steps-20_passengers-{}'.format(args.passengers)
-args.latent_dims = 5
+args.latent_dims = 10
 args.markov_dims = 5
 args.other_args = []
 
