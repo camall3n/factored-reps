@@ -170,9 +170,9 @@ with open(os.path.join(output_dir, 'results.txt'), 'w') as output_file:
     output_file.write('Training (on fake pairs): {} correct out of {} total = {}%\n'.format(
         n_correct_discrim_on_fake_train, n_training, discrim_train_accuracy_on_fake))
     output_file.write('Test (on real pairs): {} correct out of {} total = {}%\n'.format(
-        n_correct_discrim_on_real_test, n_training, discrim_test_accuracy_on_real))
+        n_correct_discrim_on_real_test, n_test, discrim_test_accuracy_on_real))
     output_file.write('Test (on fake pairs): {} correct out of {} total = {}%\n'.format(
-        n_correct_discrim_on_fake_test, n_training, discrim_test_accuracy_on_fake))
+        n_correct_discrim_on_fake_test, n_test, discrim_test_accuracy_on_fake))
 
 #%%
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
