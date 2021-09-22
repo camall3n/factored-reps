@@ -36,7 +36,8 @@ if device.type == 'cpu':
 else:
     args.taxi_experiences = 'episodes-5000_steps-20_passengers-{}'.format(args.passengers)
 
-output_dir = 'results/analyze_markov_accuracy/{}'.format('quick' if device.type == 'cpu' else args.tag)
+output_dir = 'results/analyze_markov_accuracy/{}'.format('quick' if device.type ==
+                                                         'cpu' else args.tag)
 os.makedirs(output_dir, exist_ok=True)
 
 params = load_hyperparams_and_inject_args(args)
@@ -91,12 +92,16 @@ def torchify(x):
 
 x = torchify(obs[0])
 xp = torchify(next_obs[0])
-fnet = FeatureNet(args, n_actions=5, input_shape=x.squeeze(0).shape, latent_dims=args.latent_dims, device=device)
+fnet = FeatureNet(args,
+                  n_actions=5,
+                  input_shape=x.squeeze(0).shape,
+                  latent_dims=args.latent_dims,
+                  device=device)
 fnet.to(device)
 fnet.load(model_file, to=device)
 
 #%%
-n_training = len(states)//2
+n_training = len(states) // 2
 n_test = 2000
 
 if device.type == 'cpu':
@@ -104,37 +109,73 @@ if device.type == 'cpu':
     n_test = n_test // 100
 
 def get_action_predictions(obs, next_obs):
-    return fnet.predict_a(torchify(obs).to(device), torchify(next_obs).to(device)).detach().cpu().numpy()
+    return fnet.predict_a(torchify(obs).to(device),
+                          torchify(next_obs).to(device)).detach().cpu().numpy()
 
-def compute_accuracy(actions, a_hat):
-    n_correct = (actions == a_hat).sum()
-    accuracy = 100 * n_correct / len(actions)
-    return n_correct, accuracy, a_hat
+def get_discrim_predictions(obs, next_obs):
+    return fnet.predict_is_fake(torchify(obs).to(device),
+                                torchify(next_obs).to(device)).detach().cpu().numpy()
 
-results = []
+def compute_accuracy(labels, predictions):
+    n_correct = (labels == predictions).sum()
+    accuracy = 100 * n_correct / len(labels)
+    return n_correct, accuracy
+
+inv_predictions = []
+discrim_predictions_on_real = []
+discrim_predictions_on_fake = []
 # divide training samples into batches, to save GPU memory
-n_batch_divisions = int(np.ceil(n_training/n_test)+1)
+n_batch_divisions = int(np.ceil(n_training / n_test) + 1)
 batch_divisions = np.linspace(0, n_training, n_batch_divisions).astype(int)
 batch_starts = batch_divisions[:-1]
 batch_ends = batch_divisions[1:]
 for low, high in zip(tqdm(batch_starts), batch_ends):
-    results.append(get_action_predictions(obs[low:high], next_obs[low:high]))
-a_hat_train = np.concatenate(results)
-n_train_correct, train_accuracy, a_hat_train = compute_accuracy(actions[:n_training], a_hat_train)
+    inv_predictions.append(get_action_predictions(obs[low:high], next_obs[low:high]))
+    discrim_predictions_on_real.append(get_discrim_predictions(obs[low:high], next_obs[low:high]))
+    discrim_predictions_on_fake.append(
+        get_discrim_predictions(obs[low:high], np.random.permutation(next_obs[low:high])))
 
-a_hat_test = get_action_predictions(obs[-n_test:], next_obs[-n_test:])
-n_test_correct, test_accuracy, a_hat_test = compute_accuracy(actions[-n_test:], a_hat_test)
+predicted_a_train = np.concatenate(inv_predictions)
+predicted_a_test = get_action_predictions(obs[-n_test:], next_obs[-n_test:])
+n_correct_inv_train, inv_train_accuracy = compute_accuracy(actions[:n_training], predicted_a_train)
+n_correct_inv_test, inv_test_accuracy = compute_accuracy(actions[-n_test:], predicted_a_test)
 
-print('Inverse model accuracy:')
-print('Training:', n_train_correct, 'correct out of', n_training, 'total = {}%'.format(train_accuracy))
-print('Test:', n_test_correct, 'correct out of', n_test, 'total = {}%'.format(test_accuracy))
+predicted_is_fake_on_real_train = np.concatenate(discrim_predictions_on_real)
+predicted_is_fake_on_fake_train = np.concatenate(discrim_predictions_on_fake)
+predicted_is_fake_on_real_test = get_discrim_predictions(obs[-n_test:], next_obs[-n_test:])
+predicted_is_fake_on_fake_test = get_discrim_predictions(obs[-n_test:],
+                                                         np.random.permutation(next_obs[-n_test:]))
 
-# Inverse model accuracy:
-# Training: 10043 correct out of 50000 total = 20.086%
-# Test: 401 correct out of 2000 total = 20.05%
+n_correct_discrim_on_real_train, discrim_train_accuracy_on_real = compute_accuracy(
+    np.zeros_like(predicted_is_fake_on_real_train), predicted_is_fake_on_real_train)
+n_correct_discrim_on_fake_train, discrim_train_accuracy_on_fake = compute_accuracy(
+    np.ones_like(predicted_is_fake_on_real_train), predicted_is_fake_on_fake_train)
+n_correct_discrim_on_real_test, discrim_test_accuracy_on_real = compute_accuracy(
+    np.zeros_like(predicted_is_fake_on_real_test), predicted_is_fake_on_real_test)
+n_correct_discrim_on_fake_test, discrim_test_accuracy_on_fake = compute_accuracy(
+    np.ones_like(predicted_is_fake_on_fake_test), predicted_is_fake_on_fake_test)
+
+with open(os.path.join(output_dir, 'results.txt'), 'w') as output_file:
+    output_file.write('Inverse model accuracy:\n')
+    output_file.write('Training: {} correct out of {} total = {}%\n'.format(
+        n_correct_inv_train, n_training, inv_train_accuracy))
+    output_file.write('Test: {} correct out of {} total = {}%\n'.format(
+        n_correct_inv_test, n_test, inv_test_accuracy))
+
+    output_file.write('\n')
+
+    output_file.write('Discriminator accuracy:\n')
+    output_file.write('Training (on real pairs): {} correct out of {} total = {}%\n'.format(
+        n_correct_discrim_on_real_train, n_training, discrim_train_accuracy_on_real))
+    output_file.write('Training (on fake pairs): {} correct out of {} total = {}%\n'.format(
+        n_correct_discrim_on_fake_train, n_training, discrim_train_accuracy_on_fake))
+    output_file.write('Test (on real pairs): {} correct out of {} total = {}%\n'.format(
+        n_correct_discrim_on_real_test, n_training, discrim_test_accuracy_on_real))
+    output_file.write('Test (on fake pairs): {} correct out of {} total = {}%\n'.format(
+        n_correct_discrim_on_fake_test, n_training, discrim_test_accuracy_on_fake))
 
 #%%
-fig, axes = plt.subplots(1, 2, figsize=(12,4))
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
 def action_histogram(a_actual, a_predicted, ax, title):
     dfs = []
@@ -143,12 +184,19 @@ def action_histogram(a_actual, a_predicted, ax, title):
         df['mode'] = label
         dfs.append(df)
     data = pd.concat(dfs, ignore_index=True)
-    sns.histplot(data=data, x='action', hue='mode', discrete=True, label='train', multiple='dodge', shrink=0.8, ax=ax)
+    sns.histplot(data=data,
+                 x='action',
+                 hue='mode',
+                 discrete=True,
+                 label='train',
+                 multiple='dodge',
+                 shrink=0.8,
+                 ax=ax)
     ax.set_title(title)
 
 for a, a_hat, mode, ax in zip(
         [actions[:n_training], actions[-n_test:]],
-        [a_hat_train, a_hat_test],
+        [predicted_a_train, predicted_a_test],
         ['training', 'test'],
         axes,
     ):
@@ -162,7 +210,9 @@ plt.show()
 fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
 def action_confusion_matrix(a_actual, a_predicted, ax, title):
-    confusion_counts = list(zip(*np.unique(np.stack([a_actual[:n_training], a_predicted], 1), axis=0, return_counts=True)))
+    confusion_counts = list(
+        zip(*np.unique(
+            np.stack([a_actual[:n_training], a_predicted], 1), axis=0, return_counts=True)))
     heatmap = np.zeros((5, 5))
     for (a, ahat), count in confusion_counts:
         heatmap[a, ahat] = count
@@ -175,7 +225,7 @@ def action_confusion_matrix(a_actual, a_predicted, ax, title):
 
 for a, a_hat, mode, ax in zip(
         [actions[:n_training], actions[-n_test:]],
-        [a_hat_train, a_hat_test],
+        [predicted_a_train, predicted_a_test],
         ['training', 'test'],
         axes,
     ):

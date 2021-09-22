@@ -129,6 +129,13 @@ class FeatureNet(Network):
             a_logits = self.inv_model(z0, z1)
         return torch.argmax(a_logits, dim=-1)
 
+    def predict_is_fake(self, x0, x1):
+        with torch.no_grad():
+            z0 = self.phi(x0)
+            z1 = self.phi(x1)
+            fake_prob = self.discriminator(z0, z1)
+        return fake_prob > 0.5
+
     def compute_loss(self, z0, z1, a, d):
         loss_info = {
             'L_coinv': self.contrastive_inverse_loss(z0, z1, a),
