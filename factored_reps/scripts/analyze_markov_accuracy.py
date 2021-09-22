@@ -19,26 +19,25 @@ from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.utils import load_hyperparams_and_inject_args
 
 args = argparse.Namespace()
-args.quick = False
-# args.quick = True
-args.seed = 1
-args.hyperparams = 'hyperparams/taxi.csv'
-# args.tag = 'exp49-markov-save-best__learningrate_0.001'
-args.tag = 'exp51-markov-best-passenger'
 args.passengers = 1
-if args.quick:
-    args.taxi_experiences = 'episodes-1000_steps-20_passengers-{}'.format(args.passengers)
-else:
-    args.taxi_experiences = 'episodes-5000_steps-20_passengers-{}'.format(args.passengers)
 args.latent_dims = 10
 args.markov_dims = 5
+args.seed = 1
+# args.tag = 'exp49-markov-save-best__learningrate_0.001'
+args.tag = 'exp51-markov-best-passenger'
+args.hyperparams = 'hyperparams/taxi.csv'
 args.other_args = []
-
-output_dir = 'results/analyze_markov_accuracy/{}'.format(args.tag)
-os.makedirs(output_dir, exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
+
+if device.type == 'cpu':
+    args.taxi_experiences = 'episodes-1000_steps-20_passengers-{}'.format(args.passengers)
+else:
+    args.taxi_experiences = 'episodes-5000_steps-20_passengers-{}'.format(args.passengers)
+
+output_dir = 'results/analyze_markov_accuracy/{}'.format('quick' if device.type == 'cpu' else args.tag)
+os.makedirs(output_dir, exist_ok=True)
 
 params = load_hyperparams_and_inject_args(args)
 args = argparse.Namespace(**params)
@@ -100,7 +99,7 @@ fnet.load(model_file, to=device)
 n_training = len(states)//2
 n_test = 2000
 
-if args.quick:
+if device.type == 'cpu':
     n_training = n_training // 100
     n_test = n_test // 100
 
