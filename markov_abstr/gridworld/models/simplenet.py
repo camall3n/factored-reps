@@ -27,7 +27,10 @@ class SimpleNet(Network):
             self.layers.extend([torch.nn.Linear(n_units_per_layer, n_outputs)])
 
         if final_activation is not None:
-            self.layers.extend([final_activation()])
+            try:
+                self.layers.extend([final_activation()])
+            except TypeError:
+                self.layers.extend([final_activation])
 
         self.model = torch.nn.Sequential(*self.layers)
 
