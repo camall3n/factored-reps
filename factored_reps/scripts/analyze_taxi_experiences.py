@@ -24,7 +24,7 @@ else:
         pass
 
     args = Args()
-    args.tag = 'episodes-1000_steps-20_passengers-1'
+    args.tag = 'episodes-5000_steps-20_passengers-1_plus'
     # args.tag = 'episodes-2000_steps-10_passengers-1'
 
 #%% Load results
@@ -33,9 +33,11 @@ filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
 
+experiences_limit = 1000 #if device.type == 'cpu' else 5000
+
 experiences = []
 n_episodes = 0
-for results_file in sorted(results_files):
+for results_file in sorted(results_files)[:experiences_limit]:
     with open(results_file, 'rb') as file:
         current_experiences = pickle.load(file)
     for experience in current_experiences:
