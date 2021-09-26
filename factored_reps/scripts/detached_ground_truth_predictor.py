@@ -170,7 +170,6 @@ def convert_and_log_loss_info(log_file, loss_info, step):
     log_file.write(json_str + '\n')
     log_file.flush()
 
-
 #%% ------------------ Train ground-truth state predictor ------------------
 log_dir = 'results/detached_ground_truth_predictor/logs/' + str(args.tag)
 model_dir = 'results/detached_ground_truth_predictor/models/' + str(args.tag)
@@ -187,10 +186,13 @@ with open(log_dir + '/train-{}.txt'.format(args.seed), 'w') as logfile:
         convert_and_log_loss_info(logfile, loss_info, step)
         loss_infos.append(loss_info)
 
-predictor.save('phi-{}'.format(args.seed), model_dir)
+predictor.save('predictor-{}'.format(args.seed), model_dir)
 
 #%% ------------------ Visualize training loss ------------------
-data = pd.DataFrame(loss_infos).melt(id_vars=['step'], value_vars=['train','test'], var_name='mode', value_name='loss')
+data = pd.DataFrame(loss_infos).melt(id_vars=['step'],
+                                     value_vars=['train', 'test'],
+                                     var_name='mode',
+                                     value_name='loss')
 sns.lineplot(data=data, x='step', y='loss', hue='mode')
 
 #%% ------------------ Predict ground-truth states ------------------
@@ -204,11 +206,11 @@ s_predicted = state_reconstructions_test
 
 state_vars = ['taxi_row', 'taxi_col', 'passenger_row', 'passenger_col', 'in_taxi'][:len(states[0])]
 
-fig, axes = plt.subplots(len(state_vars), 1, figsize=(6, 2*len(state_vars)))
+fig, axes = plt.subplots(len(state_vars), 1, figsize=(6, 2 * len(state_vars)))
 
 for (state_var_idx, state_var), ax in zip(enumerate(state_vars), axes):
     actual_bins = len(np.unique(s_actual[:, state_var_idx]))
-    predicted_bins = int(4*actual_bins)
+    predicted_bins = int(4 * actual_bins)
     h = ax.hist2d(x=s_predicted[:, state_var_idx],
                   y=s_actual[:, state_var_idx],
                   bins=(predicted_bins, actual_bins))
