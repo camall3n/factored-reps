@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 54
+exp_num = 55
 experiments = [filename.split('/')[-1] for filename in glob.glob('results/logs/exp{}*'.format(exp_num))]
 
 for experiment in experiments:
