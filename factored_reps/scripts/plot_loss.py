@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 53
+exp_num = 54
 experiments = [filename.split('/')[-1] for filename in glob.glob('results/logs/exp{}*'.format(exp_num))]
 
 for experiment in experiments:
@@ -18,14 +18,16 @@ for experiment in experiments:
     for mode in modes:
         filepaths = glob.glob('results/logs/{}/{}-*.txt'.format(experiment, mode))
         for filepath in filepaths:
-            df = pd.read_json(filepath, lines=True, orient='records')
-            for loss in ['L', 'L_inv', 'L_rat', 'L_dis', 'L_foc', 'L_fac', 'L_rec', 'L_fwd']:
-                if loss in df.columns:
-                    df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
             argspath = filepath.replace(mode, 'args')
             with open(argspath, 'r') as argsfile:
                 line = argsfile.readline()
                 args = eval(line)
+            if args.seed > 10:
+                continue
+            df = pd.read_json(filepath, lines=True, orient='records')
+            for loss in ['L', 'L_inv', 'L_rat', 'L_dis', 'L_foc', 'L_fac', 'L_rec', 'L_fwd']:
+                if loss in df.columns:
+                    df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
             df['seed'] = args.seed
             df['learning_rate'] = args.learning_rate
             df['mode'] = mode
@@ -37,14 +39,14 @@ for experiment in experiments:
 
     def plot(seed=None):
         if seed is None:
-            subset = data
+            subset = data.query("seed <= 10")
             plot_suffix = ''
         else:
             subset = data.query("seed == {}".format(seed))
             plot_suffix = '-seed{}'.format(seed)
 
-        # subset = subset.query("step % 200 == 0")
-        # plot_suffix += '-mod200'
+        subset = subset.query("step % 200 == 0")
+        plot_suffix += '-mod200'
 
         y_labels = ['L', 'L_inv', 'L_rat', 'L_dis', 'L_rec', 'L_foc']
         y_labels = [label for label in y_labels if label in subset.columns]
