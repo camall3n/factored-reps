@@ -19,12 +19,13 @@ from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.utils import load_hyperparams_and_inject_args
 
 args = argparse.Namespace()
-args.passengers = 0
-args.latent_dims = 5
+args.passengers = 1
+args.latent_dims = 10
 args.markov_dims = 5
 args.seed = 1
-args.tag = 'exp49-markov-save-best__learningrate_0.001'
+# args.tag = 'exp49-markov-save-best__learningrate_0.001'
 # args.tag = 'exp51-markov-best-passenger'
+args.tag = 'exp55-markov-best-passenger-plus'
 args.hyperparams = 'hyperparams/taxi.csv'
 args.other_args = []
 
