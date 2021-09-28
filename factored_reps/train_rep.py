@@ -51,6 +51,8 @@ parser.add_argument('--cleanvis', action='store_true',
                     help='Switch to representation-only visualization')
 parser.add_argument('--no_sigma', action='store_true',
                     help='Turn off sensors and just use true state; i.e. x=s')
+parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default)')
+parser.add_argument('--rgb', action='store_true', help='RGB observations (overrides grayscale)')
 parser.add_argument('--rearrange_xy', action='store_true',
                     help='Rearrange discrete x-y positions to break smoothness')
 # yapf: enable
@@ -58,6 +60,11 @@ parser.add_argument('--rearrange_xy', action='store_true',
 args = utils.parse_args_and_load_hyperparams(parser)
 if args.load_markov is not None:
     args.load_markov = os.path.join(args.load_markov, 'fnet-{}_best.pytorch'.format(args.seed))
+
+assert not (args.grayscale and args.rgb), 'Cannot specify both grayscale and RGB observations'
+args.grayscale = True if args.grayscale else (not args.rgb)
+del args.rgb
+args.grayscale
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
@@ -105,7 +112,7 @@ elif args.walls == 'spiral':
 elif args.walls == 'loop':
     env = LoopWorld(rows=args.rows, cols=args.cols)
 elif args.walls == 'taxi':
-    env = VisTaxi5x5()
+    env = VisTaxi5x5(grayscale=args.grayscale)
     env.reset()
 else:
     env = GridWorld(rows=args.rows, cols=args.cols)

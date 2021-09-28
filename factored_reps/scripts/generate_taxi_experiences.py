@@ -29,15 +29,23 @@ parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Nu
 parser.add_argument('-p','--n_passengers', type=int, default=1, help='Number of passengers')
 parser.add_argument('-s','--seed', type=int, default=0, help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
+parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default)')
+parser.add_argument('--rgb', action='store_true', help='RGB observations (overrides grayscale)')
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 # yapf: enable
 args = parser.parse_args()
 del args.fool_ipython
 
+assert not (args.grayscale and args.rgb), 'Cannot specify both grayscale and RGB observations'
+args.grayscale = True if args.grayscale else (not args.rgb)
+del args.rgb
+args.grayscale
+
+#%%
 
 seeding.seed(args.seed, np, random)
 
-env = VisTaxi5x5(n_passengers=args.n_passengers)
+env = VisTaxi5x5(n_passengers=args.n_passengers, grayscale=args.grayscale)
 s = env.reset(goal=False, explore=True)
 # env.plot(linewidth_multiplier=2)
 # plt.show()
