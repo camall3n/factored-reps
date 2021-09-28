@@ -35,8 +35,10 @@ for filepath in filepaths:
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-output_dir = 'results/analyze_markov_accuracy/{}'.format('quick' if device.type ==
-                                                         'cpu' else args.tag)
+output_dir = 'results/analyze_markov_accuracy/{}/seed-{}'.format(
+    'quick' if device.type == 'cpu' else args.tag,
+    args.seed
+)
 os.makedirs(output_dir, exist_ok=True)
 
 model_file = 'results/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
