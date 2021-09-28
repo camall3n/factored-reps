@@ -29,6 +29,10 @@ parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", de
 args = parser.parse_args()
 del args.fool_ipython
 
+seeding.seed(args.seed, np, random)
+torch.manual_seed(args.seed)
+torch.backends.cudnn.benchmark = False
+
 filepaths = glob.glob('results/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
 for filepath in filepaths:
     with open(filepath, 'r') as argsfile:
