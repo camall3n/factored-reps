@@ -171,7 +171,7 @@ if args.walls != 'taxi':
     env.reset_agent()
 
 else:
-    prefix = '~/scratch/' if platform.system() == 'Linux' else ''
+    prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
     experiences_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.taxi_experiences)
     filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 

@@ -62,7 +62,7 @@ sensor_list = [
 ]
 sensor = SensorChain(sensor_list)
 
-prefix = '~/scratch/' if platform.system() == 'Linux' else ''
+prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
 results_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.tag)
 os.makedirs(results_dir, exist_ok=True)
 
