@@ -1,5 +1,6 @@
 import os
 import pickle
+import platform
 import random
 import sys
 
@@ -61,7 +62,8 @@ sensor_list = [
 ]
 sensor = SensorChain(sensor_list)
 
-results_dir = os.path.join('results', 'taxi-experiences', args.tag)
+prefix = '~/scratch/' if platform.system() == 'Linux' else ''
+results_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.tag)
 os.makedirs(results_dir, exist_ok=True)
 
 #%% Generate experiences

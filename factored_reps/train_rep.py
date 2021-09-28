@@ -6,6 +6,7 @@ import json
 import numpy as np
 import os
 import pickle
+import platform
 import random
 import seeding
 import sys
@@ -170,7 +171,8 @@ if args.walls != 'taxi':
     env.reset_agent()
 
 else:
-    experiences_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
+    prefix = '~/scratch/' if platform.system() == 'Linux' else ''
+    experiences_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.taxi_experiences)
     filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
     experience_files = glob.glob(filename_pattern)
