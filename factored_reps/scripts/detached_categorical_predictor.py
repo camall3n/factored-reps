@@ -175,6 +175,9 @@ data = pd.DataFrame(loss_infos).melt(id_vars=['step'],
                                      var_name='mode',
                                      value_name='loss')
 sns.lineplot(data=data, x='step', y='loss', hue='mode')
+plt.savefig(os.path.join(output_dir, 'detached_categorical_predictor_loss.png'),
+            facecolor='white',
+            edgecolor='white')
 
 #%% ------------------ Predict ground-truth states ------------------
 with torch.no_grad():
@@ -199,4 +202,7 @@ for (state_var_idx, state_var), ax in zip(enumerate(state_vars), axes):
     ax.set_xlabel('predicted')
     ax.set_ylabel('actual')
 plt.tight_layout()
+plt.savefig(os.path.join(output_dir, 'detached_categorical_confusion_plots.png'),
+            facecolor='white',
+            edgecolor='white')
 plt.show()

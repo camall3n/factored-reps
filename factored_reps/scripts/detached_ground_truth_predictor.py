@@ -24,7 +24,7 @@ from markov_abstr.gridworld.models.simplenet import SimpleNet
 
 parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)
-parser.add_argument('-e', '--experiment', type=int, default=49)
+parser.add_argument('-e', '--experiment', type=int, default=56)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 args = parser.parse_args()
 del args.fool_ipython
@@ -193,6 +193,9 @@ data = pd.DataFrame(loss_infos).melt(id_vars=['step'],
                                      var_name='mode',
                                      value_name='loss')
 sns.lineplot(data=data, x='step', y='loss', hue='mode')
+plt.savefig(os.path.join(output_dir, 'detached_mse_predictor_loss.png'),
+            facecolor='white',
+            edgecolor='white')
 
 #%% ------------------ Predict ground-truth states ------------------
 with torch.no_grad():
@@ -218,4 +221,7 @@ for (state_var_idx, state_var), ax in zip(enumerate(state_vars), axes):
     ax.set_xlabel('predicted')
     ax.set_ylabel('actual')
 plt.tight_layout()
+plt.savefig(os.path.join(output_dir, 'detached_mse_confusion_hist.png'),
+            facecolor='white',
+            edgecolor='white')
 plt.show()

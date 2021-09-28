@@ -192,7 +192,9 @@ for a, a_hat, mode, ax in zip(
     ):
     action_histogram(a, a_hat, ax=ax, title=mode)
 
-plt.savefig(os.path.join(output_dir, 'predicted_action.png'))
+plt.savefig(os.path.join(output_dir, 'predicted_action.png'),
+            facecolor='white',
+            edgecolor='white')
 plt.show()
 
 #%%
@@ -224,5 +226,7 @@ for a, a_hat, mode, ax in zip(
 fig.suptitle('Inverse model classifications')
 plt.tight_layout()
 plt.subplots_adjust(top=1.0)
-plt.savefig(os.path.join(output_dir, 'action_confusion_matrix.png'))
+plt.savefig(os.path.join(output_dir, 'action_confusion_matrix.png'),
+            facecolor='white',
+            edgecolor='white')
 plt.show()
