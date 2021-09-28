@@ -40,7 +40,7 @@ for filepath in filepaths:
         line = argsfile.readline()
         args = eval(line)
     break
-args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', ''))
+args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', '').replace('_rgb', ''))
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
