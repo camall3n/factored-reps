@@ -39,9 +39,6 @@ for filepath in filepaths:
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-if device.type == 'cpu':
-    args.taxi_experiences = args.taxi_experiences.replace('5000', '1000')
-
 output_dir = 'results/analyze_markov_accuracy/{}'.format('quick' if device.type ==
                                                          'cpu' else args.tag)
 os.makedirs(output_dir, exist_ok=True)
@@ -54,9 +51,11 @@ filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
 
+experiences_limit = 1000 if device.type == 'cpu' else 5000
+
 experiences = []
 n_episodes = 0
-for results_file in sorted(results_files):
+for results_file in sorted(results_files)[:experiences_limit]:
     with open(results_file, 'rb') as file:
         current_experiences = pickle.load(file)
     for experience in current_experiences:

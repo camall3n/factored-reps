@@ -1,3 +1,4 @@
+from argparse import Namespace
 import glob
 import os
 import pickle
@@ -13,24 +14,24 @@ from visgrid.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from visgrid.utils import get_parser
 
-#%% Setup
-if 'ipykernel' not in sys.argv[0]:
-    parser = get_parser()
-    parser.add_argument('-t', '--tag', type=str, required=True, help='Name of experiment')
-    args = parser.parse_args()
-else:
+parser = get_parser()
+parser.add_argument('-s', '--seed', type=int, default=1)
+parser.add_argument('-e', '--experiment', type=int, default=56)
+parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
+args = parser.parse_args()
+del args.fool_ipython
 
-    class Args:
-        pass
-
-    args = Args()
-    args.tag = 'episodes-5000_steps-20_passengers-1_plus'
-    # args.tag = 'episodes-2000_steps-10_passengers-1'
+filepaths = glob.glob('results/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
+for filepath in filepaths:
+    with open(filepath, 'r') as argsfile:
+        line = argsfile.readline()
+        args = eval(line)
+    break
+args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', ''))
 
 #%% Load results
-results_dir = os.path.join('results', 'taxi-experiences', args.tag)
+results_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
 filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
-
 results_files = glob.glob(filename_pattern)
 
 experiences_limit = 1000 #if device.type == 'cpu' else 5000
@@ -195,5 +196,5 @@ pass
 #%% Check that observations look reasonable
 
 for i in range(1):
-    plt.imshow(obs[i])
+    plt.imshow(obs[i], cmap='gray')
     plt.show()

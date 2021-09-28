@@ -1,4 +1,4 @@
-import argparse
+from argparse import Namespace
 import glob
 import pickle
 import os
@@ -16,43 +16,30 @@ from visgrid.gridworld import GridWorld
 from visgrid.sensors import *
 from factored_reps.models.factornet import FactorNet
 from markov_abstr.gridworld.models.featurenet import FeatureNet
-from factored_reps.utils import load_hyperparams_and_inject_args
+from factored_reps.utils import get_parser, load_hyperparams_and_inject_args
 
-args = argparse.Namespace()
-args.passengers = 1
-args.latent_dims = 10
-args.markov_dims = 5
-args.seed = 1
-# args.tag = 'exp49-markov-save-best__learningrate_0.001'
-# args.tag = 'exp51-markov-best-passenger'
-args.tag = 'exp55-markov-best-passenger-plus'
-args.hyperparams = 'hyperparams/taxi.csv'
-args.other_args = []
+parser = get_parser()
+parser.add_argument('-s', '--seed', type=int, default=1)
+parser.add_argument('-e', '--experiment', type=int, default=56)
+parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
+args = parser.parse_args()
+del args.fool_ipython
+
+filepaths = glob.glob('results/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
+for filepath in filepaths:
+    with open(filepath, 'r') as argsfile:
+        line = argsfile.readline()
+        args = eval(line)
+    break
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
-
-if device.type == 'cpu':
-    args.taxi_experiences = 'episodes-1000_steps-20_passengers-{}'.format(args.passengers)
-else:
-    args.taxi_experiences = 'episodes-5000_steps-20_passengers-{}'.format(args.passengers)
 
 output_dir = 'results/analyze_markov_accuracy/{}'.format('quick' if device.type ==
                                                          'cpu' else args.tag)
 os.makedirs(output_dir, exist_ok=True)
 
-params = load_hyperparams_and_inject_args(args)
-args = argparse.Namespace(**params)
-
 model_file = 'results/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
-coefs = {
-    'L_inv': args.L_inv,
-    'L_fwd': args.L_fwd,
-    'L_rat': args.L_rat,
-    'L_fac': args.L_fac,
-    'L_dis': args.L_dis,
-}
-args.coefs = coefs
 
 #%% ------------------ Load environment ------------------
 experiences_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
@@ -60,9 +47,11 @@ filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
 
+experiences_limit = 1000 if device.type == 'cpu' else 5000
+
 experiences = []
 n_episodes = 0
-for results_file in sorted(results_files):
+for results_file in sorted(results_files)[:experiences_limit]:
     with open(results_file, 'rb') as file:
         current_experiences = pickle.load(file)
     for experience in current_experiences:
@@ -106,8 +95,8 @@ n_training = len(states) // 2
 n_test = 2000
 
 if device.type == 'cpu':
-    n_training = n_training // 100
-    n_test = n_test // 100
+    n_training = n_training // 10
+    n_test = n_test // 10
 
 def get_action_predictions(obs, next_obs):
     return fnet.predict_a(torchify(obs).to(device),

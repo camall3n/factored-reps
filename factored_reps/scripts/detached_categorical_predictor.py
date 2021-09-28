@@ -25,7 +25,7 @@ from markov_abstr.gridworld.models.simplenet import SimpleNet
 
 parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)
-parser.add_argument('-e', '--experiment', type=int, default=55)
+parser.add_argument('-e', '--experiment', type=int, default=56)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 args = parser.parse_args()
 del args.fool_ipython
@@ -36,7 +36,7 @@ for filepath in filepaths:
         line = argsfile.readline()
         args = eval(line)
     break
-args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', ''))
+args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', ''))
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
@@ -100,13 +100,6 @@ fnet.to(device)
 fnet.load(model_file, to=device)
 fnet.freeze()
 
-n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
-predictor = CategoricalPredictor(
-    n_inputs=args.latent_dims,
-    n_values=n_values_per_variable,
-    learning_rate=args.learning_rate,
-)
-
 #%% ------------------ Encode observations to latent states ------------------
 n_training = len(states) // 2
 n_test = 2000
@@ -157,6 +150,13 @@ model_dir = 'results/detached_ground_truth_predictor/models/' + str(args.tag)
 
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(model_dir, exist_ok=True)
+
+n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
+predictor = CategoricalPredictor(
+    n_inputs=args.latent_dims,
+    n_values=n_values_per_variable,
+    learning_rate=0.001,
+)
 
 loss_infos = []
 with open(log_dir + '/train-{}.txt'.format(args.seed), 'w') as logfile:

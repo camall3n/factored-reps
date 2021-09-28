@@ -13,32 +13,27 @@ from visgrid.sensors import *
 from visgrid.utils import get_parser
 
 #%% Setup
-if 'ipykernel' not in sys.argv[0]:
+if 'ipykernel' in sys.argv[0]:
+    import matplotlib.pyplot as plt
+    sys.argv += ["-t", "debugger"]
+else:
     import matplotlib
     # Force matplotlib to not use any Xwindows backend.
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
-    parser = get_parser()
-    # yapf: disable
-    parser.add_argument('-e','--n_episodes', type=int, default=1, help='Number of episodes')
-    parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Number of steps per episode')
-    parser.add_argument('-p','--n_passengers', type=int, default=1, help='Number of passengers')
-    parser.add_argument('-s','--seed', type=int, default=0, help='Random seed')
-    parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
-    # yapf: enable
-    args = parser.parse_args()
-else:
-    import matplotlib.pyplot as plt
+parser = get_parser()
+# yapf: disable
+parser.add_argument('-e','--n_episodes', type=int, default=1, help='Number of episodes')
+parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Number of steps per episode')
+parser.add_argument('-p','--n_passengers', type=int, default=1, help='Number of passengers')
+parser.add_argument('-s','--seed', type=int, default=0, help='Random seed')
+parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
+parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
+# yapf: enable
+args = parser.parse_args()
+del args.fool_ipython
 
-    from types import SimpleNamespace
-    args = SimpleNamespace(
-        n_episodes=1,
-        n_steps_per_episode=10,
-        n_passengers=0,
-        seed=1,
-        tag='episodes-1000_steps-20_passengers-0',
-    )
 
 seeding.seed(args.seed, np, random)
 
