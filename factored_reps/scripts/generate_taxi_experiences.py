@@ -15,7 +15,7 @@ from visgrid.utils import get_parser
 #%% Setup
 if 'ipykernel' in sys.argv[0]:
     import matplotlib.pyplot as plt
-    sys.argv += ["-t", "debugger"]
+    sys.argv += ["-t", "debugger", "--rgb"]
 else:
     import matplotlib
     # Force matplotlib to not use any Xwindows backend.
@@ -24,10 +24,10 @@ else:
 
 parser = get_parser()
 # yapf: disable
-parser.add_argument('-e','--n_episodes', type=int, default=1, help='Number of episodes')
-parser.add_argument('-n','--n_steps_per_episode', type=int, default=20, help='Number of steps per episode')
+parser.add_argument('-e','--n_episodes', type=int, default=100, help='Number of episodes')
+parser.add_argument('-n','--n_steps_per_episode', type=int, default=1, help='Number of steps per episode')
 parser.add_argument('-p','--n_passengers', type=int, default=1, help='Number of passengers')
-parser.add_argument('-s','--seed', type=int, default=1, help='Random seed')
+parser.add_argument('-s','--seed', type=int, default=5, help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
 parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default)')
 parser.add_argument('--rgb', action='store_true', help='RGB observations (overrides grayscale)')
@@ -47,16 +47,10 @@ if args.tag == 'debugger':
     if args.grayscale:
         args.tag += '_gray'
     else:
-        args.tag += '_plus'
+        args.tag += '_rgb'
 
 #%%
-
-seeding.seed(args.seed, np, random)
-
 env = VisTaxi5x5(n_passengers=args.n_passengers, grayscale=args.grayscale)
-s = env.reset(goal=False, explore=True)
-# env.plot(linewidth_multiplier=2)
-# plt.show()
 
 sensor_list = [
     MultiplySensor(scale=1 / 255),
@@ -67,16 +61,13 @@ sensor_list = [
 ]
 sensor = SensorChain(sensor_list)
 
-# plt.imshow(sensor.observe(s))
-# plt.show()
-
 results_dir = os.path.join('results', 'taxi-experiences', args.tag)
 os.makedirs(results_dir, exist_ok=True)
 
 #%% Generate experiences
 experiences = []
-seeding.seed(args.seed, np, random)
 for episode in tqdm(range(args.n_episodes)):
+    seeding.seed(args.n_episodes * (args.seed - 1) + 1 + episode, np, random)
     ob = sensor.observe(env.reset(goal=False, explore=True))
     state = env.get_state()
     goal = env.get_goal_state()
