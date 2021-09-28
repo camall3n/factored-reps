@@ -152,8 +152,8 @@ def convert_and_log_loss_info(log_file, loss_info, step):
     log_file.flush()
 
 #%% ------------------ Train ground-truth state predictor ------------------
-log_dir = 'results/detached_ground_truth_predictor/logs/' + str(args.tag)
-model_dir = 'results/detached_ground_truth_predictor/models/' + str(args.tag)
+log_dir = os.path.join(output_dir, 'logs')
+model_dir = os.path.join(output_dir, 'models')
 
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(model_dir, exist_ok=True)
