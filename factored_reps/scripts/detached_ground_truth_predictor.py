@@ -131,16 +131,17 @@ with torch.no_grad():
 
 #%% ------------------ Define helper functions for training predictor ------------------
 def get_batch(mode='train'):
-    if mode == 'test':
-        batch_z = latent_states_test
-        batch_s = states[-n_test:]
-    elif mode == 'train':
-        idx = np.random.choice(n_training, args.batch_size, replace=False)
-        batch_z = latent_states_train[idx]
-        batch_s = states[idx]
-    else:
-        raise RuntimeError('Invalid mode for get_batch: ' + str(mode))
-    batch_s = torch.as_tensor(batch_s).float().to(device)
+    with torch.no_grad():
+        if mode == 'test':
+            batch_z = latent_states_test
+            batch_s = states[-n_test:]
+        elif mode == 'train':
+            idx = np.random.choice(n_training, args.batch_size, replace=False)
+            batch_z = latent_states_train[idx]
+            batch_s = states[idx]
+        else:
+            raise RuntimeError('Invalid mode for get_batch: ' + str(mode))
+        batch_s = torch.as_tensor(batch_s).float().to(device)
     return batch_z, batch_s
 
 def compute_loss(z, s):

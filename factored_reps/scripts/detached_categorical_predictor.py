@@ -123,16 +123,17 @@ with torch.no_grad():
 
 #%% ------------------ Define helper functions for training predictor ------------------
 def get_batch(mode='train'):
-    if mode == 'test':
-        batch_z = latent_states_test
-        batch_s = states[-n_test:]
-    elif mode == 'train':
-        idx = np.random.choice(n_training, args.batch_size, replace=False)
-        batch_z = latent_states_train[idx]
-        batch_s = states[idx]
-    else:
-        raise RuntimeError('Invalid mode for get_batch: ' + str(mode))
-    batch_s = torch.as_tensor(batch_s).long().to(device)
+    with torch.no_grad():
+        if mode == 'test':
+            batch_z = latent_states_test
+            batch_s = states[-n_test:]
+        elif mode == 'train':
+            idx = np.random.choice(n_training, args.batch_size, replace=False)
+            batch_z = latent_states_train[idx]
+            batch_s = states[idx]
+        else:
+            raise RuntimeError('Invalid mode for get_batch: ' + str(mode))
+        batch_s = torch.as_tensor(batch_s).long().to(device)
     return batch_z, batch_s
 
 def convert_and_log_loss_info(log_file, loss_info, step):
@@ -156,7 +157,7 @@ predictor = CategoricalPredictor(
     n_inputs=args.latent_dims,
     n_values=n_values_per_variable,
     learning_rate=0.001,
-)
+).to(device)
 
 loss_infos = []
 with open(log_dir + '/train-{}.txt'.format(args.seed), 'w') as logfile:
