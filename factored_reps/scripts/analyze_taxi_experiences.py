@@ -1,4 +1,3 @@
-from argparse import Namespace
 import glob
 import os
 import pickle
@@ -14,23 +13,26 @@ from visgrid.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from visgrid.utils import get_parser
 
+if 'ipykernel' in sys.argv[0]:
+    sys.argv += ["-t", 'foo']
 parser = get_parser()
-parser.add_argument('-s', '--seed', type=int, default=1)
-parser.add_argument('-e', '--experiment', type=int, default=56)
+parser.add_argument('-t', '--tag', type=str, required=True)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 args = parser.parse_args()
 del args.fool_ipython
 
-filepaths = glob.glob('results/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
-for filepath in filepaths:
-    with open(filepath, 'r') as argsfile:
-        line = argsfile.readline()
-        args = eval(line)
-    break
-args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', ''))
+if 'ipykernel' in sys.argv[0]:
+    # args.tag = 'debugger_steps-20_passengers-1_plus'
+    # args.tag = 'debugger_steps-20_passengers-1_gray'
+    # args.tag = 'episodes-5000_steps-20_passengers-0'
+    # args.tag = 'episodes-5000_steps-20_passengers-1'
+    # args.tag = 'episodes-5000_steps-20_passengers-1_plus'
+    args.tag = 'episodes-5000_steps-20_passengers-1_gray'
+
+args.n_passengers = int(args.tag.split('passengers-')[-1].replace('_plus', '').replace('_gray', ''))
 
 #%% Load results
-results_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
+results_dir = os.path.join('results', 'taxi-experiences', args.tag)
 filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
 results_files = glob.glob(filename_pattern)
 
@@ -111,6 +113,16 @@ if args.n_passengers > 0:
 sns.histplot(actions[:], discrete=True)
 plt.title('action')
 plt.show()
+
+#%% -------------- Sanity checks --------------
+
+if args.n_passengers > 0:
+    different_col = states[:, taxi_col] != states[:, passenger_col]
+    different_row = states[:, taxi_row] != states[:, passenger_row]
+    different_position = different_col | different_row
+    fish_out_of_water = different_position & (states[:, in_taxi] == True)
+    fish_out_of_water.sum()/len(states)
+    np.argwhere(fish_out_of_water > 0).squeeze()
 
 #%% -------------- Compute statistics on experiences --------------
 
