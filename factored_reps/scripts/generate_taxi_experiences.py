@@ -28,7 +28,7 @@ parser = get_parser()
 parser.add_argument('-e','--n_episodes', type=int, default=100, help='Number of episodes')
 parser.add_argument('-n','--n_steps_per_episode', type=int, default=1, help='Number of steps per episode')
 parser.add_argument('-p','--n_passengers', type=int, default=1, help='Number of passengers')
-parser.add_argument('-s','--seed', type=int, default=5, help='Random seed')
+parser.add_argument('-s','--seed', type=int, default=1, help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True, help='Name of experiment')
 parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default)')
 parser.add_argument('--rgb', action='store_true', help='RGB observations (overrides grayscale)')
@@ -42,7 +42,7 @@ args.grayscale = True if args.grayscale else (not args.rgb)
 del args.rgb
 args.grayscale
 
-if args.tag == 'debugger':
+if 'debugger' in args.tag:
     args.tag += '_steps-{}'.format(args.n_steps_per_episode)
     args.tag += '_passengers-{}'.format(args.n_passengers)
     if args.grayscale:

@@ -1,6 +1,7 @@
 import glob
 import os
 import pickle
+import platform
 import random
 import sys
 
@@ -22,36 +23,48 @@ args = parser.parse_args()
 del args.fool_ipython
 
 if 'ipykernel' in sys.argv[0]:
+    args.tag = 'debugger-02_steps-1_passengers-1_rgb'
     # args.tag = 'debugger_steps-20_passengers-1_plus'
     # args.tag = 'debugger_steps-20_passengers-1_gray'
     # args.tag = 'episodes-5000_steps-20_passengers-0'
     # args.tag = 'episodes-5000_steps-20_passengers-1'
     # args.tag = 'episodes-5000_steps-20_passengers-1_plus'
-    args.tag = 'episodes-5000_steps-20_passengers-1_gray'
+    # args.tag = 'episodes-5000_steps-20_passengers-1_gray'
+    # args.tag = 'episodes-5000_steps-20_passengers-1_rgb'
+    # args.tag = 'episodes-10000_steps-10_passengers-1_rgb'
+    # args.tag = 'episodes-20000_steps-5_passengers-1_rgb'
+    # args.tag = 'iid100k_steps-1_passengers-1_gray'
+    # args.tag = 'iid100k_steps-1_passengers-1_rgb'
 
-args.n_passengers = int(args.tag.split('passengers-')[-1].replace('_plus', '').replace('_gray', ''))
+args.n_passengers = int(args.tag.split('passengers-')[-1].replace('_plus', '').replace('_gray', '').replace('_rgb', ''))
+args.n_steps_per_episode = int(args.tag.split('_')[1].replace('steps-', ''))
+args.n_episodes_per_chunk = 1000 if 'iid100k' in args.tag else 1
 
 #%% Load results
-results_dir = os.path.join('results', 'taxi-experiences', args.tag)
+prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
+results_dir = os.path.join(prefix+'results', 'taxi-experiences', args.tag)
 filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
 results_files = glob.glob(filename_pattern)
 
-experiences_limit = 1000 #if device.type == 'cpu' else 5000
+if device.type == 'cpu':
+    experiences_limit = 20000//args.n_steps_per_episode//args.n_episodes_per_chunk
+else:
+    experiences_limit = 100000//args.n_steps_per_episode//args.n_episodes_per_chunk
 
+n_chunks = 0
 experiences = []
-n_episodes = 0
 for results_file in sorted(results_files)[:experiences_limit]:
     with open(results_file, 'rb') as file:
         current_experiences = pickle.load(file)
     for experience in current_experiences:
-        experience['episode'] = n_episodes
+        experience['chunk'] = n_chunks
     experiences.extend(current_experiences)
-    n_episodes += 1
+    n_chunks += 1
 
 def extract_array(experiences, key):
     return np.asarray([experience[key] for experience in experiences])
 
-episodes = extract_array(experiences, 'episode')
+# episodes = extract_array(experiences, 'episode')
 steps = extract_array(experiences, 'step')
 obs = extract_array(experiences, 'ob')
 states = extract_array(experiences, 'state')
@@ -105,7 +118,7 @@ if args.n_passengers > 0:
 #%%
 if args.n_passengers > 0:
     sns.histplot(states[:, in_taxi], discrete=True)
-    np.histogram(states[:, in_taxi], bins=2)[0]*2/len(states)
+    np.histogram(states[:, in_taxi], bins=2)[0]/len(states)
     plt.title('passenger in taxi?')
     plt.show()
 
@@ -113,16 +126,6 @@ if args.n_passengers > 0:
 sns.histplot(actions[:], discrete=True)
 plt.title('action')
 plt.show()
-
-#%% -------------- Sanity checks --------------
-
-if args.n_passengers > 0:
-    different_col = states[:, taxi_col] != states[:, passenger_col]
-    different_row = states[:, taxi_row] != states[:, passenger_row]
-    different_position = different_col | different_row
-    fish_out_of_water = different_position & (states[:, in_taxi] == True)
-    fish_out_of_water.sum()/len(states)
-    np.argwhere(fish_out_of_water > 0).squeeze()
 
 #%% -------------- Compute statistics on experiences --------------
 
@@ -162,12 +165,36 @@ if args.n_passengers > 0:
 if args.n_passengers > 0:
     np.unique(goals, axis=0, return_counts=True)[1]/len(states)
 
+#%% -------------- Sanity checks --------------
+
+if args.n_passengers > 0:
+    different_col = states[:, taxi_col] != states[:, passenger_col]
+    different_row = states[:, taxi_row] != states[:, passenger_row]
+    different_position = different_col | different_row
+    fish_out_of_water = different_position & (states[:, in_taxi] == True)
+    fish_out_of_water.sum()
+    np.argwhere(fish_out_of_water > 0).squeeze()
+
+    waiting = (1-states[:, in_taxi]) & (1-next_states[:, in_taxi])
+    riding = states[:, in_taxi] & next_states[:, in_taxi]
+    dropoff = states[:, in_taxi] & (1-next_states[:, in_taxi])
+    pickup = (1-states[:, in_taxi]) & next_states[:, in_taxi]
+    [waiting.sum(), riding.sum(), dropoff.sum(), pickup.sum()]
+
+    tried_dropoff = (states[:, in_taxi] & (actions == 4))
+    tried_pickup = (1 - states[:, in_taxi]) & (actions == 4) & taxi_at_passenger
+    [tried_dropoff.sum(), tried_pickup.sum()]
+    np.argwhere(~dropoff & tried_dropoff)[:10]
+    np.argwhere(~pickup & tried_pickup)[:10]
+
+#%% -------------------------------------------
+
 #%% Episode frequencies
-episode_length = int(len(states)/n_episodes)
+episode_length = args.n_steps_per_episode
 
 #%% Taxi L1 distance traveled
 ep_start_states = states[0::episode_length]
-ep_end_states = states[episode_length-1::episode_length]
+ep_end_states = next_states[episode_length-1::episode_length]
 row_dist = np.abs(ep_start_states[:, taxi_row] - ep_end_states[:, taxi_row])
 col_dist = np.abs(ep_start_states[:, taxi_col] - ep_end_states[:, taxi_col])
 taxi_dist = (row_dist + col_dist)
@@ -178,7 +205,7 @@ plt.show()
 #%% Passenger L1 distance traveled
 if args.n_passengers > 0:
     ep_start_states = states[0::episode_length]
-    ep_end_states = states[episode_length-1::episode_length]
+    ep_end_states = next_states[episode_length-1::episode_length]
     row_dist = np.abs(ep_start_states[:, passenger_row] - ep_end_states[:, passenger_row])
     col_dist = np.abs(ep_start_states[:, passenger_col] - ep_end_states[:, passenger_col])
     passenger_dist = (row_dist + col_dist).astype(int)

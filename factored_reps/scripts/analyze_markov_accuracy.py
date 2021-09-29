@@ -53,7 +53,7 @@ filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
 
-experiences_limit = 1000 if device.type == 'cpu' else 5000
+experiences_limit = 1000 if device.type == 'cpu' else len(results_files)
 
 experiences = []
 n_episodes = 0

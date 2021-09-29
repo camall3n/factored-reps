@@ -2,6 +2,7 @@ from argparse import Namespace
 import glob
 import json
 import pickle
+import platform
 import os
 import random
 import sys
@@ -52,7 +53,8 @@ os.makedirs(output_dir, exist_ok=True)
 model_file = 'results/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
 
 #%% ------------------ Load environment ------------------
-experiences_dir = os.path.join('results', 'taxi-experiences', args.taxi_experiences)
+prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
+experiences_dir = os.path.join(prefix+'results', 'taxi-experiences', args.taxi_experiences)
 filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
