@@ -46,10 +46,7 @@ results_dir = os.path.join(prefix+'results', 'taxi-experiences', args.tag)
 filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
 results_files = glob.glob(filename_pattern)
 
-if device.type == 'cpu':
-    experiences_limit = 20000//args.n_steps_per_episode//args.n_episodes_per_chunk
-else:
-    experiences_limit = 100000//args.n_steps_per_episode//args.n_episodes_per_chunk
+experiences_limit = 20000//args.n_steps_per_episode//args.n_episodes_per_chunk
 
 n_chunks = 0
 experiences = []
