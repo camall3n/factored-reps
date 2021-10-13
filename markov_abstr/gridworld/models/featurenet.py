@@ -71,13 +71,13 @@ class FeatureNet(Network):
         fakes = self.inv_discriminator(z0_extended, z1_extended, a_pos_neg)
         return self.bce_loss(input=fakes, target=is_fake.float())
 
-    def ratio_loss(self, z0, z1):
+    def ratio_loss(self, z0, z1, z1_neg):
         if self.coefs.L_rat == 0.0:
             return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
-        idx = torch.randperm(N)
-        z1_neg = z1.view(N, -1)[idx].view(z1.size())
+        # idx = torch.randperm(N)
+        # z1_neg = z1.view(N, -1)[idx].view(z1.size())
 
         # concatenate positive and negative examples
         z0_extended = torch.cat([z0, z0], dim=0)
@@ -136,13 +136,13 @@ class FeatureNet(Network):
             fake_prob = self.discriminator(z0, z1)
         return fake_prob > 0.5
 
-    def compute_loss(self, z0, z1, a, d):
+    def compute_loss(self, z0, a, z1, z1_alt):
         loss_info = {
-            'L_coinv': self.contrastive_inverse_loss(z0, z1, a),
+            # 'L_coinv': self.contrastive_inverse_loss(z0, z1, a),
             'L_inv': self.inverse_loss(z0, z1, a),
-            'L_rat': self.ratio_loss(z0, z1),
+            'L_rat': self.ratio_loss(z0, z1, z1_alt),
             'L_dis': self.distance_loss(z0, z1),
-            'L_ora': self.oracle_loss(z0, z1, d),
+            # 'L_ora': self.oracle_loss(z0, z1, d),
         }
         loss = 0
         for loss_type in sorted(loss_info.keys()):
@@ -151,7 +151,7 @@ class FeatureNet(Network):
 
         return loss_info
 
-    def train_batch(self, x0, a, x1, d=None, test=False):
+    def train_batch(self, x0, a, x1, x1_alt, d=None, test=False):
         if not test:
             self.train()
             self.optimizer.zero_grad()
@@ -159,7 +159,8 @@ class FeatureNet(Network):
             self.eval()
         z0 = self.phi(x0)
         z1 = self.phi(x1)
-        loss_info = self.compute_loss(z0, z1, a, d)
+        z1_alt = self.phi(x1_alt)
+        loss_info = self.compute_loss(z0, a, z1, z1_alt)
         if not test:
             loss_info['L'].backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(self.parameters(), self.max_gradient_norm)

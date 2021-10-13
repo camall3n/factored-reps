@@ -83,6 +83,9 @@ if args.no_graphics:
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('device: {}'.format(device))
+
 log_dir = 'results/logs/' + str(args.tag)
 vid_dir = 'results/videos/' + str(args.tag)
 maze_dir = 'results/mazes/' + str(args.tag)
@@ -177,6 +180,8 @@ else:
 
     experience_files = glob.glob(filename_pattern)
 
+    experiences_limit = 20 if device.type == 'cpu' else len(experience_files)
+
     experiences = []
     for experience_file in sorted(experience_files):
         with open(experience_file, 'rb') as file:
@@ -184,7 +189,7 @@ else:
             experiences.extend(current_experiences)
 
     def extract_array(experiences, key):
-        return [experience[key] for experience in experiences]
+        return np.asarray([experience[key] for experience in experiences])
 
     n_samples = len(experiences)
     obs = extract_array(experiences, 'ob')
@@ -202,11 +207,11 @@ else:
         ]
     sensor = SensorChain(sensor_list)
 
-    s0 = np.stack(states)
-    s1 = np.stack(next_states)
-    a = np.asarray(actions)
-    x0 = sensor.observe(np.stack(obs))
-    x1 = sensor.observe(np.stack(next_obs))
+    s0 = states
+    s1 = next_states
+    a = actions
+    x0 = sensor.observe(obs)
+    x1 = sensor.observe(next_obs)
     c0 = s0[:, 0] * env._cols + s0[:, 1]
 
 #% ------------------ Setup experiment ------------------
@@ -214,9 +219,7 @@ n_updates_per_frame = 100
 n_frames = args.n_updates // n_updates_per_frame
 
 batch_size = args.batch_size
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print('device: {}'.format(device))
+n_training = n_samples // 2
 
 if args.model_type == 'factored-split':
     fnet = FactoredFwdModel(args,
@@ -249,29 +252,53 @@ fnet.to(device)
 
 fnet.print_summary()
 
-n_test_samples = 2000
+def get_obs_negatives(idx, max_idx=n_samples):
+    # provide alternate x' (negative examples) for contrastive model
+
+    # draw from multiple sources of negative examples, depending on RNG
+    r = np.random.rand(*idx.shape)
+    all = np.arange(len(idx))
+    to_keep = np.argwhere(r < 1/3).squeeze()  # yapf:disable;  where to use the same obs again
+    to_offset = np.argwhere((1/3 <= r) & (r < 2/3) & ((idx + 1) < max_idx)).squeeze()  # yapf:disable;  where to use the *subsequent* obs from the trajectory (i.e. x''), unless out of bounds
+    # otherwise we'll draw a random obs from the buffer
+
+    shuffled_idx = np.random.permutation(idx)
+    obs_negatives = next_obs[shuffled_idx]  # replace x' samples with random samples
+    obs_negatives[to_keep] = obs[idx[to_keep]]  # replace x' samples with x
+    obs_negatives[to_offset] = next_obs[idx[to_offset] + 1]  # replace x' samples with x''
+
+    # replace all samples with one specific type of negative example
+    # obs_negatives = next_obs[shuffled_idx]  # x' -> \tilde x'
+    # obs_negatives = obs[idx]  # x' -> x
+    # obs_negatives = next_obs[(idx+1) % n_samples]  # x' -> x''
+
+    return sensor.observe(obs_negatives)
+
+n_test_samples = 100 if str(device) == 'cpu' else 2000
 test_s0 = s0[-n_test_samples:, :]
 test_s1 = s1[-n_test_samples:, :]
 test_x0 = torch.as_tensor(x0)[-n_test_samples:].float().to(device)
 test_x1 = torch.as_tensor(x1)[-n_test_samples:].float().to(device)
+test_x1_alt = torch.as_tensor(get_obs_negatives(np.arange(n_samples - n_test_samples,
+                                                          n_samples))).float().to(device)
 test_a = torch.as_tensor(a)[-n_test_samples:].long().to(device)
 test_i = torch.arange(n_test_samples).long().to(device)
 test_c = c0[-n_test_samples:]
 
 state = s0[0]
-obs = x0[0]
+ob = x0[0]
 
 if args.video:
     if not args.cleanvis:
         repvis = RepVisualization(env,
-                                  obs,
+                                  ob,
                                   batch_size=n_test_samples,
                                   n_dims=args.latent_dims,
                                   colors=test_c,
                                   cmap=cmap)
     else:
         repvis = CleanVisualization(env,
-                                    obs,
+                                    ob,
                                     batch_size=n_test_samples,
                                     n_dims=args.latent_dims,
                                     colors=test_c,
@@ -285,8 +312,7 @@ def get_batch(x0, x1, a, batch_size=batch_size):
     ti = torch.as_tensor(idx).long().to(device)
     return tx0, tx1, ta, idx
 
-get_next_batch = (
-    lambda: get_batch(x0[:n_samples // 2, :], x1[:n_samples // 2, :], a[:n_samples // 2]))
+get_next_batch = (lambda: get_batch(x0[:n_training, :], x1[:n_training, :], a[:n_training]))
 
 def convert_and_log_loss_info(log_file, loss_info, step):
     for loss_type, loss_value in loss_info.items():
@@ -304,7 +330,11 @@ def test_rep(fnet, step):
         fnet.eval()
         if args.model_type in ['markov', 'factored-combined', 'factored-split', 'focused-autoenc']:
             with torch.no_grad():
-                z0, z1, loss_info = fnet.train_batch(test_x0, test_a, test_x1, test=True)
+                z0, z1, loss_info = fnet.train_batch(test_x0,
+                                                     test_a,
+                                                     test_x1,
+                                                     test_x1_alt,
+                                                     test=True)
         elif args.model_type == 'autoencoder':
             z0 = fnet.encode(test_x0)
             z1 = fnet.encode(test_x1)
@@ -356,7 +386,8 @@ for step in range(args.n_updates):
                 best_frame = step
 
     tx0, tx1, ta, idx = get_next_batch()
-    train_loss_info = fnet.train_batch(tx0, ta, tx1)[-1]
+    tx1_alt = torch.as_tensor(get_obs_negatives(idx, max_idx=n_training)).float().to(device)
+    train_loss_info = fnet.train_batch(tx0, ta, tx1, tx1_alt)[-1]
     convert_and_log_loss_info(train_log, train_loss_info, step)
 
 if args.video:
