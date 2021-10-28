@@ -91,7 +91,7 @@ goals = extract_array(experiences, 'goal')
 def torchify(x):
     if x.ndim == 3:
         x = np.expand_dims(x, axis=0)
-    result = torch.as_tensor(np.moveaxis(x, -1, 1)).float().to(device)
+    result = torch.as_tensor(np.moveaxis(x, -1, 1)).float().to(device) / 255
     return result
 
 x = torchify(obs[0])
