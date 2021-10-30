@@ -165,7 +165,7 @@ n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
 predictor = CategoricalPredictor(
     n_inputs=args.latent_dims,
     n_values=n_values_per_variable,
-    learning_rate=0.001,
+    learning_rate=args.learning_rate,
 ).to(device)
 
 def process_batch(x, s, test=False):
