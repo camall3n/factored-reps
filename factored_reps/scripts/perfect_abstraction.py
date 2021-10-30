@@ -32,16 +32,10 @@ parser.add_argument('--hyperparams',
                     type=str,
                     default='hyperparams/taxi.csv',
                     help='Path to hyperparameters csv file')
-parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default)')
-parser.add_argument('--rgb', action='store_true', help='RGB observations (overrides grayscale)')
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 # yapf: enable
 
 args = utils.parse_args_and_load_hyperparams(parser)
-
-assert not (args.grayscale and args.rgb), 'Cannot specify both grayscale and RGB observations'
-args.grayscale = True if args.grayscale else (not args.rgb)
-del args.rgb
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
@@ -54,7 +48,7 @@ print('device: {}'.format(device))
 
 log_dir = 'results/logs/' + str(args.tag)
 models_dir = 'results/models/{}'.format(args.tag)
-output_dir = 'results/analyze_markov_accuracy/{}'.format(args.tag)
+output_dir = 'results/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(models_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
@@ -216,7 +210,7 @@ plt.savefig(os.path.join(output_dir, 'perfect_predictor_loss.png'),
 
 #%% ------------------ Predict ground-truth states ------------------
 with torch.no_grad():
-    state_reconstructions_train = predictor.predict(fnet.encode(obs_train)).detach().cpu().numpy()
+    # state_reconstructions_train = predictor.predict(fnet.encode(obs_train)).detach().cpu().numpy()
     state_reconstructions_test = predictor.predict(fnet.encode(obs_test)).detach().cpu().numpy()
 
 #%% ------------------ Analyze state predictions ------------------
