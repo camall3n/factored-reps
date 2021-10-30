@@ -181,6 +181,8 @@ def process_batch(x, s, test=False):
     loss = predictor.compute_loss(z, s)
     if not test:
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(fnet.parameters(), args.markov_max_gradient_norm)
+        torch.nn.utils.clip_grad_norm_(predictor.parameters(), args.markov_max_gradient_norm)
         fnet.optimizer.step()
         predictor.optimizer.step()
     return loss
