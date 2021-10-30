@@ -51,8 +51,12 @@ class CategoricalPredictor(Network):
     def compute_loss(self, input, target):
         soft_predictions = self(input)
         losses = [
-            F.nll_loss(input=pred, target=targ.squeeze(-1))
-            for pred, targ in zip(soft_predictions, torch.split(target, 1, dim=-1))
+            F.nll_loss(input=pred, target=targ.squeeze(-1), weight=weights)
+            for pred, targ, weights in zip(
+                soft_predictions,
+                torch.split(target, 1, dim=-1),
+                [None] * 4 + [torch.tensor((0.5 / 0.75, 0.5 / 0.25)).float().to(target.device)],
+            )
         ]
         return torch.stack(losses).mean()
 
