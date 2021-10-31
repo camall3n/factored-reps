@@ -116,6 +116,7 @@ if device.type == 'cpu':
     n_training = n_training // 10
     n_test = n_test // 10
     args.batch_size = 10
+    args.n_updates = 40
 
 with torch.no_grad():
     latent_batches = []
@@ -164,7 +165,7 @@ n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
 predictor = CategoricalPredictor(
     n_inputs=args.latent_dims,
     n_values=n_values_per_variable,
-    learning_rate=0.001,
+    learning_rate=0.0001,
 ).to(device)
 
 loss_infos = []

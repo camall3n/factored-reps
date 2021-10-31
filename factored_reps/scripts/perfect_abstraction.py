@@ -114,6 +114,16 @@ else:
     raise NotImplementedError
 fnet.to(device)
 
+n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
+predictor = CategoricalPredictor(
+    n_inputs=args.latent_dims,
+    n_values=n_values_per_variable,
+    learning_rate=args.learning_rate,
+).to(device)
+
+fnet.print_summary()
+predictor.print_summary()
+
 #%% ------------------ Encode observations to latent states ------------------
 n_training = len(states) // 2
 n_test = 2000
@@ -161,13 +171,6 @@ def convert_and_log_loss_info(log_file, loss_info, step):
     log_file.flush()
 
 #%% ------------------ Train ground-truth state predictor ------------------
-n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
-predictor = CategoricalPredictor(
-    n_inputs=args.latent_dims,
-    n_values=n_values_per_variable,
-    learning_rate=args.learning_rate,
-).to(device)
-
 def process_batch(x, s, test=False):
     if not test:
         fnet.train()
