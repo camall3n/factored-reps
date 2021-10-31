@@ -28,6 +28,7 @@ parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)
 parser.add_argument('-e', '--experiment', type=int, default=56)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
+parser.add_argument("--n_updates", type=int, default=20000)
 args = parser.parse_args()
 del args.fool_ipython
 
@@ -35,6 +36,7 @@ seeding.seed(args.seed, np, random)
 torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
+n_updates = args.n_updates
 filepaths = glob.glob('results/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
 for filepath in filepaths:
     with open(filepath, 'r') as argsfile:
@@ -42,6 +44,7 @@ for filepath in filepaths:
         args = eval(line)
     break
 args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', '').replace('_rgb', ''))
+args.n_updates = n_updates
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
