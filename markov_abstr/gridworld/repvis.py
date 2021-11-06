@@ -118,7 +118,7 @@ class RepVisualization:
         plt.setp(ax.collections, alpha=.7)
         return ax
 
-    def update_plots(self, z0, a, z1, text):
+    def update_plots(self, z0, text):
         for row in range(4):
             for col in range(row + 1):
                 if (row + 1) < self.n_dims:
@@ -133,7 +133,7 @@ class RepVisualization:
         self.fig.canvas.flush_events()
 
         # self._plot_effects(z0, z1_hat, a, ax=self.effects, title=r'$T(\phi(x),a) - \phi(x)$')
-        self._plot_effects(z0, z1, a, ax=self.effects, title=r"$\phi({x'}) - \phi(x)$", noise=0.05)
+        # self._plot_effects(z0, z1, a, ax=self.effects, title=r"$\phi({x'}) - \phi(x)$", noise=0.05)
 
         frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
         frame = frame.reshape(self.fig.canvas.get_width_height()[::-1] + (3, ))
