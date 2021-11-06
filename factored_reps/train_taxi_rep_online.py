@@ -107,20 +107,24 @@ env.reset()
 sensor_list = []
 if not args.no_sigma:
     sensor_list += [
-        MoveAxisSensor(-1, 1)  # Move image channel (-1) to just after batch dim (1)
+        MoveAxisSensor(-1, 0)  # Move image channel (-1) to front (0)
     ]
 sensor = SensorChain(sensor_list)
 
 #% ------------------ Generate & store experiences ------------------
 on_retrieve = {
+    '_index_': lambda items: np.asarray(items),
     '*': lambda items: torch.as_tensor(np.asarray(items)).to(device),
     'ob': lambda items: items.float(),
     'next_ob': lambda items: items.float(),
     'action': lambda items: items.long()
 }
-replay_train = ReplayMemory(20000, on_retrieve)
+replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 replay_test = ReplayMemory(args.batch_size, on_retrieve)
-for buffer, n_episodes in zip([replay_train, replay_test], [4000, 400]):
+n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
+n_test_episodes = int(np.ceil(args.batch_size / args.n_steps_per_episode))
+n_train_episodes = n_test_episodes
+for buffer, n_episodes in zip([replay_train, replay_test], [n_train_episodes, n_test_episodes]):
     for exp in generate_experiences(env,
                                     sensor,
                                     n_episodes,
@@ -128,7 +132,7 @@ for buffer, n_episodes in zip([replay_train, replay_test], [4000, 400]):
                                     seed=args.seed):
         if buffer is replay_test:
             s = exp['state']
-            exp['color'] = s[:, 0] * env._cols + s[:, 1]
+            exp['color'] = s[0] * env._cols + s[1]
         buffer.push(exp)
 
 def get_negatives(buffer, idx):
