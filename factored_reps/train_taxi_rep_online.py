@@ -52,7 +52,10 @@ parser.add_argument('--save', action='store_true',
                     help='Save final network weights')
 parser.add_argument('--no_sigma', action='store_true',
                     help='Turn off sensors and just use true state; i.e. x=s')
-parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default is RGB)')
+parser.add_argument('--grayscale', action='store_true',
+                    help='Grayscale observations (default is RGB)')
+parser.add_argument('--quick', action='store_true',
+                    help='Flag to reduce number of updates for quick testing')
 # yapf: enable
 
 args = utils.parse_args_and_load_hyperparams(parser)
@@ -79,6 +82,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
 log_dir = 'results/logs/' + str(args.tag)
+models_dir = 'results/models/' + str(args.tag)
 vid_dir = 'results/videos/' + str(args.tag)
 maze_dir = 'results/mazes/' + str(args.tag)
 os.makedirs(log_dir, exist_ok=True)
@@ -123,13 +127,18 @@ replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 replay_test = ReplayMemory(args.batch_size, on_retrieve)
 n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
 n_test_episodes = int(np.ceil(args.batch_size / args.n_steps_per_episode))
-n_train_episodes = n_test_episodes
-for buffer, n_episodes in zip([replay_train, replay_test], [n_train_episodes, n_test_episodes]):
+if args.quick:
+    n_train_episodes = n_test_episodes
+test_seed = 1
+train_seed = 2 + args.seed
+print('Initializing replay buffer...')
+for buffer, n_episodes, seed in zip([replay_train, replay_test],
+                                    [n_train_episodes, n_test_episodes], [train_seed, test_seed]):
     for exp in generate_experiences(env,
                                     sensor,
                                     n_episodes,
                                     n_steps_per_episode=args.n_steps_per_episode,
-                                    seed=args.seed):
+                                    seed=seed):
         if buffer is replay_test:
             s = exp['state']
             exp['color'] = s[0] * env._cols + s[1]
@@ -201,9 +210,10 @@ def convert_and_log_loss_info(log_file, loss_info, step):
 
 best_model_test_loss = np.inf
 
-def test_rep(fnet, step):
+def test_rep(step):
     with torch.no_grad():
         fnet.eval()
+        predictor.eval()
         with torch.no_grad():
             z0, loss_info = train_batch(test=True)
 
@@ -216,12 +226,9 @@ def test_rep(fnet, step):
         if current_loss < best_model_test_loss:
             is_best = True
             best_model_test_loss = current_loss
-        fnet.phi.save('phi-{}'.format(args.seed),
-                      'results/models/{}'.format(args.tag),
-                      is_best=is_best)
-        fnet.save('fnet-{}'.format(args.seed),
-                  'results/models/{}'.format(args.tag),
-                  is_best=is_best)
+        fnet.phi.save('phi-{}'.format(args.seed), models_dir, is_best=is_best)
+        fnet.save('fnet-{}'.format(args.seed), models_dir, is_best=is_best)
+        predictor.save('predictor-{}'.format(args.seed), models_dir, is_best=is_best)
 
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
 
@@ -244,8 +251,11 @@ n_episodes_per_update = int(min(1, n_steps_per_update // args.n_steps_per_episod
 
 data = []
 best_frame = 0
-for step in range(args.n_updates):
-    test_results, is_best = test_rep(fnet, step)
+print('Training model...')
+if args.quick:
+    args.n_updates = 10
+for step in tqdm(range(args.n_updates)):
+    test_results, is_best = test_rep(step)
 
     if args.video:
         if step % n_updates_per_frame == 0:
@@ -261,7 +271,8 @@ for step in range(args.n_updates):
                                     sensor,
                                     n_episodes=n_episodes_per_update,
                                     n_steps_per_episode=args.n_steps_per_episode,
-                                    seed=args.seed):
+                                    seed=train_seed + step,
+                                    quiet=True):
         replay_train.push(exp)
 
 #% ------------------ Save results ------------------
@@ -271,8 +282,9 @@ if args.video:
     imageio.imwrite(best_image_filename, data[best_frame])
 
 if args.save:
-    fnet.phi.save('phi-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
-    fnet.save('fnet-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
+    fnet.phi.save('phi-{}'.format(args.seed), models_dir)
+    fnet.save('fnet-{}'.format(args.seed), models_dir)
+    predictor.save('predictor-{}'.format(args.seed), models_dir)
 
 train_log.close()
 test_log.close()

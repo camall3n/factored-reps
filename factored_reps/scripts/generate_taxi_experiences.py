@@ -13,9 +13,12 @@ from visgrid.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from visgrid.utils import get_parser
 
-def generate_experiences(env, sensor, n_episodes, n_steps_per_episode, seed):
+def generate_experiences(env, sensor, n_episodes, n_steps_per_episode, seed, quiet=False):
     experiences = []
-    for episode in tqdm(range(n_episodes)):
+    episodes = range(n_episodes)
+    if not quiet:
+        episodes = tqdm(episodes)
+    for episode in episodes:
         seeding.seed(n_episodes * (seed - 1) + 1 + episode, np, random)
         ob = sensor.observe(env.reset(goal=False, explore=True))
         state = env.get_state()
