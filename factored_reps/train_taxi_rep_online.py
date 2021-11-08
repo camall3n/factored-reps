@@ -193,7 +193,7 @@ def train_batch(test=False):
     batch = buffer.sample(batch_size, fields) if not test else buffer.retrieve(fields=fields)
     idx, obs, states, actions, next_obs = batch
 
-    negatives = get_negatives(replay_train, idx)
+    negatives = get_negatives(buffer, idx)
     z, _, loss_info = fnet.train_batch(obs, actions, next_obs, negatives, test=test)
     z = z.detach()
     loss_info['predictor'] = predictor.process_batch(z, states, test=test)
