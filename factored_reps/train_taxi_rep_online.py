@@ -77,6 +77,7 @@ if args.no_graphics:
     # Force matplotlib to not use any Xwindows backend.
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
@@ -123,10 +124,10 @@ on_retrieve = {
     'next_ob': lambda items: items.float(),
     'action': lambda items: items.long()
 }
-replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 replay_test = ReplayMemory(args.batch_size, on_retrieve)
-n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
+replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 n_test_episodes = int(np.ceil(args.batch_size / args.n_steps_per_episode))
+n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
 if args.quick:
     n_train_episodes = n_test_episodes
 test_seed = 1
@@ -143,31 +144,6 @@ for buffer, n_episodes, seed in zip([replay_train, replay_test],
             s = exp['state']
             exp['color'] = s[0] * env._cols + s[1]
         buffer.push(exp)
-
-def get_negatives(buffer, idx):
-    """Provide alternate x' (negative examples) for contrastive model"""
-
-    # draw from multiple sources of negative examples, depending on RNG
-    r = np.random.rand(*idx.shape)
-
-    # decide where to use the same obs again
-    to_keep = np.argwhere(r < 1 / 3).squeeze()
-    # decide where to use the *subsequent* obs from the trajectory (i.e. x''), unless out of bounds
-    to_offset = np.argwhere((1 / 3 <= r) & (r < 2 / 3) & ((idx + 1) < len(buffer))).squeeze()
-    # otherwise we'll draw a random obs from the buffer
-
-    shuffled_idx = np.random.permutation(idx)
-    negatives = buffer.retrieve(shuffled_idx, 'next_ob')  # replace x' samples with random samples
-    negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')  # replace x' samples with x
-    negatives[to_offset] = buffer.retrieve(idx[to_offset] + 1,
-                                           'next_ob')  # replace x' samples with x''
-
-    # replace all samples with one specific type of negative example
-    # negatives = buffer.retrieve(shuffled_idx, 'next_obs')  # x' -> \tilde x'
-    # negatives = buffer.retrieve(idx, 'obs')  # x' -> x
-    # negatives = buffer.retrieve((idx+1) % n_samples, 'next_obs')  # x' -> x''
-
-    return negatives
 
 #% ------------------ Define models ------------------
 fnet = FeatureNet(args,
@@ -193,7 +169,7 @@ def train_batch(test=False):
     batch = buffer.sample(batch_size, fields) if not test else buffer.retrieve(fields=fields)
     idx, obs, states, actions, next_obs = batch
 
-    negatives = get_negatives(buffer, idx)
+    negatives = fnet.get_negatives(buffer, idx)
     z, _, loss_info = fnet.train_batch(obs, actions, next_obs, negatives, test=test)
     z = z.detach()
     loss_info['predictor'] = predictor.process_batch(z, states, test=test)
@@ -288,3 +264,9 @@ if args.save:
 
 train_log.close()
 test_log.close()
+
+#% ------------------ Analyze results ------------------
+from factored_reps.analyze_online_results import analyze_results
+
+output_dir = 'results/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
+analyze_results(output_dir, replay_test, fnet, predictor)

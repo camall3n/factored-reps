@@ -89,6 +89,40 @@ class FeatureNet(Network):
         fakes = self.discriminator(z0_extended, z1_pos_neg)
         return self.bce_loss(input=fakes, target=is_fake)
 
+    @staticmethod
+    def get_negatives(buffer, idx, mode='all'):
+        """Provide alternate x' (negative examples) for contrastive model"""
+
+        # draw from multiple sources of negative examples, depending on RNG
+        r = np.random.rand(*idx.shape)
+
+        shuffled_idx = np.random.permutation(idx)
+        # replace all samples with one specific type of negative example
+        if mode == 'random':
+            negatives = buffer.retrieve(shuffled_idx, 'next_ob')  # x' -> \tilde x'
+        elif mode == 'same':
+            negatives = buffer.retrieve(idx, 'ob')  # x' -> x
+        elif mode == 'following':
+            negatives = buffer.retrieve((idx + 1) % len(buffer), 'next_ob')  # x' -> x''
+        elif mode == 'all':
+            # replace samples with equal amounts of all types of negative example
+
+            # decide where to use the same obs again
+            to_keep = np.argwhere(r < 1 / 3).squeeze()
+            # decide where to use the *subsequent* obs from the trajectory (i.e. x''), unless out of bounds
+            to_offset = np.argwhere((1 / 3 <= r) & (r < 2 / 3)
+                                    & ((idx + 1) < len(buffer))).squeeze()
+            # otherwise we'll draw a random obs from the buffer
+
+            # replace x' samples with random samples
+            negatives = buffer.retrieve(shuffled_idx, 'next_ob')
+            # replace x' samples with x
+            negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')
+            # replace x' samples with x''
+            negatives[to_offset] = buffer.retrieve(idx[to_offset] + 1, 'next_ob')
+
+        return negatives
+
     def distance_loss(self, z0, z1):
         if self.coefs.L_dis == 0.0:
             return torch.tensor(0.0).to(self.device)
