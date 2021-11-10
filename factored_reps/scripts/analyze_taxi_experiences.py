@@ -152,6 +152,15 @@ if args.n_passengers > 0:
     plt.show()
 
 #%%
+if args.n_passengers > 0:
+    taxi_at_passenger = ((states[:, passenger_col] == states[:, taxi_col]) & (states[:, passenger_row] == states[:, taxi_row]))
+
+    sns.histplot(taxi_at_passenger, discrete=True)
+    np.histogram(taxi_at_passenger, bins=2)[0]/len(states)
+    plt.title('taxi at passenger?')
+    plt.show()
+
+#%%
 sns.histplot(actions[:], discrete=True)
 plt.title('action')
 plt.show()
@@ -269,7 +278,7 @@ def get_negatives(idx, max_idx=n_samples):
 
 idx = np.arange(n_samples)
 negatives = get_negatives(idx)
-print(len(np.unique(negatives, axis=0)), 'unique', 'negatives', 'entries')
+print(len(np.unique(negatives, axis=0)), 'unique negative entries')
 
 #%% What's the difference between corresponding positive and negative samples?
 positives = next_states
