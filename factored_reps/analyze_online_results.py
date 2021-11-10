@@ -235,7 +235,7 @@ if __name__ == '__main__':
                       input_shape=replay_train.retrieve(0, 'ob').shape[1:],
                       latent_dims=args.latent_dims,
                       device=device).to(device)
-    fnet.load(models_dir + '/fnet-{}_best.pytorch')
+    fnet.load(models_dir + '/fnet-{}_best.pytorch'.format(args.seed))
     fnet.print_summary()
 
     n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
@@ -244,7 +244,7 @@ if __name__ == '__main__':
         n_values=n_values_per_variable,
         learning_rate=args.learning_rate,
     ).to(device)
-    predictor.load(models_dir + '/predictor-{}_best.pytorch')
+    predictor.load(models_dir + '/predictor-{}_best.pytorch'.format(args.seed))
     predictor.print_summary()
 
     #% ------------------ Analyze results ------------------
