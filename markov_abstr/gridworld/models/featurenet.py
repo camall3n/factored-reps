@@ -138,10 +138,14 @@ class FeatureNet(Network):
 
             # replace x' samples with random samples
             negatives = buffer.retrieve(shuffled_idx, 'next_ob')
+            
             # replace x' samples with x
-            # negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')
+            # if len(idx[to_keep]) > 0:
+            #     negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')
+
             # replace x' samples with x''
-            negatives[to_offset] = buffer.retrieve(idx[to_offset] + 1, 'next_ob')
+            if len(idx[to_offset]) > 0:
+                negatives[to_offset] = buffer.retrieve(idx[to_offset] + 1, 'next_ob')
         else:
             raise NotImplementedError()
 

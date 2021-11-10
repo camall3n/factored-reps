@@ -91,15 +91,16 @@ def load_trajectories(path):
         (generator): generator to be called for trajectories
     '''
     # print(f"[+] Loading trajectories from file '{path}'")
-    with gzip.open(path, 'rb') as f:
-        try:
-            while True:
-                traj = pickle.load(f)
-                yield traj
-        except EOFError:
-            pass
+    while True:
+        with gzip.open(path, 'rb') as f:
+            try:
+                while True:
+                    traj = pickle.load(f)
+                    yield traj
+            except EOFError:
+                pass
 
-path = 'monte/monte_rnd_with_reward_actions_full_trajectories.pkl.gz'
+path = os.path.expanduser('~/scratch/monte/monte_rnd_with_reward_actions_full_trajectories.pkl.gz')
 traj_iter = load_trajectories(path)
 
 def generate_trajectory():
