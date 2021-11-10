@@ -9,14 +9,14 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 73
-experiments = [filename.split('/')[-1] for filename in glob.glob('results/logs/exp{}*'.format(exp_num))]
+exp_num = 1
+experiments = [filename.split('/')[-1] for filename in glob.glob('monte-results/logs/monte{:02d}*'.format(exp_num))]
 
 for experiment in experiments:
     modes = ['train', 'test']
     dfs = []
     for mode in modes:
-        filepaths = glob.glob('results/logs/{}/{}-*.txt'.format(experiment, mode))
+        filepaths = glob.glob('monte-results/logs/{}/{}-*.txt'.format(experiment, mode))
         for filepath in filepaths:
             argspath = filepath.replace(mode, 'args')
             with open(argspath, 'r') as argsfile:
@@ -65,7 +65,7 @@ for experiment in experiments:
                 # legend=False,
                 ax=ax)
 
-        results_dir = 'results/loss_plots/'
+        results_dir = 'monte-results/loss_plots/'
         os.makedirs(results_dir, exist_ok=True)
         plt.savefig(results_dir + '{}{}.png'.format(experiment, plot_suffix),
                     facecolor='white',
