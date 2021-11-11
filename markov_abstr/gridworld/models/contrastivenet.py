@@ -3,6 +3,7 @@ import torch
 import torch.nn
 
 from .nnutils import Network, one_hot
+from .simplenet import SimpleNet
 
 class ContrastiveNet(Network):
     def __init__(self, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32):
@@ -25,5 +26,28 @@ class ContrastiveNet(Network):
 
     def forward(self, z0, z1):
         context = torch.cat((z0, z1), -1)
+        fakes = self.model(context).squeeze()
+        return fakes
+
+class ActionContrastiveNet(Network):
+    def __init__(self, n_actions, n_latent_dims, n_hidden_layers=1, n_units_per_layer=32):
+        super().__init__()
+        self.frozen = False
+        self.n_actions = n_actions
+
+        self.layers = []
+        input_size = 2 * n_latent_dims + n_actions
+        self.model = SimpleNet(
+            n_inputs=input_size,
+            n_outputs=1,
+            n_hidden_layers=n_hidden_layers,
+            n_units_per_layer=n_units_per_layer,
+            activation=torch.nn.Tanh,
+            final_activation=torch.nn.Sigmoid,
+        )
+
+    def forward(self, z0, a, z1):
+        a_onehot = one_hot(a, self.n_actions)
+        context = torch.cat((z0, a_onehot, z1), -1)
         fakes = self.model(context).squeeze()
         return fakes

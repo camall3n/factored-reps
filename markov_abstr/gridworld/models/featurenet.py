@@ -6,7 +6,7 @@ from .nnutils import Network
 from .phinet import PhiNet
 from .invnet import InvNet
 from .fwdnet import FwdNet
-from .contrastivenet import ContrastiveNet
+from .contrastivenet import ContrastiveNet, ActionContrastiveNet
 from .invdiscriminator import InvDiscriminator
 
 class FeatureNet(Network):
@@ -38,6 +38,10 @@ class FeatureNet(Network):
         self.discriminator = ContrastiveNet(n_latent_dims=latent_dims,
                                             n_hidden_layers=1,
                                             n_units_per_layer=args.n_units_per_layer)
+        self.action_discrim = ActionContrastiveNet(n_actions=n_actions,
+                                                   n_latent_dims=latent_dims,
+                                                   n_hidden_layers=1,
+                                                   n_units_per_layer=args.n_units_per_layer)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
@@ -70,6 +74,22 @@ class FeatureNet(Network):
         # Compute which ones are fakes
         fakes = self.inv_discriminator(z0_extended, z1_extended, a_pos_neg)
         return self.bce_loss(input=fakes, target=is_fake.float())
+
+    def transition_ratio_loss(self, z0, a, z1, z1_neg):
+        if self.coefs.L_rat == 0.0:
+            return torch.tensor(0.0).to(self.device)
+        N = len(z0)
+
+        # concatenate positive and negative examples
+        z0_extended = torch.cat([z0, z0], dim=0)
+        a_extended = torch.cat([a, a], dim=0)
+        z1_pos_neg = torch.cat([z1, z1_neg], dim=0)
+        with torch.no_grad():
+            is_fake = torch.cat([torch.zeros(N), torch.ones(N)], dim=0).float().to(self.device)
+
+        # Compute which ones are fakes
+        fakes = self.action_discrim(z0_extended, a_extended, z1_pos_neg)
+        return self.bce_loss(input=fakes, target=is_fake)
 
     def ratio_loss(self, z0, z1, z1_neg):
         if self.coefs.L_rat == 0.0:
@@ -127,6 +147,18 @@ class FeatureNet(Network):
 
         return negatives
 
+    def triplet_loss(self, z0, z1, z1_alt):
+        if self.coefs.L_dis == 0.0:
+            return torch.tensor(0.0).to(self.device)
+        anchor = z0
+        positive = z1
+        negative = z1_alt
+        d_pos = torch.norm(anchor - positive, dim=-1, p=2)
+        d_neg = torch.norm(anchor - negative, dim=-1, p=2)
+        margin = self.max_dz
+        excess = torch.nn.functional.relu(d_pos - d_neg + margin)
+        return torch.mean(excess, dim=0)
+
     def distance_loss(self, z0, z1):
         if self.coefs.L_dis == 0.0:
             return torch.tensor(0.0).to(self.device)
@@ -174,12 +206,21 @@ class FeatureNet(Network):
             fake_prob = self.discriminator(z0, z1)
         return fake_prob > 0.5
 
+    def predict_is_fake_transition(self, x0, a, x1):
+        with torch.no_grad():
+            z0 = self.phi(x0)
+            z1 = self.phi(x1)
+            fake_prob = self.action_discrim(z0, a, z1)
+        return fake_prob > 0.5
+
     def compute_loss(self, z0, a, z1, z1_alt):
         loss_info = {
             # 'L_coinv': self.contrastive_inverse_loss(z0, z1, a),
-            'L_inv': self.inverse_loss(z0, z1, a),
-            'L_rat': self.ratio_loss(z0, z1, z1_alt),
-            'L_dis': self.distance_loss(z0, z1),
+            # 'L_inv': self.inverse_loss(z0, z1, a),
+            # 'L_rat': self.ratio_loss(z0, z1, z1_alt),
+            'L_txr': self.transition_ratio_loss(z0, a, z1, z1_alt),
+            # 'L_dis': self.distance_loss(z0, z1),
+            'L_trp': self.triplet_loss(z0, z1, z1_alt),
             # 'L_ora': self.oracle_loss(z0, z1, d),
         }
         loss = 0

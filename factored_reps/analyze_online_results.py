@@ -22,12 +22,13 @@ def analyze_results(output_dir, replay_test, fnet, predictor):
 
     with open(os.path.join(output_dir, 'results.txt'), 'w') as output_file:
         #% ------------------ Compute inverse model accuracy ------------------
-        predicted_actions = fnet.predict_a(obs, next_obs).detach().cpu().numpy()
-        inv_results = compute_accuracy(actions.detach().cpu().numpy(), predicted_actions)
-        record_model_accuracy(output_file, 'Inverse model accuracy', *inv_results)
+        # predicted_actions = fnet.predict_a(obs, next_obs).detach().cpu().numpy()
+        # inv_results = compute_accuracy(actions.detach().cpu().numpy(), predicted_actions)
+        # record_model_accuracy(output_file, 'Inverse model accuracy', *inv_results)
 
         #% ------------------ Compute discriminator accuracy ------------------
-        predicted_is_fake_on_positives = fnet.predict_is_fake(obs, next_obs).detach().cpu().numpy()
+        predicted_is_fake_on_positives = fnet.predict_is_fake_transition(
+            obs, actions, next_obs).detach().cpu().numpy()
         discrim_results_positives = compute_accuracy(np.zeros_like(predicted_is_fake_on_positives),
                                                      predicted_is_fake_on_positives)
         record_model_accuracy(output_file, 'Discriminator accuracy (positives)',
@@ -35,8 +36,8 @@ def analyze_results(output_dir, replay_test, fnet, predictor):
 
         for mode in ['random', 'following']:
             negatives = fnet.get_negatives(replay_test, idx, mode=mode)
-            predicted_is_fake_on_negatives = fnet.predict_is_fake(
-                obs, negatives).detach().cpu().numpy()
+            predicted_is_fake_on_negatives = fnet.predict_is_fake_transition(
+                obs, actions, negatives).detach().cpu().numpy()
             discrim_results_negatives = compute_accuracy(
                 np.ones_like(predicted_is_fake_on_negatives), predicted_is_fake_on_negatives)
             record_model_accuracy(output_file,
