@@ -1,7 +1,6 @@
 def analyze_results(output_dir, replay_test, fnet, predictor):
     import os
     import numpy as np
-    import seaborn as sns
     import matplotlib.pyplot as plt
 
     os.makedirs(output_dir, exist_ok=True)
@@ -51,12 +50,19 @@ def analyze_results(output_dir, replay_test, fnet, predictor):
     def generate_confusion_plots(s_actual, s_predicted):
         state_vars = ['taxi_row', 'taxi_col', 'passenger_row', 'passenger_col',
                       'in_taxi'][:len(states[0])]
+        n_passengers = 1
+        n_values_per_variable = [5, 5] + ([5, 5, 2] * n_passengers)
 
         fig, axes = plt.subplots(len(state_vars), 1, figsize=(3, 2 * len(state_vars)))
 
-        for (state_var_idx, state_var), ax in zip(enumerate(state_vars), axes):
-            bins = len(np.unique(s_actual[:, state_var_idx]))
-            h = ax.hist2d(x=s_predicted[:, state_var_idx], y=s_actual[:, state_var_idx], bins=bins)
+        for state_var_idx, (state_var, n_values,
+                            ax) in enumerate(zip(state_vars, n_values_per_variable, axes)):
+            bins = n_values
+            value_range = ((-0.5, n_values - 0.5), (0, n_values - 0.5))
+            h = ax.hist2d(x=s_predicted[:, state_var_idx],
+                          y=s_actual[:, state_var_idx],
+                          bins=bins,
+                          range=value_range)
             counts, xedges, yedges, im = h
             fig.colorbar(im, ax=ax)
             # sns.histplot(
@@ -68,7 +74,16 @@ def analyze_results(output_dir, replay_test, fnet, predictor):
             #     stat='count',
             #     ax=ax,
             # )
-            print(counts)
+
+            for i in range(len(yedges) - 1):
+                for j in range(len(xedges) - 1):
+                    ax.text(xedges[j] + 0.5,
+                            yedges[i] + 0.4,
+                            int(counts.T[i, j]),
+                            color="w",
+                            ha="center",
+                            va="center",
+                            fontweight="bold")
             ax.set_title(state_var)
             ax.set_xlabel('predicted')
             ax.set_ylabel('actual')
