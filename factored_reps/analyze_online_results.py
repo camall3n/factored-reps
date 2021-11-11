@@ -33,7 +33,7 @@ def analyze_results(output_dir, replay_test, fnet, predictor):
         record_model_accuracy(output_file, 'Discriminator accuracy (positives)',
                               *discrim_results_positives)
 
-        for mode in ['random', 'same', 'following']:
+        for mode in ['random', 'following']:
             negatives = fnet.get_negatives(replay_test, idx, mode=mode)
             predicted_is_fake_on_negatives = fnet.predict_is_fake(
                 obs, negatives).detach().cpu().numpy()
