@@ -62,6 +62,11 @@ os.makedirs(output_dir, exist_ok=True)
 
 model_file = 'monte-results/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
 
+if device.type == 'cpu':
+    args.batch_size = 10
+    args.n_updates = 2
+    args.replay_buffer_size = args.batch_size
+
 #%% ------------------ Load environment ------------------
 def load_trajectories(path):
     '''
@@ -73,13 +78,14 @@ def load_trajectories(path):
         (generator): generator to be called for trajectories
     '''
     # print(f"[+] Loading trajectories from file '{path}'")
-    with gzip.open(path, 'rb') as f:
-        try:
-            while True:
-                traj = pickle.load(f)
-                yield traj
-        except EOFError:
-            pass
+    while True:
+        with gzip.open(path, 'rb') as f:
+            try:
+                while True:
+                    traj = pickle.load(f)
+                    yield traj
+            except EOFError:
+                pass
 
 prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
 path = prefix+'monte/monte_rnd_with_reward_actions_full_trajectories.pkl.gz'
@@ -135,9 +141,9 @@ on_retrieve = {
 replay_test = ReplayMemory(args.batch_size, on_retrieve)
 if args.quick:
     args.replay_buffer_size = args.batch_size
-# replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
+replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 print('Initializing replay buffer...')
-for buffer in [replay_test]:#, replay_train]:
+for buffer in [replay_test, replay_train]:
     while len(buffer) < buffer.capacity:
         for exp in generate_experiences(n_episodes=1):
             buffer.push(exp)
@@ -170,21 +176,12 @@ predictor = SimpleNet(
 predictor.optimizer = torch.optim.Adam(predictor.parameters(), lr=args.learning_rate)
 
 #%% ------------------ Encode observations to latent states ------------------
-# n_training = len(replay_train)
-n_test = len(replay_test)
-
-if device.type == 'cpu':
-    # n_training = n_training // 10
-    n_test = n_test // 10
-    args.batch_size = 10
-    args.n_updates = 2
-
 with torch.no_grad():
     latent_states_test = fnet.encode(replay_test.retrieve(fields='ob'))
 
 #%% ------------------ Define helper functions for training predictor ------------------
 def train_batch(test=False):
-    buffer = replay_test#replay_train if not test else replay_test
+    buffer = replay_train if not test else replay_test
     batch_size = args.batch_size if not test else len(replay_test)
     fields = ['ob', 'state']
     batch = buffer.sample(batch_size, fields) if not test else buffer.retrieve(fields=fields)
@@ -233,7 +230,7 @@ with open(log_dir + '/train-{}.txt'.format(args.seed), 'w') as logfile:
     for step in tqdm(range(args.n_updates)):
         loss_info = dict()
         loss_info['test'] = train_batch(test=True)
-        # loss_info['train'] = train_batch(test=False)
+        loss_info['train'] = train_batch(test=False)
         convert_and_log_loss_info(logfile, loss_info, step)
         loss_infos.append(loss_info)
 
@@ -241,7 +238,7 @@ predictor.save('predictor-{}'.format(args.seed), model_dir)
 
 #%% ------------------ Visualize training loss ------------------
 data = pd.DataFrame(loss_infos).melt(id_vars=['step'],
-                                     value_vars=['test'],#'train',
+                                     value_vars=['train', 'test'],
                                      var_name='mode',
                                      value_name='loss')
 sns.lineplot(data=data, x='step', y='loss', hue='mode')
