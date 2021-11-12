@@ -219,6 +219,12 @@ def convert_and_log_loss_info(log_file, loss_info, step):
     log_file.flush()
 
 #%% ------------------ Train ground-truth state predictor ------------------
+n_steps_per_episode = 335  # 334.86 (average of first 100 episodes)
+probability_of_sampling = args.batch_size / replay_train.capacity
+n_updates_per_buffer_fill = args.n_expected_times_to_sample_experience / probability_of_sampling
+n_steps_per_update = replay_train.capacity / n_updates_per_buffer_fill
+n_episodes_per_update = int(min(1, n_steps_per_update // n_steps_per_episode))
+
 log_dir = os.path.join(output_dir, 'logs')
 model_dir = os.path.join(output_dir, 'models')
 
@@ -233,6 +239,9 @@ with open(log_dir + '/train-{}.txt'.format(args.seed), 'w') as logfile:
         loss_info['train'] = train_batch(test=False)
         convert_and_log_loss_info(logfile, loss_info, step)
         loss_infos.append(loss_info)
+
+        for exp in generate_experiences(n_episodes=n_episodes_per_update):
+            replay_train.push(exp)
 
 predictor.save('predictor-{}'.format(args.seed), model_dir)
 
