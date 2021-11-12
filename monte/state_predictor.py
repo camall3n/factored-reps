@@ -107,8 +107,8 @@ def generate_trajectory():
             }
             state = env.parseRAM(experience['ram'])
             state = np.asarray([
-                state['player_x'],
-                state['player_y'],
+                (state['player_x'] - 77) / 100,
+                (state['player_y'] - 235) / 100,
             ])
             experience['next_state'] = state
             del experience['ram']
