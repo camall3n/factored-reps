@@ -6,7 +6,7 @@ from .nnutils import Network
 from .phinet import PhiNet
 from .invnet import InvNet
 from .fwdnet import FwdNet
-from .contrastivenet import ContrastiveNet
+from .contrastivenet import ContrastiveNet, ActionContrastiveNet
 from .invdiscriminator import InvDiscriminator
 
 class FeatureNet(Network):
@@ -38,6 +38,10 @@ class FeatureNet(Network):
         self.discriminator = ContrastiveNet(n_latent_dims=latent_dims,
                                             n_hidden_layers=1,
                                             n_units_per_layer=args.n_units_per_layer)
+        self.action_discrim = ActionContrastiveNet(n_actions=n_actions,
+                                                   n_latent_dims=latent_dims,
+                                                   n_hidden_layers=1,
+                                                   n_units_per_layer=args.n_units_per_layer)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
@@ -71,6 +75,22 @@ class FeatureNet(Network):
         fakes = self.inv_discriminator(z0_extended, z1_extended, a_pos_neg)
         return self.bce_loss(input=fakes, target=is_fake.float())
 
+    def transition_ratio_loss(self, z0, a, z1, z1_neg):
+        if self.coefs.L_rat == 0.0:
+            return torch.tensor(0.0).to(self.device)
+        N = len(z0)
+
+        # concatenate positive and negative examples
+        z0_extended = torch.cat([z0, z0], dim=0)
+        a_extended = torch.cat([a, a], dim=0)
+        z1_pos_neg = torch.cat([z1, z1_neg], dim=0)
+        with torch.no_grad():
+            is_fake = torch.cat([torch.zeros(N), torch.ones(N)], dim=0).float().to(self.device)
+
+        # Compute which ones are fakes
+        fakes = self.action_discrim(z0_extended, a_extended, z1_pos_neg)
+        return self.bce_loss(input=fakes, target=is_fake)
+
     def ratio_loss(self, z0, z1, z1_neg):
         if self.coefs.L_rat == 0.0:
             return torch.tensor(0.0).to(self.device)
@@ -93,35 +113,51 @@ class FeatureNet(Network):
     def get_negatives(buffer, idx, mode='all'):
         """Provide alternate x' (negative examples) for contrastive model"""
 
-        # draw from multiple sources of negative examples, depending on RNG
-        r = np.random.rand(*idx.shape)
-
         shuffled_idx = np.random.permutation(idx)
         # replace all samples with one specific type of negative example
         if mode == 'random':
             negatives = buffer.retrieve(shuffled_idx, 'next_ob')  # x' -> \tilde x'
-        elif mode == 'same':
-            negatives = buffer.retrieve(idx, 'ob')  # x' -> x
+        # elif mode == 'same':
+        #     negatives = buffer.retrieve(idx, 'ob')  # x' -> x
         elif mode == 'following':
             negatives = buffer.retrieve((idx + 1) % len(buffer), 'next_ob')  # x' -> x''
         elif mode == 'all':
             # replace samples with equal amounts of all types of negative example
 
+            # draw from multiple sources of negative examples, depending on RNG
+            r = np.random.rand(*idx.shape)
+
             # decide where to use the same obs again
-            to_keep = np.argwhere(r < 1 / 3).squeeze()
+            # to_keep = np.argwhere(r < 1 / 3).squeeze()
+
             # decide where to use the *subsequent* obs from the trajectory (i.e. x''), unless out of bounds
-            to_offset = np.argwhere((1 / 3 <= r) & (r < 2 / 3)
-                                    & ((idx + 1) < len(buffer))).squeeze()
+            to_offset = np.argwhere((r < 0.5) & ((idx + 1) < len(buffer))).squeeze()
+            # to_offset = np.argwhere((1 / 3 <= r) & (r < 2 / 3)
+            # & ((idx + 1) < len(buffer))).squeeze()
             # otherwise we'll draw a random obs from the buffer
 
             # replace x' samples with random samples
             negatives = buffer.retrieve(shuffled_idx, 'next_ob')
             # replace x' samples with x
-            negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')
+            # negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')
             # replace x' samples with x''
             negatives[to_offset] = buffer.retrieve(idx[to_offset] + 1, 'next_ob')
+        else:
+            raise NotImplementedError()
 
         return negatives
+
+    def triplet_loss(self, z0, z1, z1_alt):
+        if self.coefs.L_dis == 0.0:
+            return torch.tensor(0.0).to(self.device)
+        anchor = z0
+        positive = z1
+        negative = z1_alt
+        d_pos = torch.norm(anchor - positive, dim=-1, p=2)
+        d_neg = torch.norm(anchor - negative, dim=-1, p=2)
+        margin = self.max_dz
+        excess = torch.nn.functional.relu(d_pos - d_neg + margin)
+        return torch.mean(excess, dim=0)
 
     def distance_loss(self, z0, z1):
         if self.coefs.L_dis == 0.0:
@@ -170,12 +206,21 @@ class FeatureNet(Network):
             fake_prob = self.discriminator(z0, z1)
         return fake_prob > 0.5
 
+    def predict_is_fake_transition(self, x0, a, x1):
+        with torch.no_grad():
+            z0 = self.phi(x0)
+            z1 = self.phi(x1)
+            fake_prob = self.action_discrim(z0, a, z1)
+        return fake_prob > 0.5
+
     def compute_loss(self, z0, a, z1, z1_alt):
         loss_info = {
             # 'L_coinv': self.contrastive_inverse_loss(z0, z1, a),
-            'L_inv': self.inverse_loss(z0, z1, a),
-            'L_rat': self.ratio_loss(z0, z1, z1_alt),
-            'L_dis': self.distance_loss(z0, z1),
+            # 'L_inv': self.inverse_loss(z0, z1, a),
+            # 'L_rat': self.ratio_loss(z0, z1, z1_alt),
+            'L_txr': self.transition_ratio_loss(z0, a, z1, z1_alt),
+            # 'L_dis': self.distance_loss(z0, z1),
+            'L_trp': self.triplet_loss(z0, z1, z1_alt),
             # 'L_ora': self.oracle_loss(z0, z1, d),
         }
         loss = 0
