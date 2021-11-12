@@ -100,7 +100,8 @@ def load_trajectories(path):
             except EOFError:
                 pass
 
-path = os.path.expanduser('~/scratch/monte/monte_rnd_with_reward_actions_full_trajectories.pkl.gz')
+prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
+path = prefix+'monte/monte_rnd_with_reward_actions_full_trajectories.pkl.gz'
 traj_iter = load_trajectories(path)
 
 def generate_trajectory():
