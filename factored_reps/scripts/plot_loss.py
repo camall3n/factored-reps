@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 73
+exp_num = 75
 experiments = [filename.split('/')[-1] for filename in glob.glob('results/logs/exp{}*'.format(exp_num))]
 
 for experiment in experiments:
@@ -48,7 +48,7 @@ for experiment in experiments:
         # subset = subset.query("step % 200 == 0")
         # plot_suffix += '-mod200'
 
-        y_labels = ['L', 'L_inv', 'L_rat', 'L_dis', 'L_rec', 'L_foc', 'predictor', 'grad_norm']
+        y_labels = ['L', 'L_inv', 'L_rat', 'L_dis', 'L_rec', 'L_foc', 'L_txr', 'L_trp', 'predictor', 'grad_norm']
         y_labels = [label for label in y_labels if label in subset.columns]
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
         p = sns.color_palette(n_colors=len(subset['mode'].unique()))
