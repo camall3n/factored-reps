@@ -31,6 +31,7 @@ from factored_reps import utils
 parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)
 parser.add_argument('-e', '--experiment', type=int, default=2)
+parser.add_argument('-n', '--n_train_steps', type=int, default=4000)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 args = parser.parse_args()
 del args.fool_ipython
@@ -39,12 +40,16 @@ seeding.seed(args.seed, np, random)
 torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
+n_train_steps = args.n_train_steps
+
 filepaths = glob.glob('monte-results/logs/monte{:02d}*/args-{}.txt'.format(args.experiment, args.seed))
 for filepath in filepaths:
     with open(filepath, 'r') as argsfile:
         line = argsfile.readline()
         args = eval(line)
     break
+
+args.n_updates = n_train_steps
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
