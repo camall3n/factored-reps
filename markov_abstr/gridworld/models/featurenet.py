@@ -156,8 +156,9 @@ class FeatureNet(Network):
         d_pos = torch.norm(anchor - positive, dim=-1, p=2)
         d_neg = torch.norm(anchor - negative, dim=-1, p=2)
         margin = self.max_dz
-        excess = torch.nn.functional.relu(d_pos - d_neg + margin)
-        return torch.mean(excess, dim=0)
+        undershoot = torch.nn.functional.relu(d_pos - d_neg + margin)
+        num_positive_triplets = torch.sum(undershoot > 1e-16)
+        return torch.sum(undershoot, dim=0) / (num_positive_triplets + 1e-16)
 
     def distance_loss(self, z0, z1):
         if self.coefs.L_dis == 0.0:
