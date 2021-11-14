@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn
+import torch.nn.functional as F
 
 from .nnutils import Network
 from .phinet import PhiNet
@@ -8,6 +9,7 @@ from .invnet import InvNet
 from .fwdnet import FwdNet
 from .contrastivenet import ContrastiveNet, ActionContrastiveNet
 from .invdiscriminator import InvDiscriminator
+from .simplenet import SimpleNet
 
 class FeatureNet(Network):
     def __init__(self, args, n_actions, input_shape=2, latent_dims=2, device='cpu'):
@@ -42,6 +44,12 @@ class FeatureNet(Network):
                                                    n_latent_dims=latent_dims,
                                                    n_hidden_layers=1,
                                                    n_units_per_layer=args.n_units_per_layer)
+        self.policy_reconstr = SimpleNet(n_inputs=latent_dims,
+                                         n_outputs=n_actions,
+                                         n_hidden_layers=2,
+                                         n_units_per_layer=args.n_units_per_layer,
+                                         activation=torch.nn.ReLU,
+                                         final_activation=torch.nn.Softmax(dim=-1))
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()
@@ -109,6 +117,10 @@ class FeatureNet(Network):
         fakes = self.discriminator(z0_extended, z1_pos_neg)
         return self.bce_loss(input=fakes, target=is_fake)
 
+    def policy_reconstr_loss(self, z0, a):
+        a_hat = self.policy_reconstr(z0)
+        return F.nll_loss(input=a_hat, target=a.squeeze(-1))
+
     @staticmethod
     def get_negatives(buffer, idx, mode='all'):
         """Provide alternate x' (negative examples) for contrastive model"""
@@ -138,7 +150,7 @@ class FeatureNet(Network):
 
             # replace x' samples with random samples
             negatives = buffer.retrieve(shuffled_idx, 'next_ob')
-            
+
             # replace x' samples with x
             # if len(idx[to_keep]) > 0:
             #     negatives[to_keep] = buffer.retrieve(idx[to_keep], 'ob')
@@ -225,6 +237,7 @@ class FeatureNet(Network):
             'L_txr': self.transition_ratio_loss(z0, a, z1, z1_alt),
             # 'L_dis': self.distance_loss(z0, z1),
             'L_trp': self.triplet_loss(z0, z1, z1_alt),
+            'L_pcy': self.policy_reconstr_loss(z0, a),
             # 'L_ora': self.oracle_loss(z0, z1, d),
         }
         loss = 0
