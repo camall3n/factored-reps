@@ -13,3 +13,6 @@ results/
 archive/
 *.vagrant/
 *.sif
+*.gz
+*.zip
+
