@@ -56,7 +56,7 @@ agents = [
     # 'random',
     # 'rearrange_xy',
 ]
-root = 'results/scores/'
+root = 'results/gridworld/scores/'
 unfiltered_paths = [(root + e + '/' + a + '/', (e, a)) for e in experiments for a in agents]
 experiments = [experiment for path, experiment in unfiltered_paths if os.path.exists(path)]
 paths = [path for path, _ in unfiltered_paths if os.path.exists(path)]

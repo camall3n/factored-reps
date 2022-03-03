@@ -82,9 +82,9 @@ if args.no_graphics:
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-log_dir = 'results/logs/' + str(args.tag)
-vid_dir = 'results/videos/' + str(args.tag)
-maze_dir = 'results/mazes/' + str(args.tag)
+log_dir = 'results/gridworld/logs/' + str(args.tag)
+vid_dir = 'results/gridworld/videos/' + str(args.tag)
+maze_dir = 'results/gridworld/mazes/' + str(args.tag)
 os.makedirs(log_dir, exist_ok=True)
 
 if args.video:

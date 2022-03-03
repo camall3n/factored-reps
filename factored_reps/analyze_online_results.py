@@ -181,10 +181,10 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('device: {}'.format(device))
 
-    log_dir = 'results/logs/' + str(args.tag)
-    models_dir = 'results/models/' + str(args.tag)
-    vid_dir = 'results/videos/' + str(args.tag)
-    maze_dir = 'results/mazes/' + str(args.tag)
+    log_dir = 'results/taxi/logs/' + str(args.tag)
+    models_dir = 'results/taxi/models/' + str(args.tag)
+    vid_dir = 'results/taxi/videos/' + str(args.tag)
+    maze_dir = 'results/taxi/mazes/' + str(args.tag)
     os.makedirs(log_dir, exist_ok=True)
 
     if args.video:

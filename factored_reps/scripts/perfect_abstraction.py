@@ -46,9 +46,9 @@ args.coefs = coefs
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-log_dir = 'results/logs/' + str(args.tag)
-models_dir = 'results/models/{}'.format(args.tag)
-output_dir = 'results/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
+log_dir = 'results/taxi/logs/' + str(args.tag)
+models_dir = 'results/taxi/models/{}'.format(args.tag)
+output_dir = 'results/taxi/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(models_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)

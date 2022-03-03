@@ -37,29 +37,30 @@ torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
 n_updates = args.n_updates
-filepaths = glob.glob('results/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
+filepaths = glob.glob('results/taxi/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
 for filepath in filepaths:
     with open(filepath, 'r') as argsfile:
         line = argsfile.readline()
         args = eval(line)
     break
-args.n_passengers = int(args.taxi_experiences.split('passengers-')[-1].replace('_plus', '').replace('_gray', '').replace('_rgb', ''))
+args.n_passengers = int(
+    args.taxi_experiences.split('passengers-')[-1].replace('_plus',
+                                                           '').replace('_gray',
+                                                                       '').replace('_rgb', ''))
 args.n_updates = n_updates
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-output_dir = 'results/analyze_markov_accuracy/{}/seed-{}'.format(
-    'quick' if device.type == 'cpu' else args.tag,
-    args.seed
-)
+output_dir = 'results/taxi/analyze_markov_accuracy/{}/seed-{}'.format(
+    'quick' if device.type == 'cpu' else args.tag, args.seed)
 os.makedirs(output_dir, exist_ok=True)
 
-model_file = 'results/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
+model_file = 'results/taxi/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
 
 #%% ------------------ Load experiences ------------------
 prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
-experiences_dir = os.path.join(prefix+'results', 'taxi-experiences', args.taxi_experiences)
+experiences_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.taxi_experiences)
 filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
 
 results_files = glob.glob(filename_pattern)
@@ -207,9 +208,7 @@ fig, axes = plt.subplots(len(state_vars), 1, figsize=(3, 2 * len(state_vars)))
 
 for (state_var_idx, state_var), ax in zip(enumerate(state_vars), axes):
     bins = len(np.unique(s_actual[:, state_var_idx]))
-    h = ax.hist2d(x=s_predicted[:, state_var_idx],
-                  y=s_actual[:, state_var_idx],
-                  bins=bins)
+    h = ax.hist2d(x=s_predicted[:, state_var_idx], y=s_actual[:, state_var_idx], bins=bins)
     fig.colorbar(h[3], ax=ax)
     ax.set_title(state_var)
     ax.set_xlabel('predicted')

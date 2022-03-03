@@ -86,9 +86,9 @@ import matplotlib.pyplot as plt
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-log_dir = 'results/logs/' + str(args.tag)
-vid_dir = 'results/videos/' + str(args.tag)
-maze_dir = 'results/mazes/' + str(args.tag)
+log_dir = 'results/unknown_env/logs/' + str(args.tag)
+vid_dir = 'results/unknown_env/videos/' + str(args.tag)
+maze_dir = 'results/unknown_env/mazes/' + str(args.tag)
 os.makedirs(log_dir, exist_ok=True)
 
 if args.video:
