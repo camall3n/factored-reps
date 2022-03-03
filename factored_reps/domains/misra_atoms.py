@@ -3,7 +3,13 @@ import gym.spaces
 import numpy as np
 
 class MisraAtomEnv(gym.Env):
-    def __init__(self, n_factors=10, n_atoms_per_factor=2, horizon=10, noise_std=0.1, permute=True):
+    def __init__(self,
+                 n_factors=10,
+                 n_atoms_per_factor=2,
+                 horizon=10,
+                 noise_std=0.1,
+                 permute_actions=True,
+                 permute_atoms=True):
         super().__init__()
         self.n_factors = n_factors
         self.n_atoms_per_factor = n_atoms_per_factor
@@ -12,19 +18,22 @@ class MisraAtomEnv(gym.Env):
         self.horizon = horizon
         self.noise_std = noise_std
 
-        new_permutation = np.random.permutation if permute else np.arange
+        action_permutation = np.random.permutation if permute_actions else np.arange
+        atom_permutation = np.random.permutation if permute_atoms else np.arange
 
         self.observation_space = gym.spaces.Box(-1, 2, (self.n_atoms, ))
-        self.obs_permutations = [new_permutation(self.n_atoms) for _ in range(self.horizon)]
+        self.obs_permutations = [atom_permutation(self.n_atoms) for _ in range(self.horizon)]
 
         self.action_space = gym.spaces.Discrete(self.n_factors)
-        self.action_permutations = [new_permutation(self.n_actions) for _ in range(self.horizon)]
+        self.action_permutations = [
+            action_permutation(self.n_actions) for _ in range(self.horizon)
+        ]
 
         self.state = np.empty((self.n_factors, ), dtype=int)
         self.timestep = 0
 
     def reset(self):
-        self.state = np.zeros((self.n_factors, ), dtype=int)
+        self.state = np.random.choice(2, (self.n_factors, ))
         self.timestep = 0
         return self.generate_obs(self.state)
 
