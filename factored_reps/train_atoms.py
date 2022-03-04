@@ -16,7 +16,7 @@ from factored_reps.models.focused_autoenc import FocusedAutoencoder
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
-    sys.argv += ["-t", 'exp00-test']
+    sys.argv += ["-t", 'exp01-test']
 
 parser = utils.get_parser()
 # yapf: disable
@@ -206,13 +206,18 @@ train_log.close()
 test_log.close()
 
 #%% ------------------ Analyze results ------------------
-ob = env.reset()
-info = env._get_current_info()
-state = info['state']
 torchify = lambda x: on_retrieve['ob'](on_retrieve['*'](x))
-done = False
 
-while not done:
+dz_list = []
+ds_list = []
+
+done = True
+for i in tqdm(range(1000)):
+    if done:
+        ob = env.reset()
+        info = env._get_current_info()
+        state = info['state']
+
     with torch.no_grad():
         z = fnet.encode(torchify(ob)).numpy()
 
@@ -225,14 +230,27 @@ while not done:
 
     dz = next_z - z
     ds = next_state - state
+    dz_list.append(dz)
+    ds_list.append(ds)
 
     ob = next_ob.copy()
     state = next_state.copy()
     z = next_z.copy()
 
-    print('a:  ', a)
-    print('ds: ', ds)
-    print('dz: ', np.round(dz, 2))
-    print()
+#%% ------------------ Plot dz vs. ds correlation ------------------
+import matplotlib.pyplot as plt
 
-#%% ------------------ Profit ??? ------------------
+z_deltas = np.stack(dz_list, axis=1)
+s_deltas = np.stack(ds_list, axis=1)
+
+all_deltas = np.concatenate((z_deltas, s_deltas))
+correlation = np.corrcoef(all_deltas)[:args.latent_dims,-args.n_factors:]
+
+plt.imshow(correlation, vmin=-1, vmax=1)
+plt.yticks(np.arange(args.latent_dims))
+plt.xticks(np.arange(args.n_factors))
+plt.ylabel(r'Learned representation ($\Delta z$)')
+plt.xlabel(r'Ground truth factor ($\Delta s$)')
+plt.title('Correlation coefficients')
+plt.colorbar()
+plt.show()
