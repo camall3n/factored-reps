@@ -22,7 +22,7 @@ parser = utils.get_parser()
 # yapf: disable
 parser.add_argument('-s','--seed', type=int, default=0,
                     help='Random seed')
-parser.add_argument('--replay_buffer_size', type=int, default=20000,
+parser.add_argument('--replay_buffer_size', type=int, default=80000,
                     help='Number of experiences in training replay buffer')
 parser.add_argument('--n_steps_per_episode', type=int, default=10,
                     help='Reset environment after this many steps')
