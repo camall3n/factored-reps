@@ -96,5 +96,7 @@ g = sns.relplot(
 plt.subplots_adjust(top=0.85, bottom=0.15)
 g.fig.suptitle('Reward vs. Time')
 # plt.rcParams.update({'font.size': 22})
-plt.savefig('results/foo.png')
+images_dir = 'results/gridworld/images/'
+os.makedirs(images_dir, exist_ok=True)
+plt.savefig(images_dir + 'foo.png')
 plt.show()

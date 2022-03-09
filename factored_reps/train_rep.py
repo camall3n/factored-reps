@@ -361,10 +361,10 @@ def test_rep(fnet, step):
             is_best = True
             best_model_test_loss = current_loss
         fnet.phi.save('phi-{}'.format(args.seed),
-                      'results/models/{}'.format(args.tag),
+                      'results/unknown_env/models/{}'.format(args.tag),
                       is_best=is_best)
         fnet.save('fnet-{}'.format(args.seed),
-                  'results/models/{}'.format(args.tag),
+                  'results/unknown_env/models/{}'.format(args.tag),
                   is_best=is_best)
 
     text = '\n'.join([key + ' = ' + str(val) for key, val in loss_info.items()])
@@ -396,8 +396,8 @@ if args.video:
     imageio.imwrite(best_image_filename, data[best_frame])
 
 if args.save:
-    fnet.phi.save('phi-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
-    fnet.save('fnet-{}'.format(args.seed), 'results/models/{}'.format(args.tag))
+    fnet.phi.save('phi-{}'.format(args.seed), 'results/unknown_env/models/{}'.format(args.tag))
+    fnet.save('fnet-{}'.format(args.seed), 'results/unknown_env/models/{}'.format(args.tag))
 
 train_log.close()
 test_log.close()

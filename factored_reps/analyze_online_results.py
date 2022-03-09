@@ -266,5 +266,5 @@ if __name__ == '__main__':
     #% ------------------ Analyze results ------------------
     from factored_reps.analyze_online_results import analyze_results
 
-    output_dir = 'results/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
+    output_dir = 'results/taxi/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
     analyze_results(output_dir, replay_test, fnet, predictor)
