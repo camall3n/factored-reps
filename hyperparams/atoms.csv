@@ -1,0 +1,13 @@
+n_factors,10,int
+n_atoms,20,int
+n_updates,10000,int
+save_model_every_n_steps,200,int
+learning_rate,0.001,float
+batch_size,128,int
+latent_dims,12,int
+encoder_arch,mlp,str
+n_hidden_layers,1,int
+n_hidden_layers_factored_autoenc,2,int
+n_units_per_layer,32,int
+L_foc,0.003,float
+L_rec,1.0,float
