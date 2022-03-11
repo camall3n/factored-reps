@@ -229,7 +229,8 @@ data = []
 best_frame = 0
 print('Training model...')
 if args.quick:
-    args.n_updates = 10
+    args.n_updates = 2
+    n_episodes_per_update = 1
 for step in tqdm(range(args.n_updates)):
     test_results, is_best = test_rep(step)
 
