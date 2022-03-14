@@ -24,7 +24,7 @@ if 'ipykernel' in sys.argv[0]:
 
 parser = utils.get_parser()
 # yapf: disable
-parser.add_argument('-s','--seed', type=int, default=150,
+parser.add_argument('-s','--seed', type=int, default=None,
                     help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True,
                     help='Tag for identifying experiment')
@@ -65,6 +65,9 @@ train_log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
 test_log = open(log_dir + '/test-{}.txt'.format(args.seed), 'w')
 with open(log_dir + '/args-{}.txt'.format(args.seed), 'w') as arg_file:
     arg_file.write(repr(args))
+
+if args.seed is None:
+    args.seed = markov_args.seed
 
 seeding.seed(args.seed, np, random)
 torch.manual_seed(args.seed)
@@ -308,7 +311,7 @@ plt.ylabel(r'Learned representation ($\Delta z$)')
 plt.xlabel(r'Ground truth factor ($\Delta s$)')
 plt.title('Correlation coefficients')
 plt.colorbar()
-images_dir = 'results/focused-taxi/images/{}/'.format(markov_abstraction_tag)
+images_dir = 'results/focused-taxi/images/{}/markov-seed-{}/'.format(markov_abstraction_tag, markov_args.seed)
 os.makedirs(images_dir, exist_ok=True)
-plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(markov_args.seed))
+plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 plt.show()
