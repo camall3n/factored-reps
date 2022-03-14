@@ -269,10 +269,12 @@ ds_list = []
 if args.quick:
     args.n_samples = 100
 done = True
+ep_steps = 0
 for i in tqdm(range(args.n_samples)):
-    if done:
+    if done or ep_steps >= args.n_steps_per_episode:
         ob = env.reset()
         state = env.get_state()
+        ep_steps = 0
 
     with torch.no_grad():
         z = facnet.encode(torchify(ob)).cpu().numpy()
@@ -280,6 +282,7 @@ for i in tqdm(range(args.n_samples)):
     a = random.choice(env.actions)
     next_ob, reward, done = env.step(a)
     next_state = env.get_state()
+    ep_steps += 1
 
     with torch.no_grad():
         next_z = facnet.encode(torchify(next_ob)).cpu().numpy()
