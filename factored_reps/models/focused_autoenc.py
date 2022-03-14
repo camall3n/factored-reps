@@ -14,13 +14,13 @@ class FocusedAutoencoder(Network):
         self.coefs = args.coefs
         self.device = device
 
-        self.encoder = SimpleNet(n_inputs=args.n_atoms,
-                                 n_outputs=args.latent_dims,
+        self.encoder = SimpleNet(n_inputs=n_input_dims,
+                                 n_outputs=n_latent_dims,
                                  n_hidden_layers=1,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
-        self.decoder = SimpleNet(n_inputs=args.latent_dims,
-                                 n_outputs=args.n_atoms,
+        self.decoder = SimpleNet(n_inputs=n_latent_dims,
+                                 n_outputs=n_input_dims,
                                  n_hidden_layers=1,
                                  n_units_per_layer=32,
                                  final_activation=torch.nn.Tanh)
