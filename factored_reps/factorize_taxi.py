@@ -20,7 +20,7 @@ from factored_reps.models.focused_autoenc import FocusedAutoencoder
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
-    sys.argv += ["-t", 'exp01-test', "--quick"]
+    sys.argv += ["-t", 'exp00-test', "--quick"]
 
 parser = utils.get_parser()
 # yapf: disable
@@ -93,7 +93,7 @@ class StateAbstractionWrapper(gym.Wrapper):
         obs = self.sensor.observe(obs)
         with torch.no_grad():
             obs_tensor = torch.as_tensor(obs).unsqueeze(0).float().to(self.device)
-            abstract_state = self.state_abstraction_model(obs_tensor).numpy()
+            abstract_state = self.state_abstraction_model(obs_tensor).cpu().numpy()
         return abstract_state
 
 env = VisTaxi5x5(grayscale=markov_args.grayscale)
@@ -275,14 +275,14 @@ for i in tqdm(range(args.n_samples)):
         state = env.get_state()
 
     with torch.no_grad():
-        z = facnet.encode(torchify(ob)).numpy()
+        z = facnet.encode(torchify(ob)).cpu().numpy()
 
     a = random.choice(env.actions)
     next_ob, reward, done = env.step(a)
     next_state = env.get_state()
 
     with torch.no_grad():
-        next_z = facnet.encode(torchify(next_ob)).numpy()
+        next_z = facnet.encode(torchify(next_ob)).cpu().numpy()
 
     dz = next_z - z
     ds = next_state - state
