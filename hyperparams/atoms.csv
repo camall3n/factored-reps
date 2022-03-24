@@ -1,6 +1,8 @@
 n_factors,10,int
-n_atoms,20,int
+n_atoms_per_factor,2,int
 n_updates,10000,int
+replay_buffer_size,80000,int
+n_steps_per_episode,10,int
 save_model_every_n_steps,200,int
 learning_rate,0.001,float
 batch_size,128,int
@@ -11,3 +13,5 @@ n_hidden_layers_factored_autoenc,2,int
 n_units_per_layer,32,int
 L_foc,0.003,float
 L_rec,1.0,float
+add_noop_actions,False,bool
+correlate_factors,False,bool

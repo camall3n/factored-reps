@@ -2,14 +2,16 @@ import gym
 import gym.spaces
 import numpy as np
 
-class MisraAtomEnv(gym.Env):
+class AtomsEnv(gym.Env):
     def __init__(self,
                  n_factors=10,
                  n_atoms_per_factor=2,
                  horizon=10,
                  noise_std=0.1,
                  permute_actions=True,
-                 permute_atoms=True):
+                 permute_atoms=True,
+                 correlate_factors=False,
+                 add_noop_actions=False):
         super().__init__()
         self.n_factors = n_factors
         self.n_atoms_per_factor = n_atoms_per_factor
@@ -17,17 +19,21 @@ class MisraAtomEnv(gym.Env):
         self.n_actions = n_factors
         self.horizon = horizon
         self.noise_std = noise_std
+        self.correlate_factors = correlate_factors
+        self.add_noop_actions = add_noop_actions
 
         action_permutation = np.random.permutation if permute_actions else np.arange
         atom_permutation = np.random.permutation if permute_atoms else np.arange
 
-        self.observation_space = gym.spaces.Box(-1, 2, (self.n_atoms, ))
         self.obs_permutations = [atom_permutation(self.n_atoms) for _ in range(self.horizon)]
+        self.observation_space = gym.spaces.Box(-1, 2, (self.n_atoms, ))
 
-        self.action_space = gym.spaces.Discrete(self.n_factors)
         self.action_permutations = [
             action_permutation(self.n_actions) for _ in range(self.horizon)
         ]
+        if self.add_noop_actions:
+            self.n_actions = 2 * self.n_actions
+        self.action_space = gym.spaces.Discrete(self.n_actions)
 
         self.state = np.empty((self.n_factors, ), dtype=int)
         self.timestep = 0
@@ -35,19 +41,26 @@ class MisraAtomEnv(gym.Env):
     def reset(self):
         self.state = np.random.choice(2, (self.n_factors, ))
         self.timestep = 0
-        return self.generate_obs(self.state)
+        return self._generate_obs(self.state)
 
     def step(self, action):
-        # For each timestep, we define a fixed permutation p of {1,...,d}
-        # Dynamics at time step t are given by:
-        #   1. Use the action number a to compute the index to update, i = p[a]
-        #   2. Set state element s[i] to (1 - s[i])
-        #   3. Leave the remaining elements unchanged
-        action_permutation = self.action_permutations[self.timestep]
-        update_idx = action_permutation[action]
-        self.state[update_idx] = 1 - self.state[update_idx]
+        if not self.add_noop_actions or (action <= self.n_actions // 2):
+            # For each timestep, we define a fixed permutation p of {1,...,d}
+            # Dynamics at time step t are given by:
+            #   1. Use the action number a to compute the index to update, i = p[a]
+            #   2. Set state element s[i] to (1 - s[i])
+            #   3. Leave the remaining elements unchanged
+            action_permutation = self.action_permutations[self.timestep]
+            update_idx = action_permutation[action]
 
-        obs = self.generate_obs(self.state)
+            # If factor correlation is desired...
+            if self.correlate_factors and (self.state[0] == 1):
+                # Add state-dependent correlation between adjacent factors
+                additional_idx = (update_idx + 1) % self.n_factors
+                self.state[additional_idx] = 1 - self.state[additional_idx]
+            self.state[update_idx] = 1 - self.state[update_idx]
+
+        obs = self._generate_obs(self.state)
         reward = 0
         self.timestep += 1
         done = (self.timestep >= self.horizon - 1)
@@ -55,7 +68,7 @@ class MisraAtomEnv(gym.Env):
 
         return obs, reward, done, info
 
-    def generate_obs(self, state):
+    def _generate_obs(self, state):
         # Vector z_i = [1, 0] if s[i] = 0, else [0, 1]
         atoms = np.take(np.eye(2), state, axis=0)
 
@@ -83,7 +96,7 @@ class MisraAtomEnv(gym.Env):
         }
 
 def test():
-    env = MisraAtomEnv(n_factors=5)
+    env = AtomsEnv(n_factors=5)
     ob = env.reset()
     info = env._get_current_info()
 

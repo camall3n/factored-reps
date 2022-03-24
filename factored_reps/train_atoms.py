@@ -11,21 +11,17 @@ from tqdm import tqdm
 from factored_reps.agents.replaymemory import ReplayMemory
 
 from factored_reps import utils
-from factored_reps.domains.misra_atoms import MisraAtomEnv
+from factored_reps.domains.atoms import AtomsEnv
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
-    sys.argv += ["-t", 'exp01-test']
+    sys.argv += ["-t", 'exp00-test']
 
 parser = utils.get_parser()
 # yapf: disable
 parser.add_argument('-s','--seed', type=int, default=0,
                     help='Random seed')
-parser.add_argument('--replay_buffer_size', type=int, default=80000,
-                    help='Number of experiences in training replay buffer')
-parser.add_argument('--n_steps_per_episode', type=int, default=10,
-                    help='Reset environment after this many steps')
 parser.add_argument('-t','--tag', type=str, required=True,
                     help='Tag for identifying experiment')
 parser.add_argument('--hyperparams', type=str, default='hyperparams/atoms.csv',
@@ -64,10 +60,12 @@ torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
 #%% ------------------ Define MDP ------------------
-env = MisraAtomEnv(n_factors=args.n_factors,
-                   n_atoms_per_factor=args.n_atoms // args.n_factors,
-                   permute_actions=False,
-                   permute_atoms=False)
+env = AtomsEnv(n_factors=args.n_factors,
+               n_atoms_per_factor=args.n_atoms_per_factor,
+               permute_actions=False,
+               permute_atoms=False,
+               correlate_factors=args.correlate_factors,
+               add_noop_actions=args.add_noop_actions)
 env.reset()
 pass
 
@@ -136,7 +134,7 @@ for buffer, n_episodes, seed in zip([replay_train, replay_test],
 #%% ------------------ Define models ------------------
 fnet = FocusedAutoencoder(args,
                           n_actions=env.action_space.n,
-                          n_input_dims=replay_train.retrieve(0, 'ob').shape[1:],
+                          n_input_dims=replay_train.retrieve(0, 'ob').shape[-1],
                           n_latent_dims=args.latent_dims,
                           device=device).to(device)
 fnet.print_summary()
@@ -244,7 +242,7 @@ z_deltas = np.stack(dz_list, axis=1)
 s_deltas = np.stack(ds_list, axis=1)
 
 all_deltas = np.concatenate((z_deltas, s_deltas))
-correlation = np.corrcoef(all_deltas)[:args.latent_dims,-args.n_factors:]
+correlation = np.corrcoef(all_deltas)[:args.latent_dims, -args.n_factors:]
 
 plt.imshow(correlation, vmin=-1, vmax=1)
 plt.yticks(np.arange(args.latent_dims))
