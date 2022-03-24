@@ -101,11 +101,12 @@ env = VisTaxi5x5(grayscale=markov_args.grayscale)
 example_obs = MoveAxisSensor(-1, 0).observe(env.reset(goal=False, explore=True))
 
 featurenet = FeatureNet(markov_args,
-                  n_actions=len(env.actions),
-                  input_shape=example_obs.shape,
-                  latent_dims=markov_args.latent_dims,
-                  device=device).to(device)
-model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag, markov_args.seed)
+                        n_actions=len(env.actions),
+                        input_shape=example_obs.shape,
+                        latent_dims=markov_args.latent_dims,
+                        device=device).to(device)
+model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag,
+                                                                  markov_args.seed)
 featurenet.load(model_file, to=device)
 phi = featurenet.phi
 phi.freeze()
@@ -178,10 +179,10 @@ for buffer, n_episodes, seed in zip([replay_train, replay_test],
 
 #%% ------------------ Define models ------------------
 facnet = FocusedAutoencoder(args,
-                          n_actions=len(env.actions),
-                          n_input_dims=markov_args.latent_dims,
-                          n_latent_dims=args.latent_dims,
-                          device=device).to(device)
+                            n_actions=len(env.actions),
+                            n_input_dims=markov_args.latent_dims,
+                            n_latent_dims=args.latent_dims,
+                            device=device).to(device)
 facnet.print_summary()
 
 #%% ------------------ Define training/testing callbacks ------------------
@@ -317,7 +318,8 @@ plt.ylabel(r'Learned representation ($\Delta z$)')
 plt.xlabel(r'Ground truth factor ($\Delta s$)')
 plt.title('Correlation coefficients')
 plt.colorbar()
-images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(args.tag, markov_abstraction_tag, markov_args.seed)
+images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
+    args.tag, markov_abstraction_tag, markov_args.seed)
 os.makedirs(images_dir, exist_ok=True)
 plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 plt.show()
