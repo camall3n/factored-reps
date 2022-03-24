@@ -44,7 +44,7 @@ class AtomsEnv(gym.Env):
         return self._generate_obs(self.state)
 
     def step(self, action):
-        if not self.add_noop_actions or (action <= self.n_actions // 2):
+        if not self.add_noop_actions or (action < self.n_actions // 2):
             # For each timestep, we define a fixed permutation p of {1,...,d}
             # Dynamics at time step t are given by:
             #   1. Use the action number a to compute the index to update, i = p[a]

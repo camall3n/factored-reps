@@ -13,6 +13,7 @@ from factored_reps.agents.replaymemory import ReplayMemory
 from factored_reps import utils
 from factored_reps.domains.atoms import AtomsEnv
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps.plotting import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
@@ -28,6 +29,8 @@ parser.add_argument('--hyperparams', type=str, default='hyperparams/atoms.csv',
                     help='Path to hyperparameters csv file')
 parser.add_argument('--save', action='store_true',
                     help='Save final network weights')
+parser.add_argument('--headless', action='store_true',
+                    help='Enable headless (no graphics) mode for running on cluster')
 parser.add_argument('--quick', action='store_true',
                     help='Flag to reduce number of updates for quick testing')
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
@@ -35,6 +38,12 @@ parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", de
 
 args = utils.parse_args_and_load_hyperparams(parser)
 del args.fool_ipython
+
+if args.headless:
+    import matplotlib
+    # Force matplotlib to not use any Xwindows backend.
+    matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
@@ -236,19 +245,30 @@ for i in tqdm(range(1000)):
     z = next_z.copy()
 
 #%% ------------------ Plot dz vs. ds correlation ------------------
-import matplotlib.pyplot as plt
-
 z_deltas = np.stack(dz_list, axis=1)
 s_deltas = np.stack(ds_list, axis=1)
 
+n_factors = len(state)
+n_vars = len(z)
+
 all_deltas = np.concatenate((z_deltas, s_deltas))
 correlation = np.corrcoef(all_deltas)[:args.latent_dims, -args.n_factors:]
+diag_correlation, y_ticks = diagonalize(np.abs(correlation))
 
-plt.imshow(correlation, vmin=-1, vmax=1)
-plt.yticks(np.arange(args.latent_dims))
-plt.xticks(np.arange(args.n_factors))
+plt.imshow(diag_correlation, vmin=0, vmax=1)
+add_heatmap_labels(diag_correlation)
+ax = plt.gca()
+
+ax.set_yticks(np.arange(n_vars))
+ax.set_yticklabels(y_ticks)
+
+plt.xticks(np.arange(n_factors))
 plt.ylabel(r'Learned representation ($\Delta z$)')
 plt.xlabel(r'Ground truth factor ($\Delta s$)')
-plt.title('Correlation coefficients')
+plt.title('Correlation Magnitude')
 plt.colorbar()
+plt.tight_layout()
+images_dir = 'results/atoms/images/{}/'.format(args.tag)
+os.makedirs(images_dir, exist_ok=True)
+plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 plt.show()

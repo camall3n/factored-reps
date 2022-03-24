@@ -17,6 +17,7 @@ from visgrid.taxi.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps.plotting import add_heatmap_labels
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
@@ -303,12 +304,14 @@ z_deltas = np.stack(dz_list, axis=1)
 s_deltas = np.stack(ds_list, axis=1)
 
 n_factors = len(state)
+n_vars = len(z)
 
 all_deltas = np.concatenate((z_deltas, s_deltas))
-correlation = np.corrcoef(all_deltas)[:args.latent_dims, -n_factors:]
-
+correlation = np.corrcoef(all_deltas)[:n_vars, -n_factors:]
 plt.imshow(correlation, vmin=-1, vmax=1)
-plt.yticks(np.arange(args.latent_dims))
+#add_heatmap_labels(correlation)
+
+plt.yticks(np.arange(n_vars))
 plt.xticks(np.arange(n_factors))
 plt.ylabel(r'Learned representation ($\Delta z$)')
 plt.xlabel(r'Ground truth factor ($\Delta s$)')
