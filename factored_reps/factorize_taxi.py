@@ -17,7 +17,7 @@ from visgrid.taxi.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
-from factored_reps.plotting import add_heatmap_labels
+from factored_reps.plotting import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
