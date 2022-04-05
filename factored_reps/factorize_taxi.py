@@ -313,15 +313,20 @@ n_vars = len(z)
 
 all_deltas = np.concatenate((z_deltas, s_deltas))
 correlation = np.corrcoef(all_deltas)[:n_vars, -n_factors:]
-plt.imshow(correlation, vmin=-1, vmax=1)
-#add_heatmap_labels(correlation)
+diag_correlation, y_ticks = diagonalize(np.abs(correlation))
+plt.imshow(diag_correlation, vmin=0, vmax=1)
+#add_heatmap_labels(diag_correlation)
 
-plt.yticks(np.arange(n_vars))
-plt.xticks(np.arange(n_factors))
+ax = plt.gca()
+
+ax.set_yticks(np.arange(n_vars))
+ax.set_yticklabels(y_ticks)
+
 plt.ylabel(r'Learned representation ($\Delta z$)')
 plt.xlabel(r'Ground truth factor ($\Delta s$)')
-plt.title('Correlation coefficients')
+plt.title('Correlation Magnitude')
 plt.colorbar()
+plt.tight_layout()
 images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
     args.tag, markov_abstraction_tag, markov_args.seed)
 os.makedirs(images_dir, exist_ok=True)
