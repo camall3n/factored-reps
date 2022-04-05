@@ -60,6 +60,7 @@ print('device: {}'.format(device))
 results_dir = 'results/focused-taxi/'
 log_dir = results_dir + '/logs/' + str(args.tag)
 models_dir = results_dir + '/models/' + str(args.tag)
+memory_dir = results_dir + '/memory/' + str(args.tag)
 os.makedirs(log_dir, exist_ok=True)
 
 train_log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
@@ -160,7 +161,7 @@ on_retrieve = {
 }
 replay_test = ReplayMemory(args.batch_size, on_retrieve)
 replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
-n_test_episodes = 100
+n_test_episodes = 500
 n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
 if args.quick:
     n_train_episodes = n_test_episodes
@@ -176,6 +177,9 @@ for buffer, n_episodes, seed in zip([replay_train, replay_test],
         if buffer is replay_test:
             s = exp['state']
         buffer.push(exp)
+
+replay_train.save(memory_dir, filename='seed_{}__replay_train'.format(args.seed))
+replay_test.save(memory_dir, filename='seed_{}__replay_test'.format(args.seed))
 
 #%% ------------------ Define models ------------------
 facnet = FocusedAutoencoder(args,
