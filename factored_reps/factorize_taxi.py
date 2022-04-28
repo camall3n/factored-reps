@@ -35,11 +35,21 @@ parser.add_argument('--save', action='store_true',
                     help='Save final network weights')
 parser.add_argument('--quick', action='store_true',
                     help='Flag to reduce number of updates for quick testing')
+parser.add_argument('--headless', action='store_true',
+                    help='Enable headless (no graphics) mode for running on cluster')
+parser.add_argument('--load-experiences', type=str, default=None,
+                    help='Flag to force regeneration of experience data')
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 # yapf: enable
 
 args = utils.parse_args_and_load_hyperparams(parser)
 del args.fool_ipython
+
+if args.headless:
+    import matplotlib
+    # Force matplotlib to not use any Xwindows backend.
+    matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
@@ -60,7 +70,6 @@ print('device: {}'.format(device))
 results_dir = 'results/focused-taxi/'
 log_dir = results_dir + '/logs/' + str(args.tag)
 models_dir = results_dir + '/models/' + str(args.tag)
-memory_dir = results_dir + '/memory/' + str(args.tag)
 os.makedirs(log_dir, exist_ok=True)
 
 train_log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
@@ -106,8 +115,7 @@ featurenet = FeatureNet(markov_args,
                         input_shape=example_obs.shape,
                         latent_dims=markov_args.latent_dims,
                         device=device).to(device)
-model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag,
-                                                                  markov_args.seed)
+model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag, markov_args.seed)
 featurenet.load(model_file, to=device)
 phi = featurenet.phi
 phi.freeze()
@@ -161,25 +169,32 @@ on_retrieve = {
 }
 replay_test = ReplayMemory(args.batch_size, on_retrieve)
 replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
-n_test_episodes = 500
-n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
-if args.quick:
-    n_train_episodes = n_test_episodes
-test_seed = 1
-train_seed = 2 + args.seed
-print('Initializing replay buffer...')
-for buffer, n_episodes, seed in zip([replay_train, replay_test],
-                                    [n_train_episodes, n_test_episodes], [train_seed, test_seed]):
-    for exp in generate_experiences(env,
-                                    n_episodes,
-                                    n_steps_per_episode=args.n_steps_per_episode,
-                                    seed=seed):
-        if buffer is replay_test:
-            s = exp['state']
-        buffer.push(exp)
 
-replay_train.save(memory_dir, filename='seed_{}__replay_train'.format(args.seed))
-replay_test.save(memory_dir, filename='seed_{}__replay_test'.format(args.seed))
+if args.load_experiences is not None:
+    memory_dir = os.path.join(results_dir, 'memory', str(args.load_experiences))
+    replay_train.load(memory_dir+'/seed_{}__replay_train.json'.format(args.seed))
+    replay_test.load(memory_dir+'/seed_{}__replay_test.json'.format(args.seed))
+else:
+    memory_dir = os.path.join(results_dir, 'memory', str(args.tag))
+    n_test_episodes = 500
+    n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
+    if args.quick:
+        n_train_episodes = n_test_episodes
+    test_seed = 1
+    train_seed = 2 + args.seed
+    print('Initializing replay buffer...')
+    for buffer, n_episodes, seed in zip([replay_train, replay_test],
+                                        [n_train_episodes, n_test_episodes], [train_seed, test_seed]):
+        for exp in generate_experiences(env,
+                                        n_episodes,
+                                        n_steps_per_episode=args.n_steps_per_episode,
+                                        seed=seed):
+            if buffer is replay_test:
+                s = exp['state']
+            buffer.push(exp)
+
+    replay_train.save(memory_dir, filename='seed_{}__replay_train'.format(args.seed))
+    replay_test.save(memory_dir, filename='seed_{}__replay_test'.format(args.seed))
 
 #%% ------------------ Define models ------------------
 facnet = FocusedAutoencoder(args,
@@ -252,12 +267,13 @@ for step in tqdm(range(args.n_updates)):
     train_loss_info = train_batch()[-1]
     convert_and_log_loss_info(train_log, train_loss_info, step)
 
-    for exp in generate_experiences(env,
-                                    n_episodes=n_episodes_per_update,
-                                    n_steps_per_episode=args.n_steps_per_episode,
-                                    seed=train_seed + step,
-                                    quiet=True):
-        replay_train.push(exp)
+    if args.load_experiences is None:
+        for exp in generate_experiences(env,
+                                        n_episodes=n_episodes_per_update,
+                                        n_steps_per_episode=args.n_steps_per_episode,
+                                        seed=train_seed + step,
+                                        quiet=True):
+            replay_train.push(exp)
 
 #%% ------------------ Save results ------------------
 if args.save:
