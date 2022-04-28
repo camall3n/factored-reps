@@ -334,8 +334,6 @@ for i in tqdm(range(args.n_samples)):
     z = next_z.copy()
 
 #%% ------------------ Plot dz vs. ds correlation ------------------
-import matplotlib.pyplot as plt
-
 z_deltas = np.stack(dz_list, axis=1)
 s_deltas = np.stack(ds_list, axis=1)
 
