@@ -337,6 +337,18 @@ for i in tqdm(range(args.n_samples)):
 z_deltas = np.stack(dz_list, axis=1)
 s_deltas = np.stack(ds_list, axis=1)
 
+def compute_focused_loss(dz):
+    eps = 1e-6
+    dz = dz.transpose()
+    l1 = np.sum(np.abs(dz), axis=-1)
+    lmax = np.max(np.abs(dz), axis=-1)[0]
+    return np.mean(l1 / (lmax + eps))
+
+compute_focused_loss(s_deltas)
+self_loops = (s_deltas.sum(axis=0) == 0)
+compute_focused_loss(s_deltas[:, ~self_loops])
+compute_focused_loss(z_deltas[:, ~self_loops])
+
 n_factors = len(state)
 n_vars = len(z)
 
