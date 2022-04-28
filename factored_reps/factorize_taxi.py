@@ -39,6 +39,8 @@ parser.add_argument('--headless', action='store_true',
                     help='Enable headless (no graphics) mode for running on cluster')
 parser.add_argument('--load-experiences', type=str, default=None,
                     help='Flag to force regeneration of experience data')
+parser.add_argument('--remove-self-loops', action='store_true',
+                    help='Prevent self-loop transitions from being added to replay buffer')
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 # yapf: enable
 
@@ -208,12 +210,25 @@ facnet.print_summary()
 def train_batch(test=False):
     buffer = replay_train if not test else replay_test
     batch_size = args.batch_size if not test else len(replay_test)
-    fields = ['_index_', 'ob', 'state', 'action', 'next_ob']
+    fields = ['_index_', 'ob', 'state', 'action', 'next_ob', 'next_state']
     batch = buffer.sample(batch_size, fields) if not test else buffer.retrieve(fields=fields)
-    idx, obs, states, actions, next_obs = batch
+    idx, obs, states, actions, next_obs, next_states = batch
 
-    z, _, loss_info = facnet.train_batch(obs, actions, next_obs, test=test)
-    z = z.detach()
+    # If requested, remove self-loop transitions
+    if args.remove_self_loops:
+        mask = (states != next_states).any(dim=-1)
+    else:
+        mask = np.ones(len(states), dtype=bool)
+    if mask.any(dim=0):
+        obs = obs[mask]
+        actions = actions[mask]
+        next_obs = next_obs[mask]
+
+        z, _, loss_info = facnet.train_batch(obs, actions, next_obs, test=test)
+        z = z.detach()
+    else:
+        z = torch.zeros_like(ob)
+        loss_info = {}
     return z, loss_info
 
 def convert_and_log_loss_info(log_file, loss_info, step):
