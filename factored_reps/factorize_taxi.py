@@ -304,7 +304,7 @@ dz_list = []
 ds_list = []
 
 if args.quick:
-    args.n_samples = 100
+    args.n_samples = 1000
 done = True
 ep_steps = 0
 for i in tqdm(range(args.n_samples)):
@@ -341,13 +341,19 @@ def compute_focused_loss(dz):
     eps = 1e-6
     dz = dz.transpose()
     l1 = np.sum(np.abs(dz), axis=-1)
-    lmax = np.max(np.abs(dz), axis=-1)[0]
+    lmax = np.max(np.abs(dz), axis=-1)
     return np.mean(l1 / (lmax + eps))
 
 compute_focused_loss(s_deltas)
 self_loops = (s_deltas.sum(axis=0) == 0)
 compute_focused_loss(s_deltas[:, ~self_loops])
 compute_focused_loss(z_deltas[:, ~self_loops])
+
+taxi_pos_only = s_deltas.copy()
+taxi_pos_only[2:, :] = 0
+taxi_pos_only
+compute_focused_loss(taxi_pos_only[:, ~self_loops])
+dz = taxi_pos_only
 
 n_factors = len(state)
 n_vars = len(z)
