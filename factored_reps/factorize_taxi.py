@@ -216,10 +216,10 @@ def train_batch(test=False):
 
     # If requested, remove self-loop transitions
     if args.remove_self_loops:
-        mask = (states != next_states).any(dim=-1)
+        mask = (states != next_states).any(axis=-1)
     else:
         mask = np.ones(len(states), dtype=bool)
-    if mask.any(dim=0):
+    if mask.any(axis=0):
         obs = obs[mask]
         actions = actions[mask]
         next_obs = next_obs[mask]
