@@ -5,8 +5,11 @@ import json
 #!! do not import matplotlib until you check input arguments
 import numpy as np
 import os
+import pandas as pd
 import random
+import seaborn as sns
 import seeding
+from sklearn.neighbors import KernelDensity
 import sys
 import torch
 from tqdm import tqdm
@@ -17,11 +20,12 @@ from visgrid.taxi.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps.models.categorical_predictor import CategoricalPredictor
 from factored_reps.plotting import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
-    sys.argv += ["-t", 'exp00-test', "--quick"]
+    sys.argv += ["-t", 'exp00-test', '--load-experiences', 'exp02-factorize-multi-seeds', '--remove-self-loops', '-s', '1', '--save']
 
 parser = utils.get_parser()
 # yapf: disable
@@ -117,8 +121,10 @@ featurenet = FeatureNet(markov_args,
                         input_shape=example_obs.shape,
                         latent_dims=markov_args.latent_dims,
                         device=device).to(device)
-model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag, markov_args.seed)
+model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag,
+                                                                  markov_args.seed)
 featurenet.load(model_file, to=device)
+featurenet.freeze()
 phi = featurenet.phi
 phi.freeze()
 env = StateAbstractionWrapper(env, phi)
@@ -174,8 +180,8 @@ replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 
 if args.load_experiences is not None:
     memory_dir = os.path.join(results_dir, 'memory', str(args.load_experiences))
-    replay_train.load(memory_dir+'/seed_{}__replay_train.json'.format(args.seed))
-    replay_test.load(memory_dir+'/seed_{}__replay_test.json'.format(args.seed))
+    replay_train.load(memory_dir + '/seed_{}__replay_train.json'.format(args.seed))
+    replay_test.load(memory_dir + '/seed_{}__replay_test.json'.format(args.seed))
 else:
     memory_dir = os.path.join(results_dir, 'memory', str(args.tag))
     n_test_episodes = 500
@@ -186,7 +192,8 @@ else:
     train_seed = 2 + args.seed
     print('Initializing replay buffer...')
     for buffer, n_episodes, seed in zip([replay_train, replay_test],
-                                        [n_train_episodes, n_test_episodes], [train_seed, test_seed]):
+                                        [n_train_episodes, n_test_episodes],
+                                        [train_seed, test_seed]):
         for exp in generate_experiences(env,
                                         n_episodes,
                                         n_steps_per_episode=args.n_steps_per_episode,
@@ -300,11 +307,16 @@ test_log.close()
 #%% ------------------ Analyze results ------------------
 torchify = lambda x: on_retrieve['ob'](on_retrieve['*'](x)).squeeze()
 
+obs = []
+next_obs = []
+states = []
+z_list = []
+a_list = []
 dz_list = []
 ds_list = []
 
 if args.quick:
-    args.n_samples = 1000
+    args.n_samples = 5000
 done = True
 ep_steps = 0
 for i in tqdm(range(args.n_samples)):
@@ -328,6 +340,11 @@ for i in tqdm(range(args.n_samples)):
     ds = next_state - state
     dz_list.append(dz)
     ds_list.append(ds)
+    obs.append(ob)
+    next_obs.append(next_ob)
+    states.append(state)
+    z_list.append(z)
+    a_list.append(a)
 
     ob = next_ob.copy()
     state = next_state.copy()
@@ -338,7 +355,7 @@ z_deltas = np.stack(dz_list, axis=1)
 s_deltas = np.stack(ds_list, axis=1)
 
 def compute_focused_loss(dz):
-    eps = 1e-6
+    eps = 1e-14
     dz = dz.transpose()
     l1 = np.sum(np.abs(dz), axis=-1)
     lmax = np.max(np.abs(dz), axis=-1)
@@ -349,11 +366,15 @@ self_loops = (s_deltas.sum(axis=0) == 0)
 compute_focused_loss(s_deltas[:, ~self_loops])
 compute_focused_loss(z_deltas[:, ~self_loops])
 
-taxi_pos_only = s_deltas.copy()
+taxi_pos_only = s_deltas.copy().astype(float)
 taxi_pos_only[2:, :] = 0
-taxi_pos_only
+s_shaped_noise = np.random.normal(scale=0.01, size=s_deltas.shape)
+taxi_pos_only += s_shaped_noise
 compute_focused_loss(taxi_pos_only[:, ~self_loops])
 dz = taxi_pos_only
+
+s_concat_with_noise = np.concatenate((s_deltas, s_deltas + s_shaped_noise))
+compute_focused_loss(s_concat_with_noise[:, ~self_loops])
 
 n_factors = len(state)
 n_vars = len(z)
@@ -379,3 +400,315 @@ images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
 os.makedirs(images_dir, exist_ok=True)
 plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 plt.show()
+
+#% ------------------ Plot z vs s correlation ------------------
+n_factors = len(state)
+n_vars = len(z)
+
+s = np.stack(states, axis=1).astype(float)
+z = np.stack(z_list, axis=1).astype(float)
+state_vars = np.concatenate((z, s))
+correlation = np.corrcoef(state_vars)[:n_vars, -n_factors:]
+diag_correlation, y_ticks = diagonalize(np.abs(correlation))
+plt.imshow(diag_correlation, vmin=0, vmax=1)
+#add_heatmap_labels(diag_correlation)
+
+ax = plt.gca()
+
+ax.set_yticks(np.arange(n_vars))
+ax.set_yticklabels(y_ticks)
+
+plt.ylabel(r'Learned representation ($z$)')
+plt.xlabel(r'Ground truth factor ($s$)')
+plt.title('Correlation Magnitude')
+plt.colorbar()
+plt.tight_layout()
+images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
+    args.tag, markov_abstraction_tag, markov_args.seed)
+os.makedirs(images_dir, exist_ok=True)
+# plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
+plt.show()
+
+#%% ------------------ Plot MI(z, s) ------------------
+def fit_kde(x, bw=0.03):
+    p = KernelDensity(bandwidth=bw, kernel='tophat')
+    p.fit(x)
+    return p
+
+def MI(x, y):
+    xy = np.concatenate([x, y], axis=-1)
+    log_pxy = fit_kde(xy).score_samples(xy)
+    log_px = fit_kde(x).score_samples(x)
+    log_py = fit_kde(y).score_samples(y)
+    log_ratio = log_pxy - log_px - log_py
+    return np.mean(log_ratio)
+
+def compute_mi_matrix(s, z):
+    n_factors = s.shape[0]
+    n_vars = z.shape[0]
+    mi_matrix = np.zeros((n_vars, n_factors))
+    for i in range(n_factors):
+        s_i = s[i,:][:, np.newaxis]
+        for j in range(n_vars):
+            z_j = z[j,:][:, np.newaxis]
+            mi_matrix[j][i] = MI(s_i, z_j)
+    return mi_matrix
+
+# def compute_mi_matrix(s, z):
+#     n_factors = s.shape[0]
+#     n_vars = 1
+#     mi_matrix = np.zeros((1, n_factors))
+#     for i in range(n_factors):
+#         s_i = s[i,:][:, np.newaxis]
+#         mi_matrix[0][i] = MI(s_i, z.transpose())
+#     return mi_matrix
+
+s_entropy = compute_mi_matrix(s, s).diagonal()[np.newaxis, :]
+mi_matrix = compute_mi_matrix(s, s)
+mi_matrix = compute_mi_matrix(s, z)
+
+n_vars, n_factors = mi_matrix.shape
+
+diag_mi_matrix, y_ticks = diagonalize(np.abs(mi_matrix))
+plt.imshow(diag_mi_matrix)
+
+ax = plt.gca()
+
+ax.set_yticks(np.arange(n_vars))
+ax.set_yticklabels(y_ticks)
+
+plt.ylabel(r'Learned representation ($z$)')
+plt.xlabel(r'Ground truth factor ($s$)')
+plt.title('Mutual Information')
+plt.colorbar()
+plt.tight_layout()
+images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
+    args.tag, markov_abstraction_tag, markov_args.seed)
+os.makedirs(images_dir, exist_ok=True)
+# plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
+plt.show()
+
+# MI(s0, s1)
+# MI(s0, s2)
+# MI(s0, s3)
+# MI(s0, s4)
+# MI(s[:,0][-1,:][np.newaxis,:], s[:,1][np.newaxis,:])
+# MI(s.transpose(), z.transpose())
+# MI(z.transpose(), s.transpose())
+# MI(z.transpose(), z.transpose())
+
+#%% ------------------ Examine action effects ------------------
+z_deltas = np.stack(dz_list, axis=1)
+s_deltas = np.stack(ds_list, axis=1)
+all_a = np.stack(a_list, axis=0)
+all_obs = np.stack(obs, axis=1).squeeze().transpose()
+all_z = np.stack(z_list, axis=1)
+
+self_loops = (s_deltas.sum(axis=0) == 0)
+s_shaped_noise = np.random.normal(scale=0.03, size=s_deltas.shape)
+
+obs_deltas = np.stack([next_ob - ob for ob, next_ob in zip(obs, next_obs)], axis=1).squeeze().transpose()
+
+def plot_action_deltas(deltas):
+    n_vars = len(deltas)
+    fig, axes = plt.subplots(5,1, figsize=(8,12))
+    for action, action_name in enumerate(['left', 'right', 'up', 'down', 'interact']):
+        experiences = (all_a == action)
+        noise = np.random.normal(scale=0, size = deltas[:, experiences & ~self_loops].shape)
+        action_specific_deltas = deltas[:, experiences & ~self_loops] + noise
+        df = pd.DataFrame({
+            r'$z_{'+'{}'.format(i)+'}$': action_specific_deltas[i, :] for i in range(n_vars)
+        })
+        sns.violinplot(data=df, ax=axes[action])
+        axes[action].set_title('a = {}'.format(action_name))
+        axes[action].set_ylabel('Effect on var')
+    axes[-1].set_xlabel('Var')
+    plt.tight_layout()
+    plt.show()
+
+plot_action_deltas(all_z)
+plot_action_deltas(all_obs)
+plot_action_deltas(z_deltas)
+plot_action_deltas(obs_deltas)
+
+#%%
+
+compute_focused_loss(s_deltas)
+self_loops = (s_deltas.sum(axis=0) == 0)
+compute_focused_loss(s_deltas[:, ~self_loops])
+compute_focused_loss(z_deltas[:, ~self_loops])
+
+taxi_pos_only = s_deltas.copy().astype(float)
+taxi_pos_only[2:, :] = 0
+s_shaped_noise = np.random.normal(scale=0.01, size=s_deltas.shape)
+taxi_pos_only += s_shaped_noise
+compute_focused_loss(taxi_pos_only[:, ~self_loops])
+dz = taxi_pos_only
+
+s_concat_with_noise = np.concatenate((s_deltas, s_deltas + s_shaped_noise))
+compute_focused_loss(s_concat_with_noise[:, ~self_loops])
+
+n_factors = len(state)
+n_vars = len(z)
+
+all_deltas = np.concatenate((z_deltas, s_deltas))
+correlation = np.corrcoef(all_deltas)[:n_vars, -n_factors:]
+diag_correlation, y_ticks = diagonalize(np.abs(correlation))
+
+plt.imshow(diag_correlation, vmin=0, vmax=1)
+#add_heatmap_labels(diag_correlation)
+
+ax = plt.gca()
+
+ax.set_yticks(np.arange(n_vars))
+ax.set_yticklabels(y_ticks)
+
+plt.ylabel(r'Learned representation ($\Delta z$)')
+plt.xlabel(r'Ground truth factor ($\Delta s$)')
+plt.title('Correlation Magnitude')
+plt.colorbar()
+plt.tight_layout()
+images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
+    args.tag, markov_abstraction_tag, markov_args.seed)
+os.makedirs(images_dir, exist_ok=True)
+plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
+plt.show()
+
+
+#%% ------------------ Define models ------------------
+
+n_values_per_variable = [5, 5, 5, 5, 2]
+predictor = CategoricalPredictor(
+    n_inputs=markov_args.latent_dims,
+    n_values=n_values_per_variable,
+    learning_rate=markov_args.learning_rate,
+).to(device)
+models_dir = 'results/taxi/models/{}'.format(markov_abstraction_tag)
+predictor.load(models_dir + '/predictor-{}_best.pytorch'.format(markov_args.seed), to=device)
+predictor.print_summary()
+
+def generate_confusion_plots(s_actual, s_predicted):
+    state_vars = ['taxi_row', 'taxi_col', 'passenger_row', 'passenger_col',
+                  'in_taxi'][:len(s_actual[0])]
+    n_passengers = 1
+    n_values_per_variable = [5, 5] + ([5, 5, 2] * n_passengers)
+
+    fig, axes = plt.subplots(len(state_vars), 1, figsize=(3, 2 * len(state_vars)))
+
+    for state_var_idx, (state_var, n_values,
+                        ax) in enumerate(zip(state_vars, n_values_per_variable, axes)):
+        bins = n_values
+        value_range = ((-0.5, n_values - 0.5), (0, n_values - 0.5))
+        h = ax.hist2d(x=s_predicted[:, state_var_idx],
+                      y=s_actual[:, state_var_idx],
+                      bins=bins,
+                      range=value_range)
+        counts, xedges, yedges, im = h
+        fig.colorbar(im, ax=ax)
+
+        for i in range(len(yedges) - 1):
+            for j in range(len(xedges) - 1):
+                ax.text(xedges[j] + 0.5,
+                        yedges[i] + 0.4,
+                        int(counts.T[i, j]),
+                        color="w",
+                        ha="center",
+                        va="center",
+                        fontweight="bold")
+        ax.set_title(state_var)
+        ax.set_xlabel('predicted')
+        ax.set_ylabel('actual')
+    plt.tight_layout()
+    # plt.show()
+    return fig, axes
+
+def analyze_results(s, z_markov, autoenc, predictor):
+    z_hat = autoenc(z_markov)
+    s_hat_from_z = predictor.predict(z_markov).detach().cpu().numpy()
+    generate_confusion_plots(s, s_hat_from_z)
+    # plt.savefig(os.path.join(images_dir,
+    #                          'seed-{}-predictor_confusion_from_z.png'.format(args.seed)),
+    #             facecolor='white',
+    #             edgecolor='white')
+    # plt.close()
+
+    s_hat_from_z_hat = predictor.predict(z_hat).detach().cpu().numpy()
+    generate_confusion_plots(s, s_hat_from_z_hat)
+    # plt.savefig(os.path.join(images_dir,
+    #                          'seed-{}-predictor_confusion_from_z_hat.png'.format(args.seed)),
+    #             facecolor='white',
+    #             edgecolor='white')
+    # plt.close()
+
+all_s = np.asarray(states)
+t_obs = torchify(np.asarray(obs))
+analyze_results(all_s, t_obs, facnet, predictor)
+
+#%% ----- Where is the passenger info? -----
+
+z_markov = t_obs
+z_f = facnet.encode(z_markov)
+
+state_vars = ['taxi_row', 'taxi_col', 'passenger_row', 'passenger_col', 'in_taxi'][:len(all_s[0])]
+
+def compute_accuracy(z_hat):
+    s_hat = predictor.predict(z_hat).detach().cpu().numpy()
+    accuracy = dict()
+    for state_var_idx, state_var in enumerate(state_vars):
+        s_predicted = s_hat[:, state_var_idx]
+        s_actual = all_s[:, state_var_idx]
+        n_correct = np.sum(s_predicted == s_actual)
+        n_total = len(s_actual)
+        accuracy[state_var] = n_correct / n_total
+    return accuracy
+
+acc_baseline = np.asarray(list(compute_accuracy(z_markov).values()))
+z_hat = facnet(z_markov)
+acc_reconstruction = np.asarray(list(compute_accuracy(z_hat).values()))
+
+def compute_accuracy_delta(z_f):
+    z_hat = facnet.decode(z_f)
+    acc_factored = np.asarray(list(compute_accuracy(z_hat).values()))
+    d_acc_factored = acc_factored - acc_baseline
+    return d_acc_factored
+
+print(compute_accuracy_delta(z_f))
+
+#%%
+# Separately set each variable to its mean value and measure accuracy:
+n_vars = z_f.shape[-1]
+df = pd.DataFrame()
+for i in range(n_vars):
+    z_f_alt = z_f.clone()
+    z_f_alt[:,i] = z_f[:, i].mean()
+    accuracy_deltas = compute_accuracy_delta(z_f_alt)
+    df_entries = [{
+        'state_var': state_var,
+        'accuracy_delta': accuracy_delta,
+        'var_idx': i,
+    } for state_var, accuracy_delta in zip(state_vars, accuracy_deltas)]
+    for df_entry in df_entries:
+        df = df.append(df_entry, ignore_index=True)
+
+sns.barplot(data=df, x='var_idx', y='accuracy_delta', hue='state_var')
+plt.title('Change in accuracy, holding each individual variable fixed')
+
+#%%
+# Separately set all but one variable to the mean value and measure accuracy:
+n_vars = z_f.shape[-1]
+df = pd.DataFrame()
+for i in range(n_vars):
+    z_f_alt = z_f.mean(axis=0).repeat((len(z_f), 1))
+    z_f_alt[:, i] = z_f[:, i].clone()
+    accuracy_deltas = compute_accuracy_delta(z_f_alt)
+    df_entries = [{
+        'state_var': state_var,
+        'accuracy_delta': accuracy_delta,
+        'var_idx': i,
+    } for state_var, accuracy_delta in zip(state_vars, accuracy_deltas)]
+    for df_entry in df_entries:
+        df = df.append(df_entry, ignore_index=True)
+sns.barplot(data=df, x='var_idx', y='accuracy_delta', hue='state_var')
+plt.ylim([-1.1, 0.01])
+sns.move_legend(plt.gca(), loc='lower center', ncol=3)
+plt.title('Change in accuracy, holding all but one variable fixed')
