@@ -51,8 +51,12 @@ class FocusedAutoencoder(Network):
         z_fac = self.encoder(x)
         return z_fac
 
-    def forward(self, *args, **kwargs):
-        raise NotImplementedError
+    def decode(self, z):
+        x_hat = self.decoder(z)
+        return x_hat
+
+    def forward(self, x):
+        return self.decode(self.encode(x))
 
     def compute_loss(self, x0, z0_factored, x0_hat, x1, z1_factored, x1_hat):
         loss_info = {
