@@ -12,4 +12,4 @@ n_hidden_layers_factored_autoenc,2,int
 n_units_per_layer,64,int
 L_foc,0.0003,float
 L_rec,1.0,float
-autoenc_backprop_next_state,False,bool
+autoenc_backprop_next_state,True,bool
