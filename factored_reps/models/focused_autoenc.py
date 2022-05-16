@@ -8,11 +8,12 @@ from markov_abstr.gridworld.models.nnutils import Network
 from markov_abstr.gridworld.models.simplenet import SimpleNet
 
 class FocusedAutoencoder(Network):
-    def __init__(self, args, n_actions, n_input_dims, n_latent_dims, device='cpu'):
+    def __init__(self, args, n_actions, n_input_dims, n_latent_dims, device='cpu', backprop_next_state=True):
         super().__init__()
         self.n_actions = n_actions
         self.coefs = args.coefs
         self.device = device
+        self.backprop_next_state = backprop_next_state
 
         self.encoder = SimpleNet(n_inputs=n_input_dims,
                                  n_outputs=n_latent_dims,
@@ -75,9 +76,10 @@ class FocusedAutoencoder(Network):
             self.train()
             self.optimizer.zero_grad()
         z0_factored = self.encoder(x0)
-        z1_factored = self.encoder(x1)
         x0_hat = self.decoder(z0_factored)
-        x1_hat = self.decoder(z1_factored)
+        with torch.set_grad_enabled(self.backprop_next_state):
+            z1_factored = self.encoder(x1)
+            x1_hat = self.decoder(z1_factored)
 
         loss_info = self.compute_loss(x0, z0_factored, x0_hat, x1, z1_factored, x1_hat)
         if not test:
