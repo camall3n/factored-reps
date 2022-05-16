@@ -572,7 +572,7 @@ plt.tight_layout()
 images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
     args.tag, markov_abstraction_tag, markov_args.seed)
 os.makedirs(images_dir, exist_ok=True)
-plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
+# plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 plt.show()
 
 
