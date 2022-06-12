@@ -20,12 +20,15 @@ from visgrid.taxi.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps.models.calf import CALFNet
 from factored_reps.models.categorical_predictor import CategoricalPredictor
 from factored_reps.plotting import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
-    sys.argv += ["-t", 'exp00-test', '--load-experiences', 'exp02-factorize-multi-seeds', '--remove-self-loops', '-s', '1', '--save']
+    sys.argv += [
+        "-t", 'exp00-test', '--load-experiences', 'exp02-factorize-multi-seeds', '-s', '1', '--save', '--quick'
+    ]
 
 parser = utils.get_parser()
 # yapf: disable
@@ -206,12 +209,18 @@ else:
     replay_test.save(memory_dir, filename='seed_{}__replay_test'.format(args.seed))
 
 #%% ------------------ Define models ------------------
-facnet = FocusedAutoencoder(args,
-                            n_actions=len(env.actions),
-                            n_input_dims=markov_args.latent_dims,
-                            n_latent_dims=args.latent_dims,
-                            device=device,
-                            backprop_next_state=args.autoenc_backprop_next_state).to(device)
+# facnet = FocusedAutoencoder(args,
+#                             n_actions=len(env.actions),
+#                             n_input_dims=markov_args.latent_dims,
+#                             n_latent_dims=args.latent_dims,
+#                             device=device,
+#                             backprop_next_state=args.autoenc_backprop_next_state).to(device)
+facnet = CALFNet(args,
+                 n_actions=len(env.actions),
+                 n_input_dims=markov_args.latent_dims,
+                 n_latent_dims=args.latent_dims,
+                 device=device,
+                 backprop_next_state=args.autoenc_backprop_next_state).to(device)
 facnet.print_summary()
 
 #%% ------------------ Define training/testing callbacks ------------------
@@ -317,7 +326,7 @@ dz_list = []
 ds_list = []
 
 if args.quick:
-    args.n_samples = 5000
+    args.n_samples = 500
 done = True
 ep_steps = 0
 for i in tqdm(range(args.n_samples)):
@@ -449,9 +458,9 @@ def compute_mi_matrix(s, z):
     n_vars = z.shape[0]
     mi_matrix = np.zeros((n_vars, n_factors))
     for i in range(n_factors):
-        s_i = s[i,:][:, np.newaxis]
+        s_i = s[i, :][:, np.newaxis]
         for j in range(n_vars):
-            z_j = z[j,:][:, np.newaxis]
+            z_j = z[j, :][:, np.newaxis]
             mi_matrix[j][i] = MI(s_i, z_j)
     return mi_matrix
 
@@ -508,18 +517,19 @@ all_z = np.stack(z_list, axis=1)
 self_loops = (s_deltas.sum(axis=0) == 0)
 s_shaped_noise = np.random.normal(scale=0.03, size=s_deltas.shape)
 
-obs_deltas = np.stack([next_ob - ob for ob, next_ob in zip(obs, next_obs)], axis=1).squeeze().transpose()
+obs_deltas = np.stack([next_ob - ob for ob, next_ob in zip(obs, next_obs)],
+                      axis=1).squeeze().transpose()
 
 def plot_action_deltas(deltas):
     n_vars = len(deltas)
-    fig, axes = plt.subplots(5,1, figsize=(8,12))
+    fig, axes = plt.subplots(5, 1, figsize=(8, 12))
     for action, action_name in enumerate(['left', 'right', 'up', 'down', 'interact']):
         experiences = (all_a == action)
-        noise = np.random.normal(scale=0, size = deltas[:, experiences & ~self_loops].shape)
+        noise = np.random.normal(scale=0, size=deltas[:, experiences & ~self_loops].shape)
         action_specific_deltas = deltas[:, experiences & ~self_loops] + noise
-        df = pd.DataFrame({
-            r'$z_{'+'{}'.format(i)+'}$': action_specific_deltas[i, :] for i in range(n_vars)
-        })
+        df = pd.DataFrame(
+            {r'$z_{' + '{}'.format(i) + '}$': action_specific_deltas[i, :]
+             for i in range(n_vars)})
         sns.violinplot(data=df, ax=axes[action])
         axes[action].set_title('a = {}'.format(action_name))
         axes[action].set_ylabel('Effect on var')
@@ -574,7 +584,6 @@ images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
 os.makedirs(images_dir, exist_ok=True)
 # plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 plt.show()
-
 
 #%% ------------------ Define models ------------------
 
@@ -681,7 +690,7 @@ n_vars = z_f.shape[-1]
 df = pd.DataFrame()
 for i in range(n_vars):
     z_f_alt = z_f.clone()
-    z_f_alt[:,i] = z_f[:, i].mean()
+    z_f_alt[:, i] = z_f[:, i].mean()
     accuracy_deltas = compute_accuracy_delta(z_f_alt)
     df_entries = [{
         'state_var': state_var,
