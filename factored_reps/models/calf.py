@@ -200,6 +200,7 @@ class CALFNet(Network):
         loss_info = {}
         loss_info['L_rec'] = self.compute_reconstruction_loss(x0, x0_hat, x1, x1_hat)
         loss_info['L_calf'] = self.compute_calf_loss(zz_real)
+        loss_info['L_foc'] = self.compute_focused_loss(z0_factored, z1_factored)
         loss_G = 0
         for loss_type in sorted(loss_info.keys()):
             loss_G += vars(self.coefs)[loss_type] * loss_info[loss_type]
