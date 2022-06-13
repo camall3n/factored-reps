@@ -9,16 +9,16 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 75
+exp_num = 12
 experiments = [
-    filename.split('/')[-1] for filename in glob.glob('results/taxi/logs/exp{}*'.format(exp_num))
+    filename.split('/')[-1] for filename in glob.glob('results/focused-taxi/logs/exp{}*'.format(exp_num))
 ]
 
 for experiment in experiments:
     modes = ['train', 'test']
     dfs = []
     for mode in modes:
-        filepaths = glob.glob('results/taxi/logs/{}/{}-*.txt'.format(experiment, mode))
+        filepaths = glob.glob('results/focused-taxi/logs/{}/{}-*.txt'.format(experiment, mode))
         for filepath in filepaths:
             argspath = filepath.replace(mode, 'args')
             with open(argspath, 'r') as argsfile:
@@ -28,7 +28,7 @@ for experiment in experiments:
                 continue
             df = pd.read_json(filepath, lines=True, orient='records')
             for loss in [
-                    'L', 'L_inv', 'L_rat', 'L_dis', 'L_foc', 'L_fac', 'L_rec', 'L_fwd', 'predictor'
+                    'L', 'L_calf', 'L_rec', 'L_D', 'L_G'
             ]:
                 if loss in df.columns:
                     df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
@@ -53,8 +53,7 @@ for experiment in experiments:
         # plot_suffix += '-mod200'
 
         y_labels = [
-            'L', 'L_inv', 'L_rat', 'L_dis', 'L_rec', 'L_foc', 'L_txr', 'L_trp', 'predictor',
-            'grad_norm'
+            'L', 'L_calf', 'L_rec', 'L_D', 'L_G'
         ]
         y_labels = [label for label in y_labels if label in subset.columns]
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
@@ -72,7 +71,7 @@ for experiment in experiments:
                 # legend=False,
                 ax=ax)
 
-        results_dir = 'results/taxi/loss_plots/'
+        results_dir = 'results/focused-taxi/images/{}/loss_plots/'.format(experiment)
         os.makedirs(results_dir, exist_ok=True)
         plt.savefig(results_dir + '{}{}.png'.format(experiment, plot_suffix),
                     facecolor='white',
