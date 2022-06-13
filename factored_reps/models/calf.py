@@ -102,7 +102,7 @@ class CALFNet(Network):
                                        n_units_per_layer=args.n_units_per_layer,
                                        final_activation=None)
 
-        self.criterionGAN = GANLoss('lsgan').to(self.device)
+        self.criterionGAN = GANLoss(args.gan_mode).to(self.device)
         self.criterionCycle = torch.nn.MSELoss()
 
         # don't include featurenet/phi parameters in optimizer
