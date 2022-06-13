@@ -14,4 +14,4 @@ L_foc,0.0,float
 L_rec,1.0,float
 L_calf,1.0,float
 autoenc_backprop_next_state,True,bool
-gan_mode,'vanilla',str
+gan_mode,lsgan,str

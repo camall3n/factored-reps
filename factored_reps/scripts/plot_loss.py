@@ -53,7 +53,7 @@ for experiment in experiments:
         # plot_suffix += '-mod200'
 
         y_labels = [
-            'L', 'L_calf', 'L_rec', 'L_D', 'L_G'
+            'L', 'L_calf', 'L_rec', 'L_D', 'L_G',
         ]
         y_labels = [label for label in y_labels if label in subset.columns]
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
@@ -71,7 +71,7 @@ for experiment in experiments:
                 # legend=False,
                 ax=ax)
 
-        results_dir = 'results/focused-taxi/images/{}/loss_plots/'.format(experiment)
+        results_dir = 'results/focused-taxi/images/loss_plots/'
         os.makedirs(results_dir, exist_ok=True)
         plt.savefig(results_dir + '{}{}.png'.format(experiment, plot_suffix),
                     facecolor='white',

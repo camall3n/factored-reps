@@ -27,7 +27,8 @@ from factored_reps.plotting import add_heatmap_labels, diagonalize
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:
     sys.argv += [
-        "-t", 'exp00-test', '--load-experiences', 'exp02-factorize-multi-seeds', '-s', '1', '--save', '--quick'
+        "-t", 'exp00-test', '--load-experiences', 'exp02-factorize-multi-seeds', '-s', '1',
+        '--save', '--quick'
     ]
 
 parser = utils.get_parser()
@@ -326,7 +327,7 @@ dz_list = []
 ds_list = []
 
 if args.quick:
-    args.n_samples = 500
+    args.n_samples = 50
 done = True
 ep_steps = 0
 for i in tqdm(range(args.n_samples)):
@@ -390,10 +391,13 @@ n_factors = len(state)
 n_vars = len(z)
 
 all_deltas = np.concatenate((z_deltas, s_deltas))
-correlation = np.corrcoef(all_deltas)[:n_vars, -n_factors:]
+correlation = np.nan_to_num(np.corrcoef(all_deltas)[:n_vars, -n_factors:])
 diag_correlation, y_ticks = diagonalize(np.abs(correlation))
 plt.imshow(diag_correlation, vmin=0, vmax=1)
 #add_heatmap_labels(diag_correlation)
+
+def savefig(*args):
+    plt.savefig(*args, facecolor='white', edgecolor='white')
 
 ax = plt.gca()
 
@@ -405,11 +409,12 @@ plt.xlabel(r'Ground truth factor ($\Delta s$)')
 plt.title('Correlation Magnitude')
 plt.colorbar()
 plt.tight_layout()
-images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
-    args.tag, markov_abstraction_tag, markov_args.seed)
-os.makedirs(images_dir, exist_ok=True)
-plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
-plt.show()
+images_dir = 'results/focused-taxi/images/{}/'.format(args.tag)
+plot_dir = images_dir + '/correlation_dz_vs_ds/'
+os.makedirs(plot_dir, exist_ok=True)
+savefig(plot_dir + 'seed-{}-correlation_dz_vs_ds.png'.format(args.seed))
+# plt.show()
+plt.close()
 
 #% ------------------ Plot z vs s correlation ------------------
 n_factors = len(state)
@@ -433,11 +438,11 @@ plt.xlabel(r'Ground truth factor ($s$)')
 plt.title('Correlation Magnitude')
 plt.colorbar()
 plt.tight_layout()
-images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
-    args.tag, markov_abstraction_tag, markov_args.seed)
-os.makedirs(images_dir, exist_ok=True)
-# plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
-plt.show()
+plot_dir = images_dir + '/correlation_z_vs_s/'
+os.makedirs(plot_dir, exist_ok=True)
+savefig(plot_dir + 'seed-{}-correlation_z_vs_s.png'.format(args.seed))
+# plt.show()
+plt.close()
 
 #%% ------------------ Plot MI(z, s) ------------------
 def fit_kde(x, bw=0.03):
@@ -492,11 +497,10 @@ plt.xlabel(r'Ground truth factor ($s$)')
 plt.title('Mutual Information')
 plt.colorbar()
 plt.tight_layout()
-images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
-    args.tag, markov_abstraction_tag, markov_args.seed)
-os.makedirs(images_dir, exist_ok=True)
-# plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
-plt.show()
+plot_dir = images_dir + '/mi_z_vs_s/'
+os.makedirs(plot_dir, exist_ok=True)
+savefig(plot_dir + 'seed-{}-mi_z_vs_s.png'.format(args.seed))
+# plt.show()
 
 # MI(s0, s1)
 # MI(s0, s2)
@@ -520,7 +524,7 @@ s_shaped_noise = np.random.normal(scale=0.03, size=s_deltas.shape)
 obs_deltas = np.stack([next_ob - ob for ob, next_ob in zip(obs, next_obs)],
                       axis=1).squeeze().transpose()
 
-def plot_action_deltas(deltas):
+def plot_action_deltas(deltas, filename):
     n_vars = len(deltas)
     fig, axes = plt.subplots(5, 1, figsize=(8, 12))
     for action, action_name in enumerate(['left', 'right', 'up', 'down', 'interact']):
@@ -535,12 +539,16 @@ def plot_action_deltas(deltas):
         axes[action].set_ylabel('Effect on var')
     axes[-1].set_xlabel('Var')
     plt.tight_layout()
-    plt.show()
+    plot_dir = images_dir + '/' + filename + '/'
+    os.makedirs(plot_dir, exist_ok=True)
+    savefig(plot_dir + filename + '_seed-{}.png'.format(args.seed))
 
-plot_action_deltas(all_z)
-plot_action_deltas(all_obs)
-plot_action_deltas(z_deltas)
-plot_action_deltas(obs_deltas)
+    # plt.show()
+
+plot_action_deltas(all_z, 'action_deltas_z')
+plot_action_deltas(all_obs, 'action_deltas_x')
+plot_action_deltas(z_deltas, 'action_deltas_dz')
+plot_action_deltas(obs_deltas, 'action_deltas_dx')
 
 #%%
 
@@ -566,24 +574,23 @@ all_deltas = np.concatenate((z_deltas, s_deltas))
 correlation = np.corrcoef(all_deltas)[:n_vars, -n_factors:]
 diag_correlation, y_ticks = diagonalize(np.abs(correlation))
 
-plt.imshow(diag_correlation, vmin=0, vmax=1)
-#add_heatmap_labels(diag_correlation)
+# plt.imshow(diag_correlation, vmin=0, vmax=1)
+# #add_heatmap_labels(diag_correlation)
 
-ax = plt.gca()
+# ax = plt.gca()
 
-ax.set_yticks(np.arange(n_vars))
-ax.set_yticklabels(y_ticks)
+# ax.set_yticks(np.arange(n_vars))
+# ax.set_yticklabels(y_ticks)
 
-plt.ylabel(r'Learned representation ($\Delta z$)')
-plt.xlabel(r'Ground truth factor ($\Delta s$)')
-plt.title('Correlation Magnitude')
-plt.colorbar()
-plt.tight_layout()
-images_dir = 'results/focused-taxi/images/{}/{}/markov-seed-{}/'.format(
-    args.tag, markov_abstraction_tag, markov_args.seed)
-os.makedirs(images_dir, exist_ok=True)
-# plt.savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
-plt.show()
+# plt.ylabel(r'Learned representation ($\Delta z$)')
+# plt.xlabel(r'Ground truth factor ($\Delta s$)')
+# plt.title('Correlation Magnitude')
+# plt.colorbar()
+# plt.tight_layout()
+# plot_dir = images_dir + ''
+# os.makedirs(images_dir, exist_ok=True)
+# # savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
+# plt.show()
 
 #%% ------------------ Define models ------------------
 
@@ -636,19 +643,17 @@ def analyze_results(s, z_markov, autoenc, predictor):
     z_hat = autoenc(z_markov)
     s_hat_from_z = predictor.predict(z_markov).detach().cpu().numpy()
     generate_confusion_plots(s, s_hat_from_z)
-    # plt.savefig(os.path.join(images_dir,
-    #                          'seed-{}-predictor_confusion_from_z.png'.format(args.seed)),
-    #             facecolor='white',
-    #             edgecolor='white')
-    # plt.close()
+    plot_dir = images_dir + '/predictor_confusion_from_z/'
+    os.makedirs(plot_dir, exist_ok=True)
+    savefig(os.path.join(plot_dir, 'seed-{}-predictor_confusion_from_z.png'.format(args.seed)))
+    plt.close()
 
     s_hat_from_z_hat = predictor.predict(z_hat).detach().cpu().numpy()
     generate_confusion_plots(s, s_hat_from_z_hat)
-    # plt.savefig(os.path.join(images_dir,
-    #                          'seed-{}-predictor_confusion_from_z_hat.png'.format(args.seed)),
-    #             facecolor='white',
-    #             edgecolor='white')
-    # plt.close()
+    plot_dir = images_dir + '/predictor_confusion_from_z_hat/'
+    os.makedirs(plot_dir, exist_ok=True)
+    savefig(os.path.join(plot_dir, 'seed-{}-predictor_confusion_from_z_hat.png'.format(args.seed)))
+    plt.close()
 
 all_s = np.asarray(states)
 t_obs = torchify(np.asarray(obs))
@@ -702,6 +707,9 @@ for i in range(n_vars):
 
 sns.barplot(data=df, x='var_idx', y='accuracy_delta', hue='state_var')
 plt.title('Change in accuracy, holding each individual variable fixed')
+plot_dir = images_dir + '/intervention_single/'
+os.makedirs(plot_dir, exist_ok=True)
+savefig(plot_dir + 'seed-{}-intervention_single.png'.format(args.seed))
 
 #%%
 # Separately set all but one variable to the mean value and measure accuracy:
@@ -722,3 +730,6 @@ sns.barplot(data=df, x='var_idx', y='accuracy_delta', hue='state_var')
 plt.ylim([-1.1, 0.01])
 sns.move_legend(plt.gca(), loc='lower center', ncol=3)
 plt.title('Change in accuracy, holding all but one variable fixed')
+plot_dir = images_dir + '/intervention_remainder/'
+os.makedirs(plot_dir, exist_ok=True)
+savefig(plot_dir + 'seed-{}-intervention_remainder.png'.format(args.seed))
