@@ -9,9 +9,9 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 12
+exp_num = 13
 experiments = [
-    filename.split('/')[-1] for filename in glob.glob('results/focused-taxi/logs/exp{}*'.format(exp_num))
+    filename.split('/')[-1] for filename in glob.glob('results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
 ]
 
 for experiment in experiments:
@@ -20,8 +20,11 @@ for experiment in experiments:
     for mode in modes:
         filepaths = glob.glob('results/focused-taxi/logs/{}/{}-*.txt'.format(experiment, mode))
         for filepath in filepaths:
-            argspath = filepath.replace(mode, 'args')
-            with open(argspath, 'r') as argsfile:
+            dirpath = os.path.dirname(filepath)
+            filename = os.path.basename(filepath)
+            argsfilename = filename.replace(mode, 'args')
+            argsfilepath = os.path.join(dirpath, argsfilename)
+            with open(argsfilepath, 'r') as argsfile:
                 line = argsfile.readline()
                 args = eval(line)
             if args.seed > 10:
