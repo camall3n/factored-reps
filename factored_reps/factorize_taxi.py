@@ -501,6 +501,7 @@ plot_dir = images_dir + '/mi_z_vs_s/'
 os.makedirs(plot_dir, exist_ok=True)
 savefig(plot_dir + 'seed-{}-mi_z_vs_s.png'.format(args.seed))
 # plt.show()
+plt.close()
 
 # MI(s0, s1)
 # MI(s0, s2)
@@ -542,8 +543,8 @@ def plot_action_deltas(deltas, filename):
     plot_dir = images_dir + '/' + filename + '/'
     os.makedirs(plot_dir, exist_ok=True)
     savefig(plot_dir + filename + '_seed-{}.png'.format(args.seed))
-
     # plt.show()
+    plt.close()
 
 plot_action_deltas(all_z, 'action_deltas_z')
 plot_action_deltas(all_obs, 'action_deltas_x')
@@ -591,6 +592,7 @@ diag_correlation, y_ticks = diagonalize(np.abs(correlation))
 # os.makedirs(images_dir, exist_ok=True)
 # # savefig(images_dir + 'seed-{}-correlation-plot.png'.format(args.seed))
 # plt.show()
+# plt.close()
 
 #%% ------------------ Define models ------------------
 
@@ -710,6 +712,7 @@ plt.title('Change in accuracy, holding each individual variable fixed')
 plot_dir = images_dir + '/intervention_single/'
 os.makedirs(plot_dir, exist_ok=True)
 savefig(plot_dir + 'seed-{}-intervention_single.png'.format(args.seed))
+plt.close()
 
 #%%
 # Separately set all but one variable to the mean value and measure accuracy:
@@ -733,3 +736,4 @@ plt.title('Change in accuracy, holding all but one variable fixed')
 plot_dir = images_dir + '/intervention_remainder/'
 os.makedirs(plot_dir, exist_ok=True)
 savefig(plot_dir + 'seed-{}-intervention_remainder.png'.format(args.seed))
+plt.close()
