@@ -194,7 +194,7 @@ class CALFNet(Network):
         zz_real, zz_fake = self.generate_calf_transitions(z0_factored, z1_factored)
 
         # "generator"
-        self.discriminator.freeze()
+        # self.discriminator.freeze()
         if not test:
             self.optimizer_G.zero_grad()
         loss_info = {}
@@ -210,7 +210,7 @@ class CALFNet(Network):
         loss_info['L_G'] = loss_G
 
         # discriminator
-        self.discriminator.unfreeze()
+        # self.discriminator.unfreeze()
         if not test:
             self.optimizer_D.zero_grad()
         loss_D = self.compute_discriminator_loss(zz_real, zz_fake)
