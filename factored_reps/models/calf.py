@@ -86,8 +86,9 @@ class CALFNet(Network):
         self.coefs = args.coefs
         self.device = device
         self.backprop_next_state = backprop_next_state
+        self.identity = identity
 
-        if identity:
+        if self.identity:
             self.encoder = Identity()
             self.decoder = Identity()
             if self.n_input_dims != self.n_latent_dims:
@@ -213,7 +214,7 @@ class CALFNet(Network):
         loss_G = 0
         for loss_type in sorted(loss_info.keys()):
             loss_G += vars(self.coefs)[loss_type] * loss_info[loss_type]
-        if not test:
+        if not test and not self.identity:
             loss_G.backward()
             self.optimizer_G.step()
         loss_info['L_G'] = loss_G

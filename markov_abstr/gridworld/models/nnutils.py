@@ -86,6 +86,10 @@ class Sequential(torch.nn.Sequential, Network):
     pass
 
 class Identity(Network):
+    def __init__(self):
+        super().__init__()
+        self.dummy = torch.nn.parameter.Parameter(torch.tensor(0.0))
+
     def forward(self, args):
         return args
 
