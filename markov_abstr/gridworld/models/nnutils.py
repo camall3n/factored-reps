@@ -85,6 +85,10 @@ class Network(torch.nn.Module):
 class Sequential(torch.nn.Sequential, Network):
     pass
 
+class Identity(Network):
+    def forward(self, args):
+        return args
+
 def one_hot(x, depth, dtype=torch.float32):
     """Convert a batch of indices to a batch of one-hot vectors
 

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn
 
-from markov_abstr.gridworld.models.nnutils import Network
+from markov_abstr.gridworld.models.nnutils import Network, Identity
 from markov_abstr.gridworld.models.simplenet import SimpleNet
 
 class GANLoss(torch.nn.Module):
@@ -77,7 +77,8 @@ class CALFNet(Network):
                  n_input_dims,
                  n_latent_dims,
                  device='cpu',
-                 backprop_next_state=True):
+                 backprop_next_state=True,
+                 identity=False):
         super().__init__()
         self.n_actions = n_actions
         self.n_input_dims = n_input_dims
@@ -86,16 +87,24 @@ class CALFNet(Network):
         self.device = device
         self.backprop_next_state = backprop_next_state
 
-        self.encoder = SimpleNet(n_inputs=n_input_dims,
-                                 n_outputs=n_latent_dims,
-                                 n_hidden_layers=args.n_hidden_layers,
-                                 n_units_per_layer=args.n_units_per_layer,
-                                 final_activation=torch.nn.Tanh)
-        self.decoder = SimpleNet(n_inputs=n_latent_dims,
-                                 n_outputs=n_input_dims,
-                                 n_hidden_layers=args.n_hidden_layers,
-                                 n_units_per_layer=args.n_units_per_layer,
-                                 final_activation=torch.nn.Tanh)
+        if identity:
+            self.encoder = Identity()
+            self.decoder = Identity()
+            if self.n_input_dims != self.n_latent_dims:
+                raise ValueError(
+                    "'n_input_dims' must match 'n_latent_dims' when using identity autoencoder")
+        else:
+            self.encoder = SimpleNet(n_inputs=n_input_dims,
+                                     n_outputs=n_latent_dims,
+                                     n_hidden_layers=args.n_hidden_layers,
+                                     n_units_per_layer=args.n_units_per_layer,
+                                     final_activation=torch.nn.Tanh)
+            self.decoder = SimpleNet(n_inputs=n_latent_dims,
+                                     n_outputs=n_input_dims,
+                                     n_hidden_layers=args.n_hidden_layers,
+                                     n_units_per_layer=args.n_units_per_layer,
+                                     final_activation=torch.nn.Tanh)
+
         self.discriminator = SimpleNet(n_inputs=(2 * n_latent_dims),
                                        n_outputs=1,
                                        n_hidden_layers=args.n_hidden_layers,

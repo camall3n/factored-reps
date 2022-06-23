@@ -221,7 +221,8 @@ facnet = CALFNet(args,
                  n_input_dims=markov_args.latent_dims,
                  n_latent_dims=args.latent_dims,
                  device=device,
-                 backprop_next_state=args.autoenc_backprop_next_state).to(device)
+                 backprop_next_state=args.autoenc_backprop_next_state,
+                 identity=args.identity_autoenc).to(device)
 facnet.print_summary()
 
 #%% ------------------ Define training/testing callbacks ------------------
