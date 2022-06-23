@@ -5,7 +5,7 @@ n_samples,1000,int
 save_model_every_n_steps,200,int
 learning_rate,0.001,float
 batch_size,128,int
-latent_dims,10,int
+latent_dims,20,int
 encoder_arch,mlp,str
 n_hidden_layers,2,int
 n_hidden_layers_factored_autoenc,2,int
@@ -15,4 +15,4 @@ L_rec,1.0,float
 L_calf,1.0,float
 autoenc_backprop_next_state,True,bool
 gan_mode,lsgan,str
-identity_autoenc,False,bool
+identity_autoenc,True,bool
