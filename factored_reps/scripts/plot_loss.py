@@ -9,9 +9,10 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 15
+exp_num = 16
 experiments = [
-    filename.split('/')[-1] for filename in glob.glob('results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
+    filename.split('/')[-1]
+    for filename in glob.glob('results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
 ]
 
 for experiment in experiments:
@@ -30,9 +31,7 @@ for experiment in experiments:
             if args.seed > 10:
                 continue
             df = pd.read_json(filepath, lines=True, orient='records')
-            for loss in [
-                    'L', 'L_calf', 'L_rec', 'L_D', 'L_G'
-            ]:
+            for loss in ['L', 'L_calf', 'L_rec', 'L_D', 'L_G']:
                 if loss in df.columns:
                     df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
             df['seed'] = args.seed
@@ -56,7 +55,11 @@ for experiment in experiments:
         # plot_suffix += '-mod200'
 
         y_labels = [
-            'L', 'L_calf', 'L_rec', 'L_D', 'L_G',
+            'L',
+            'L_calf',
+            'L_rec',
+            'L_D',
+            'L_G',
         ]
         y_labels = [label for label in y_labels if label in subset.columns]
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))

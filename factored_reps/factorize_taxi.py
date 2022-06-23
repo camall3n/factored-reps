@@ -222,7 +222,8 @@ facnet = CALFNet(args,
                  n_latent_dims=args.latent_dims,
                  device=device,
                  backprop_next_state=args.autoenc_backprop_next_state,
-                 identity=args.identity_autoenc).to(device)
+                 identity=args.identity_autoenc,
+                 override_state=args.override_state_with_ground_truth).to(device)
 facnet.print_summary()
 
 #%% ------------------ Define training/testing callbacks ------------------
@@ -240,10 +241,27 @@ def train_batch(test=False):
         mask = np.ones(len(states), dtype=bool)
     if mask.any(axis=0):
         obs = obs[mask]
+        states = states[mask]
         actions = actions[mask]
         next_obs = next_obs[mask]
+        next_states = next_states[mask]
 
-        z, _, loss_info = facnet.train_batch(obs, actions, next_obs, test=test)
+        override = None
+        if args.override_state_with_ground_truth:
+            override = (states, next_states)
+            if not args.identity_autoenc:
+                raise ValueError(
+                    'Must use identity autoenc when overriding states with ground truth')
+            if facnet.n_latent_dims != states.shape[-1]:
+                raise ValueError(
+                    'n_latent_dims must match n_state_dims when overriding states with ground truth'
+                )
+
+        z, _, loss_info = facnet.train_batch(obs,
+                                             actions,
+                                             next_obs,
+                                             test=test,
+                                             override_state_with_ground_truth=override)
         z = z.detach()
     else:
         z = torch.zeros_like(ob)

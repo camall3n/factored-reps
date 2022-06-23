@@ -78,7 +78,8 @@ class CALFNet(Network):
                  n_latent_dims,
                  device='cpu',
                  backprop_next_state=True,
-                 identity=False):
+                 identity=False,
+                 override_state=False):
         super().__init__()
         self.n_actions = n_actions
         self.n_input_dims = n_input_dims
@@ -91,7 +92,7 @@ class CALFNet(Network):
         if self.identity:
             self.encoder = Identity()
             self.decoder = Identity()
-            if self.n_input_dims != self.n_latent_dims:
+            if not override_state and (self.n_input_dims != self.n_latent_dims):
                 raise ValueError(
                     "'n_input_dims' must match 'n_latent_dims' when using identity autoencoder")
         else:
@@ -192,7 +193,11 @@ class CALFNet(Network):
     def forward(self, x):
         return self.decode(self.encode(x))
 
-    def train_batch(self, x0, a, x1, test=False):
+    def train_batch(self, x0, a, x1, test=False, override_state_with_ground_truth=None):
+        if override_state_with_ground_truth is not None:
+            s0, s1 = override_state_with_ground_truth
+            x0, x1 = s0.float(), s1.float()
+
         # forward
         if not test:
             self.train()
