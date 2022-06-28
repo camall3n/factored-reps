@@ -118,8 +118,8 @@ class CALFNet(Network):
         # don't include featurenet/phi parameters in optimizer
         params_G = itertools.chain(self.encoder.parameters(), self.decoder.parameters())
         params_D = self.discriminator.parameters()
-        self.optimizer_G = torch.optim.Adam(params_G, lr=args.learning_rate)  # TODO: tune beta1?
-        self.optimizer_D = torch.optim.Adam(params_D, lr=args.learning_rate)  # TODO: tune beta1?
+        self.optimizer_G = torch.optim.Adam(params_G, lr=args.lr_G)  # TODO: tune beta1?
+        self.optimizer_D = torch.optim.Adam(params_D, lr=args.lr_D)  # TODO: tune beta1?
 
     def compute_reconstruction_loss(self, x0, x0_hat, x1, x1_hat):
         if self.coefs.L_rec == 0.0:
