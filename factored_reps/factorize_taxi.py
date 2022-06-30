@@ -6,6 +6,7 @@ import json
 import numpy as np
 import os
 import pandas as pd
+import platform
 import random
 import seaborn as sns
 import seeding
@@ -70,16 +71,18 @@ args.coefs = coefs
 # markov_abstraction_tag = 'exp78-blast-markov_100__learningrate_0.001__latentdims_20'
 markov_abstraction_tag = 'exp78-blast-markov_122__learningrate_0.001__latentdims_20'
 
-args_filename = glob.glob('results/taxi/logs/{}/args-*.txt'.format(markov_abstraction_tag))[0]
+prefix = os.path.expanduser('~/data-gdk/csal/factored/') if platform.system() == 'Linux' else ''
+results_dir = prefix + 'results/'
+
+args_filename = glob.glob(results_dir+'taxi/logs/{}/args-*.txt'.format(markov_abstraction_tag))[0]
 with open(args_filename, 'r') as args_file:
     markov_args = eval(args_file.read())
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
 
-results_dir = 'results/focused-taxi/'
-log_dir = results_dir + '/logs/' + str(args.tag)
-models_dir = results_dir + '/models/' + str(args.tag)
+log_dir = results_dir + 'focused-taxi/logs/' + str(args.tag)
+models_dir = results_dir + 'focused-taxi/models/' + str(args.tag)
 os.makedirs(log_dir, exist_ok=True)
 
 train_log = open(log_dir + '/train-{}.txt'.format(args.seed), 'w')
@@ -125,7 +128,7 @@ featurenet = FeatureNet(markov_args,
                         input_shape=example_obs.shape,
                         latent_dims=markov_args.latent_dims,
                         device=device).to(device)
-model_file = 'results/taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag,
+model_file = results_dir + 'taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag,
                                                                   markov_args.seed)
 featurenet.load(model_file, to=device)
 featurenet.freeze()
@@ -183,11 +186,11 @@ replay_test = ReplayMemory(args.batch_size, on_retrieve)
 replay_train = ReplayMemory(args.replay_buffer_size, on_retrieve)
 
 if args.load_experiences is not None:
-    memory_dir = os.path.join(results_dir, 'memory', str(args.load_experiences))
+    memory_dir = os.path.join(results_dir, 'focused-taxi/memory', str(args.load_experiences))
     replay_train.load(memory_dir + '/seed_{}__replay_train.json'.format(args.seed))
     replay_test.load(memory_dir + '/seed_{}__replay_test.json'.format(args.seed))
 else:
-    memory_dir = os.path.join(results_dir, 'memory', str(args.tag))
+    memory_dir = os.path.join(results_dir, 'focused-taxi/memory', str(args.tag))
     n_test_episodes = 500
     n_train_episodes = int(np.ceil(args.replay_buffer_size / args.n_steps_per_episode))
     if args.quick:
@@ -410,7 +413,7 @@ plt.xlabel(r'Ground truth factor ($\Delta s$)')
 plt.title('Correlation Magnitude')
 plt.colorbar()
 plt.tight_layout()
-images_dir = 'results/focused-taxi/images/{}/'.format(args.tag)
+images_dir = results_dir + 'focused-taxi/images/{}/'.format(args.tag)
 plot_dir = images_dir + '/correlation_dz_vs_ds/'
 os.makedirs(plot_dir, exist_ok=True)
 savefig(plot_dir + 'seed-{}-correlation_dz_vs_ds.png'.format(args.seed))
@@ -603,7 +606,7 @@ predictor = CategoricalPredictor(
     n_values=n_values_per_variable,
     learning_rate=markov_args.learning_rate,
 ).to(device)
-models_dir = 'results/taxi/models/{}'.format(markov_abstraction_tag)
+models_dir = results_dir + 'taxi/models/{}'.format(markov_abstraction_tag)
 predictor.load(models_dir + '/predictor-{}_best.pytorch'.format(markov_args.seed), to=device)
 predictor.print_summary()
 
