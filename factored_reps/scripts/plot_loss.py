@@ -9,9 +9,10 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 14
+exp_num = 19
 experiments = [
-    filename.split('/')[-1] for filename in glob.glob('results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
+    filename.split('/')[-1]
+    for filename in glob.glob('results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
 ]
 
 for experiment in experiments:
@@ -30,13 +31,12 @@ for experiment in experiments:
             if args.seed > 10:
                 continue
             df = pd.read_json(filepath, lines=True, orient='records')
-            for loss in [
-                    'L', 'L_calf', 'L_rec', 'L_D', 'L_G'
-            ]:
+            for loss in ['L', 'L_rec_x', 'L_rec_z', 'L_rec_z_aug', 'L_foc']:
                 if loss in df.columns:
                     df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
             df['seed'] = args.seed
-            df['learning_rate'] = args.learning_rate
+            df['lr_G'] = args.lr_G
+            # df['learning_rate'] = args.learning_rate
             df['mode'] = mode
             for name, value in vars(args).items():
                 if name[:2] == 'L_':
@@ -55,9 +55,7 @@ for experiment in experiments:
         # subset = subset.query("step % 200 == 0")
         # plot_suffix += '-mod200'
 
-        y_labels = [
-            'L', 'L_calf', 'L_rec', 'L_D', 'L_G',
-        ]
+        y_labels = ['L', 'L_rec_x', 'L_rec_z', 'L_rec_z_aug', 'L_foc']
         y_labels = [label for label in y_labels if label in subset.columns]
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
         p = sns.color_palette(n_colors=len(subset['mode'].unique()))

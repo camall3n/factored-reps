@@ -3,8 +3,7 @@ n_steps_per_episode,5,int
 n_updates,40000,int
 n_samples,1000,int
 save_model_every_n_steps,200,int
-lr_G,0.0001,float
-lr_D,0.001,float
+lr,0.001,float
 batch_size,128,int
 latent_dims,10,int
 encoder_arch,mlp,str
@@ -12,8 +11,7 @@ n_hidden_layers,2,int
 n_hidden_layers_factored_autoenc,2,int
 n_units_per_layer,64,int
 L_foc,0.0,float
-L_rec,1.0,float
-L_calf,1.0,float
-autoenc_backprop_next_state,True,bool
-gan_mode,lsgan,str
-identity_autoenc,False,bool
+L_rec_x,1.0,float
+L_rec_z,1.0,float
+L_rec_z_aug,1.0,float
+distance_type,mse,str

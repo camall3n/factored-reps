@@ -22,6 +22,7 @@ from visgrid.sensors import *
 from markov_abstr.gridworld.models.featurenet import FeatureNet
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
 from factored_reps.models.calf import CALFNet
+from factored_reps.models.cae import CAENet
 from factored_reps.models.categorical_predictor import CategoricalPredictor
 from factored_reps.plotting import add_heatmap_labels, diagonalize
 
@@ -74,7 +75,8 @@ markov_abstraction_tag = 'exp78-blast-markov_122__learningrate_0.001__latentdims
 prefix = os.path.expanduser('~/data-gdk/csal/factored/') if platform.system() == 'Linux' else ''
 results_dir = prefix + 'results/'
 
-args_filename = glob.glob(results_dir+'taxi/logs/{}/args-*.txt'.format(markov_abstraction_tag))[0]
+args_filename = glob.glob(results_dir +
+                          'taxi/logs/{}/args-*.txt'.format(markov_abstraction_tag))[0]
 with open(args_filename, 'r') as args_file:
     markov_args = eval(args_file.read())
 
@@ -128,8 +130,8 @@ featurenet = FeatureNet(markov_args,
                         input_shape=example_obs.shape,
                         latent_dims=markov_args.latent_dims,
                         device=device).to(device)
-model_file = results_dir + 'taxi/models/{}/fnet-{}_best.pytorch'.format(markov_abstraction_tag,
-                                                                  markov_args.seed)
+model_file = results_dir + 'taxi/models/{}/fnet-{}_best.pytorch'.format(
+    markov_abstraction_tag, markov_args.seed)
 featurenet.load(model_file, to=device)
 featurenet.freeze()
 phi = featurenet.phi
@@ -219,13 +221,18 @@ else:
 #                             n_latent_dims=args.latent_dims,
 #                             device=device,
 #                             backprop_next_state=args.autoenc_backprop_next_state).to(device)
-facnet = CALFNet(args,
-                 n_actions=len(env.actions),
-                 n_input_dims=markov_args.latent_dims,
-                 n_latent_dims=args.latent_dims,
-                 device=device,
-                 backprop_next_state=args.autoenc_backprop_next_state,
-                 identity=args.identity_autoenc).to(device)
+# facnet = CALFNet(args,
+#                  n_actions=len(env.actions),
+#                  n_input_dims=markov_args.latent_dims,
+#                  n_latent_dims=args.latent_dims,
+#                  device=device,
+#                  backprop_next_state=args.autoenc_backprop_next_state,
+#                  identity=args.identity_autoenc).to(device)
+facnet = CAENet(args,
+                n_actions=len(env.actions),
+                n_input_dims=markov_args.latent_dims,
+                n_latent_dims=args.latent_dims,
+                device=device).to(device)
 facnet.print_summary()
 
 #%% ------------------ Define training/testing callbacks ------------------
