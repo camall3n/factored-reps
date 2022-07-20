@@ -13,7 +13,7 @@ def diagonalize(arr):
     """Exchange rows to greedily diagonalize a 2-D array"""
     out = np.copy(arr)
     max_pos = min(out.shape)
-    print(max_pos)
+    # print(max_pos)
     labels = np.arange(len(out))
     # iterate down the diagonal
     for pos in range(max_pos):
