@@ -2,7 +2,12 @@ from argparse import Namespace
 import glob
 import json
 import os
+import platform
 
+if platform.system() == 'Linux':
+    # Force matplotlib to not use any Xwindows backend.
+    import matplotlib
+    matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -10,16 +15,20 @@ import seaborn as sns
 import torch
 
 exp_num = 19
+
+prefix = os.path.expanduser('~/data-gdk/csal/factored/') if platform.system() == 'Linux' else ''
+
 experiments = [
     filename.split('/')[-1]
-    for filename in glob.glob('results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
+    for filename in glob.glob(prefix + 'results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
 ]
 
 for experiment in experiments:
     modes = ['train', 'test']
     dfs = []
     for mode in modes:
-        filepaths = glob.glob('results/focused-taxi/logs/{}/{}-*.txt'.format(experiment, mode))
+        filepaths = glob.glob(prefix +
+                              'results/focused-taxi/logs/{}/{}-*.txt'.format(experiment, mode))
         for filepath in filepaths:
             dirpath = os.path.dirname(filepath)
             filename = os.path.basename(filepath)
@@ -35,8 +44,8 @@ for experiment in experiments:
                 if loss in df.columns:
                     df['smoothed_' + loss] = df[loss].rolling(10, center=True).mean()
             df['seed'] = args.seed
-            df['lr_G'] = args.lr_G
-            # df['learning_rate'] = args.learning_rate
+            # df['lr_G'] = args.lr_G
+            df['learning_rate'] = args.lr
             df['mode'] = mode
             for name, value in vars(args).items():
                 if name[:2] == 'L_':
@@ -59,8 +68,8 @@ for experiment in experiments:
         y_labels = [label for label in y_labels if label in subset.columns]
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
         p = sns.color_palette(n_colors=len(subset['mode'].unique()))
-        for ax, y_label in zip(axes, y_labels):
-            sns.lineplot(
+        for i, (ax, y_label) in enumerate(zip(axes, y_labels)):
+            g = sns.lineplot(
                 data=subset,
                 x='step',
                 y=y_label,
@@ -69,12 +78,15 @@ for experiment in experiments:
                 style='seed',
                 hue='mode',
                 palette=p,
-                # legend=False,
+                legend=(i==0),
                 ax=ax)
+            if i==0:
+                h,l = g.get_legend_handles_labels()
+                ax.legend(h[0:3], l[0:3])
 
-        results_dir = 'results/focused-taxi/images/loss_plots/'
+        results_dir = prefix + 'results/focused-taxi/images/{}/'.format(experiment)
         os.makedirs(results_dir, exist_ok=True)
-        plt.savefig(results_dir + '{}{}.png'.format(experiment, plot_suffix),
+        plt.savefig(results_dir + 'losses{}.png'.format(plot_suffix),
                     facecolor='white',
                     edgecolor='white')
         plt.show()
@@ -84,10 +96,10 @@ for experiment in experiments:
 
     plot()
 
-    #%%
+    # #%%
 
-    for seed in range(1, 11):
-        subset = data.query('seed == {} and step % 200 == 0 and mode == "test"'.format(seed))
-        idx = np.argmin(subset['L'])
-        record = subset.iloc[idx, :]
-        print(seed, record['step'], record['L'])
+    # for seed in range(1, 11):
+    #     subset = data.query('seed == {} and step % 200 == 0 and mode == "test"'.format(seed))
+    #     idx = np.argmin(subset['L'])
+    #     record = subset.iloc[idx, :]
+    #     print(seed, record['step'], record['L'])
