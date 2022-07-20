@@ -14,4 +14,4 @@ L_foc,0.0,float
 L_rec_x,1.0,float
 L_rec_z,1.0,float
 L_rec_z_aug,1.0,float
-distance_type,mse,str
+dist_mode,mse,str

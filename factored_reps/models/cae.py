@@ -28,14 +28,14 @@ class CAENet(Network):
                                  n_units_per_layer=args.n_units_per_layer,
                                  final_activation=torch.nn.Tanh)
 
-        if args.distance_type in ['mse', 'l2', 'L2']:
+        if args.dist_mode in ['mse', 'l2', 'L2']:
             self.distanceLoss = torch.nn.MSELoss()
-        elif args.distance_type in ['mae', 'l1', 'L1']:
+        elif args.dist_mode in ['mae', 'l1', 'L1']:
             self.distanceLoss = torch.nn.L1Loss()
-        elif args.distance_type in ['huber', 'Huber']:
+        elif args.dist_mode in ['huber', 'Huber']:
             self.distanceLoss = torch.nn.HuberLoss()
         else:
-            raise ValueError("Invalid distance_type. Choices are: 'mse', 'l1', 'huber'")
+            raise ValueError("Invalid dist_mode. Choices are: 'mse', 'l1', 'huber'")
 
         # don't include featurenet/phi parameters in optimizer
         params = itertools.chain(self.encoder.parameters(), self.decoder.parameters())
