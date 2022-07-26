@@ -95,16 +95,18 @@ class CAENet(Network):
         z0_hat = self.encoder(x0_hat)
 
         z0_aug = self.generate_counterfactual_states(z0)
-        x0_aug_hat = self.decoder(z0_aug)
-        z0_aug_hat = self.encoder(x0_aug_hat)
+        x0_aug = self.decoder(z0_aug)
+        z0_aug_hat = self.encoder(x0_aug)
+        x0_aug_hat = self.decoder(z0_aug_hat)
 
         # backward
         if not test:
             self.optimizer.zero_grad()
         loss_info = {}
         loss_info['L_rec_x'] = self.distanceLoss(x0, x0_hat)
-        loss_info['L_rec_z'] = self.distanceLoss(z0, z0_hat)
-        loss_info['L_rec_z_aug'] = self.distanceLoss(z0_aug, z0_aug_hat)
+        loss_info['L_rec_x_aug'] = self.distanceLoss(x0_aug, x0_aug_hat)
+        loss_info['L_rec_z'] = (self.distanceLoss(z0, z0_hat) +
+                                self.distanceLoss(z0_aug, z0_aug_hat))
         loss_info['L_foc'] = self.compute_focused_loss(z0, z1)
         loss = 0
         for loss_type in sorted(loss_info.keys()):

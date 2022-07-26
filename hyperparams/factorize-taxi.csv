@@ -13,5 +13,5 @@ n_units_per_layer,64,int
 L_foc,0.0,float
 L_rec_x,1.0,float
 L_rec_z,1.0,float
-L_rec_z_aug,1.0,float
 dist_mode,mse,str
+L_rec_x_aug,0.0,float
