@@ -69,19 +69,18 @@ for experiment in experiments:
         fig, axes = plt.subplots(len(y_labels), 1, sharex=True, sharey='row', figsize=(7, 12))
         p = sns.color_palette(n_colors=len(subset['mode'].unique()))
         for i, (ax, y_label) in enumerate(zip(axes, y_labels)):
-            g = sns.lineplot(
-                data=subset,
-                x='step',
-                y=y_label,
-                units='seed',
-                estimator=None,
-                style='seed',
-                hue='mode',
-                palette=p,
-                legend=(i==0),
-                ax=ax)
-            if i==0:
-                h,l = g.get_legend_handles_labels()
+            g = sns.lineplot(data=subset,
+                             x='step',
+                             y=y_label,
+                             units='seed',
+                             estimator=None,
+                             style='seed',
+                             hue='mode',
+                             palette=p,
+                             legend=(i == 0),
+                             ax=ax)
+            if i == 0:
+                h, l = g.get_legend_handles_labels()
                 ax.legend(h[0:3], l[0:3])
 
         results_dir = prefix + 'results/focused-taxi/images/{}/'.format(experiment)
@@ -89,7 +88,8 @@ for experiment in experiments:
         plt.savefig(results_dir + 'losses{}.png'.format(plot_suffix),
                     facecolor='white',
                     edgecolor='white')
-        plt.show()
+        # plt.show()
+        plt.close()
 
     # for seed in range(1,11):
     #     plot(seed)
