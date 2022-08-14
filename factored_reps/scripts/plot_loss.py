@@ -1,4 +1,4 @@
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
 import glob
 import json
 import os
@@ -14,13 +14,15 @@ import pandas as pd
 import seaborn as sns
 import torch
 
-exp_num = 19
+parser = ArgumentParser()
+parser.add_argument('--exp_num', required=True, type=int)
+args = parser.parse_args()
 
 prefix = os.path.expanduser('~/data-gdk/csal/factored/') if platform.system() == 'Linux' else ''
 
 experiments = [
     filename.split('/')[-1]
-    for filename in glob.glob(prefix + 'results/focused-taxi/logs/exp{:02d}*'.format(exp_num))
+    for filename in glob.glob(prefix + 'results/focused-taxi/logs/exp{:02d}*'.format(args.exp_num))
 ]
 
 for experiment in experiments:
