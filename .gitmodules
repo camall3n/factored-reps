@@ -4,3 +4,6 @@
 [submodule "markov_abstr/gridworld/visgrid"]
 	path = visgrid
 	url = ../visgrid.git
+[submodule "disent"]
+	path = disent
+	url = git@github.com:camall3n/disent.git
