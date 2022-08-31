@@ -11,7 +11,7 @@ from tqdm import tqdm
 from factored_reps.agents.replaymemory import ReplayMemory
 
 from factored_reps import utils
-from factored_reps.domains.atoms import AtomsEnv
+from factored_reps.envs.atoms import AtomsEnv
 from factored_reps.models.focused_autoenc import FocusedAutoencoder
 from factored_reps.plotting import add_heatmap_labels, diagonalize
 
