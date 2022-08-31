@@ -3,6 +3,12 @@ import gym.spaces
 import numpy as np
 
 class AtomsEnv(gym.Env):
+    """
+    Implements the domain from Misra et al. "Provable Rich Observation Reinforcement
+        Learning With Combinatorial Latent States", ICML 2021.
+
+        https://openreview.net/pdf?id=hx1IXFHAw7R
+    """
     def __init__(self,
                  n_factors=10,
                  n_atoms_per_factor=2,
