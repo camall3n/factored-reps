@@ -7,10 +7,10 @@ import seaborn as sns
 import seeding
 from tqdm import tqdm
 
-from markov_abstr.gridworld.models.nnutils import Reshape
-from markov_abstr.gridworld.models.nullabstraction import NullAbstraction
-from markov_abstr.gridworld.models.phinet import PhiNet
-from markov_abstr.gridworld.agents.randomagent import RandomAgent
+from factored_reps.models.nnutils import Reshape
+from factored_reps.models.markov.nullabstraction import NullAbstraction
+from factored_reps.models.markov.phinet import PhiNet
+from factored_reps.agents.randomagent import RandomAgent
 from markov_abstr.gridworld.agents.dqnagent import DQNAgent
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.utils import get_parser

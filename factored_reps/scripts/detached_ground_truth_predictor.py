@@ -18,10 +18,10 @@ from tqdm import tqdm
 
 from visgrid.gridworld import GridWorld
 from visgrid.sensors import *
-from factored_reps.models.factornet import FactorNet
-from markov_abstr.gridworld.models.featurenet import FeatureNet
+from factored_reps.models.factored.factornet import FactorNet
+from factored_reps.models.markov.featurenet import FeatureNet
 from factored_reps.utils import get_parser, load_hyperparams_and_inject_args
-from markov_abstr.gridworld.models.simplenet import SimpleNet
+from factored_reps.models.simplenet import SimpleNet
 
 parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)

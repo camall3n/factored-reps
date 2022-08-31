@@ -15,8 +15,8 @@ import torch
 from tqdm import tqdm
 
 from visgrid.sensors import *
-from markov_abstr.gridworld.models.featurenet import FeatureNet
-from factored_reps.models.categorical_predictor import CategoricalPredictor
+from factored_reps.models.markov.featurenet import FeatureNet
+from factored_reps.models.debug.categorical_predictor import CategoricalPredictor
 from factored_reps import utils
 
 parser = utils.get_parser()

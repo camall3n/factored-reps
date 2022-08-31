@@ -1,12 +1,12 @@
-from markov_abstr.gridworld.models.featurenet import FeatureNet
-from factored_reps.models.parents_net import ParentsNet
 import numpy as np
 import torch
 import torch.nn
 
-from markov_abstr.gridworld.models.nnutils import Network
-from markov_abstr.gridworld.models.fwdnet import FwdNet
-from markov_abstr.gridworld.models.simplenet import SimpleNet
+from factored_reps.models.markov.featurenet import FeatureNet
+from factored_reps.models.factored.parents_net import ParentsNet
+from factored_reps.models.nnutils import Network
+from factored_reps.models.markov.fwdnet import FwdNet
+from factored_reps.models.simplenet import SimpleNet
 
 class FactoredFwdModel(Network):
     def __init__(self, args, n_actions, input_shape=2, device='cpu'):

@@ -3,8 +3,8 @@ from collections import Sequence
 import torch
 import torch.nn.functional as F
 
-from markov_abstr.gridworld.models.nnutils import Network, one_hot
-from markov_abstr.gridworld.models.simplenet import SimpleNet
+from factored_reps.models.nnutils import Network, one_hot
+from factored_reps.models.simplenet import SimpleNet
 
 class CategoricalPredictor(Network):
     def __init__(self, n_inputs, n_values, learning_rate=1e-3):

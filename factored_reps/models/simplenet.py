@@ -34,6 +34,5 @@ class SimpleNet(Network):
 
         self.model = torch.nn.Sequential(*self.layers)
 
-    def forward(self, z0):
-        a_logits = self.model(z0)
-        return a_logits
+    def forward(self, x):
+        return self.model(x)

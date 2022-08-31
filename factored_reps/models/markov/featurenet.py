@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network
+from ..nnutils import Network
 from .phinet import PhiNet
 from .invnet import InvNet
 from .fwdnet import FwdNet

@@ -2,8 +2,8 @@ import numpy as np
 import torch
 
 from .autoencoder import AutoEncoder
-from .simplenet import SimpleNet
-from .nnutils import one_hot
+from ..simplenet import SimpleNet
+from ..nnutils import one_hot
 
 class PixelPredictor(AutoEncoder):
     def __init__(self, args, n_actions, input_shape=2):

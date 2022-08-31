@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import seeding
 from tqdm import tqdm
 
-from markov_abstr.gridworld.models.nullabstraction import NullAbstraction
-from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps.models.markov.nullabstraction import NullAbstraction
+from factored_reps.models.factored.focused_autoenc import FocusedAutoencoder
 from visgrid.gridworld import GridWorld
 from visgrid.utils import MI
 from visgrid.sensors import *

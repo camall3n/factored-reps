@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .nnutils import Network, Reshape
+from ..nnutils import Network, Reshape
 from .phinet import PhiNet
 
 class AutoEncoder(Network):

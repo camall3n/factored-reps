@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network, Reshape, conv2d_size_out
-from markov_abstr.gridworld.models.simplenet import SimpleNet
+from ..nnutils import Network, Reshape, conv2d_size_out
+from factored_reps.models.simplenet import SimpleNet
 
 class PhiNet(Network):
     def __init__(self,

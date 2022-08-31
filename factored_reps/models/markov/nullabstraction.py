@@ -1,4 +1,4 @@
-from .nnutils import Reshape
+from ..nnutils import Reshape
 
 class NullAbstraction(Reshape):
     def freeze(self):

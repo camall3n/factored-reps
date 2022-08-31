@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network, one_hot, extract
-from .simplenet import SimpleNet
+from ..nnutils import Network, one_hot, extract
+from ..simplenet import SimpleNet
 
 class FwdNet(Network):
     def __init__(self,

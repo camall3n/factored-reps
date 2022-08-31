@@ -2,8 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional
 
-from markov_abstr.gridworld.models.nnutils import Network, one_hot
-from markov_abstr.gridworld.models.simplenet import SimpleNet
+from factored_reps.models.nnutils import Network, one_hot
+from factored_reps.models.simplenet import SimpleNet
 
 class ParentsNet(Network):
     def __init__(self,

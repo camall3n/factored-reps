@@ -8,11 +8,15 @@ from tqdm import tqdm
 
 from visgrid.gridworld import GridWorld
 from visgrid.sensors import *
-from markov_abstr.gridworld.models.qnet import QNet
+from factored_reps.models.simplenet import SimpleNet
 
 seeding.seed(0, np, torch)
 
-qnet = QNet(n_features=2, n_actions=4, n_hidden_layers=1, n_units_per_layer=32)
+qnet = SimpleNet(n_inputs=2,
+                 n_outputs=4,
+                 n_hidden_layers=1,
+                 n_units_per_layer=32,
+                 activation=torch.nn.ReLU)
 env = GridWorld(rows=6, cols=6)
 gamma = 0.9
 r_step = -1

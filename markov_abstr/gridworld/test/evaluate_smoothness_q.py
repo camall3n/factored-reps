@@ -10,7 +10,7 @@ from tqdm import tqdm
 from visgrid.gridworld import GridWorld, MazeWorld, SpiralWorld
 from visgrid.utils import get_parser
 from visgrid.sensors import *
-from markov_abstr.gridworld.models.phinet import PhiNet
+from factored_reps.models.markov.phinet import PhiNet
 from markov_abstr.gridworld.agents.dqnagent import DQNAgent
 
 parser = get_parser()

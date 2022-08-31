@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network
+from ..nnutils import Network
 
 class InvNet(Network):
     def __init__(self,

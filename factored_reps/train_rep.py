@@ -13,13 +13,13 @@ import sys
 import torch
 from tqdm import tqdm
 
-from factored_reps.models.factornet import FactorNet
-from factored_reps.models.factored_fwd_model import FactoredFwdModel
-from factored_reps.models.focused_autoenc import FocusedAutoencoder
+from factored_reps.models.factored.factornet import FactorNet
+from factored_reps.models.factored.factored_fwd_model import FactoredFwdModel
+from factored_reps.models.factored.focused_autoenc import FocusedAutoencoder
 from factored_reps import utils
-from markov_abstr.gridworld.models.featurenet import FeatureNet
-from markov_abstr.gridworld.models.autoencoder import AutoEncoder
-from markov_abstr.gridworld.models.pixelpredictor import PixelPredictor
+from factored_reps.models.markov.featurenet import FeatureNet
+from factored_reps.models.markov.autoencoder import AutoEncoder
+from factored_reps.models.markov.pixelpredictor import PixelPredictor
 from markov_abstr.gridworld.repvis import RepVisualization, CleanVisualization
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.taxi import VisTaxi5x5

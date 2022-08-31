@@ -115,8 +115,8 @@ if __name__ == '__main__':
 
     from factored_reps import utils
     from factored_reps.scripts.generate_taxi_experiences import generate_experiences
-    from markov_abstr.gridworld.models.featurenet import FeatureNet
-    from factored_reps.models.categorical_predictor import CategoricalPredictor
+    from factored_reps.models.markov.featurenet import FeatureNet
+    from factored_reps.models.debug.categorical_predictor import CategoricalPredictor
     from markov_abstr.gridworld.repvis import RepVisualization
     from visgrid.taxi import VisTaxi5x5
     from visgrid.sensors import *

@@ -4,8 +4,8 @@ import numpy as np
 import torch
 import torch.nn
 
-from markov_abstr.gridworld.models.nnutils import Network
-from markov_abstr.gridworld.models.simplenet import SimpleNet
+from factored_reps.models.nnutils import Network
+from factored_reps.models.simplenet import SimpleNet
 
 class CAENet(Network):
     """Counterfactual Autoencoder"""

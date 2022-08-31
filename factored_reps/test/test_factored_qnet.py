@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from visgrid.gridworld import GridWorld
 from visgrid.sensors import *
-from factored_reps.models.factored_qnet import FactoredQNet
+from factored_reps.models.factored.factored_qnet import FactoredQNet
 
 seeding.seed(0, np, torch)
 

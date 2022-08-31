@@ -2,8 +2,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from models.qnet import QNet
-from models.nnutils import one_hot, extract
+from factored_reps.models.simplenet import SimpleNet
+from factored_reps.models.nnutils import one_hot, extract
 from .replaymemory import ReplayMemory, Experience
 
 def tch(tensor, dtype=torch.float32):
@@ -36,19 +36,21 @@ class DQNAgent():
         self.decay_period = 2500
         self.train_phi = train_phi
         self.replay = ReplayMemory(10000)
-        self.make_qnet = QNet
+        self.make_qnet = SimpleNet
         self.reset()
 
     def reset(self):
         self.n_training_steps = 0
-        self.q = self.make_qnet(n_features=self.n_features,
-                                n_actions=self.n_actions,
+        self.q = self.make_qnet(n_inputs=self.n_features,
+                                n_outputs=self.n_actions,
                                 n_hidden_layers=self.n_hidden_layers,
-                                n_units_per_layer=self.n_units_per_layer)
-        self.q_target = self.make_qnet(n_features=self.n_features,
-                                       n_actions=self.n_actions,
+                                n_units_per_layer=self.n_units_per_layer,
+                                activation=torch.nn.ReLU)
+        self.q_target = self.make_qnet(n_inputs=self.n_features,
+                                       n_outputs=self.n_actions,
                                        n_hidden_layers=self.n_hidden_layers,
-                                       n_units_per_layer=self.n_units_per_layer)
+                                       n_units_per_layer=self.n_units_per_layer,
+                                       activation=torch.nn.ReLU)
         self.copy_target_net()
         self.replay.reset()
         params = list(self.q.parameters()) + list(self.phi.parameters())

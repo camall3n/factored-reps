@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network, one_hot
+from ..nnutils import Network, one_hot
 
 class InvDiscriminator(Network):
     def __init__(self, n_actions, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32):

@@ -19,11 +19,11 @@ from factored_reps.agents.replaymemory import ReplayMemory
 from factored_reps import utils
 from visgrid.taxi.taxi import VisTaxi5x5
 from visgrid.sensors import *
-from markov_abstr.gridworld.models.featurenet import FeatureNet
-from factored_reps.models.focused_autoenc import FocusedAutoencoder
-from factored_reps.models.calf import CALFNet
-from factored_reps.models.cae import CAENet
-from factored_reps.models.categorical_predictor import CategoricalPredictor
+from factored_reps.models.markov.featurenet import FeatureNet
+from factored_reps.models.factored.focused_autoenc import FocusedAutoencoder
+from factored_reps.models.factored.calf import CALFNet
+from factored_reps.models.factored.cae import CAENet
+from factored_reps.models.debug.categorical_predictor import CategoricalPredictor
 from factored_reps.plotting import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------

@@ -1,13 +1,13 @@
-from factored_reps.models.parents_net import ParentsNet
 import numpy as np
 import torch
 import torch.nn
 
-from markov_abstr.gridworld.models.nnutils import Network
-from markov_abstr.gridworld.models.phinet import PhiNet
-from markov_abstr.gridworld.models.invnet import InvNet
-from markov_abstr.gridworld.models.fwdnet import FwdNet
-from markov_abstr.gridworld.models.contrastivenet import ContrastiveNet
+from factored_reps.models.factored.parents_net import ParentsNet
+from factored_reps.models.nnutils import Network
+from factored_reps.models.markov.phinet import PhiNet
+from factored_reps.models.markov.invnet import InvNet
+from factored_reps.models.markov.fwdnet import FwdNet
+from factored_reps.models.markov.contrastivenet import ContrastiveNet
 
 class FactorNet(Network):
     def __init__(self, args, n_actions, input_shape=2, device='cpu'):

@@ -4,7 +4,7 @@ import seaborn as sns
 import random
 import torch
 
-from markov_abstr.gridworld.models.phinet import PhiNet
+from factored_reps.models.markov.phinet import PhiNet
 
 seed = 0
 np.random.seed(seed)
