@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from factored_reps.models.factored.factored_qnet import FactoredQNet
 from factored_reps.models.nnutils import one_hot, extract
-from markov_abstr.gridworld.agents.dqnagent import DQNAgent, tch
+from factored_reps.agents.legacy.dqnagent import DQNAgent, tch
 
 class FactoredDQNAgent(DQNAgent):
     def __init__(self,

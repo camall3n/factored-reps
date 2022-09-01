@@ -20,7 +20,7 @@ from factored_reps import utils
 from factored_reps.models.markov.featurenet import FeatureNet
 from factored_reps.models.markov.autoencoder import AutoEncoder
 from factored_reps.models.markov.pixelpredictor import PixelPredictor
-from markov_abstr.gridworld.repvis import RepVisualization, CleanVisualization
+from factored_reps.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.taxi import VisTaxi5x5
 from visgrid.sensors import *
@@ -203,7 +203,7 @@ else:
         sensor_list += [
             AsTypeSensor(np.float32),
             MultiplySensor(scale=1 / 255),
-            MoveAxisSensor(-1, 1)  # Move image channels to front (after batch dim)
+            MoveAxisSensor(-1, 1) # Move image channels to front (after batch dim)
         ]
     sensor = SensorChain(sensor_list)
 
@@ -263,9 +263,9 @@ def get_obs_negatives(idx, max_idx=n_samples):
     # otherwise we'll draw a random obs from the buffer
 
     shuffled_idx = np.random.permutation(idx)
-    obs_negatives = next_obs[shuffled_idx]  # replace x' samples with random samples
-    obs_negatives[to_keep] = obs[idx[to_keep]]  # replace x' samples with x
-    obs_negatives[to_offset] = next_obs[idx[to_offset] + 1]  # replace x' samples with x''
+    obs_negatives = next_obs[shuffled_idx] # replace x' samples with random samples
+    obs_negatives[to_keep] = obs[idx[to_keep]] # replace x' samples with x
+    obs_negatives[to_offset] = next_obs[idx[to_offset] + 1] # replace x' samples with x''
 
     # replace all samples with one specific type of negative example
     # obs_negatives = next_obs[shuffled_idx]  # x' -> \tilde x'

@@ -11,7 +11,7 @@ from tqdm import tqdm
 from factored_reps.models.markov.featurenet import FeatureNet
 from factored_reps.models.markov.autoencoder import AutoEncoder
 from factored_reps.models.markov.pixelpredictor import PixelPredictor
-from markov_abstr.gridworld.repvis import RepVisualization, CleanVisualization
+from factored_reps.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
 from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.utils import get_parser, MI
 from visgrid.sensors import *

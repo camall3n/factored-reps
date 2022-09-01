@@ -18,7 +18,7 @@ from factored_reps import utils
 from factored_reps.scripts.generate_taxi_experiences import generate_experiences
 from factored_reps.models.markov.featurenet import FeatureNet
 from factored_reps.models.debug.categorical_predictor import CategoricalPredictor
-from markov_abstr.gridworld.repvis import RepVisualization
+from factored_reps.experiments.markov.analysis.repvis import RepVisualization
 from visgrid.taxi import VisTaxi5x5
 from visgrid.sensors import *
 
@@ -112,7 +112,7 @@ env.reset()
 sensor_list = []
 if not args.no_sigma:
     sensor_list += [
-        MoveAxisSensor(-1, 0)  # Move image channel (-1) to front (0)
+        MoveAxisSensor(-1, 0) # Move image channel (-1) to front (0)
     ]
 sensor = SensorChain(sensor_list)
 
@@ -267,7 +267,7 @@ train_log.close()
 test_log.close()
 
 #% ------------------ Analyze results ------------------
-from factored_reps.analyze_online_results import analyze_results
+from factored_reps.experiments.analysis.analyze_taxi_online_results import analyze_results
 
 output_dir = 'results/taxi/analyze_markov_accuracy/{}/seed-{}'.format(args.tag, args.seed)
 analyze_results(output_dir, replay_test, fnet, predictor)

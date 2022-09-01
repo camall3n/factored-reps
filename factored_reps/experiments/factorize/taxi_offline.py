@@ -24,7 +24,7 @@ from factored_reps.models.factored.focused_autoenc import FocusedAutoencoder
 from factored_reps.models.factored.calf import CALFNet
 from factored_reps.models.factored.cae import CAENet
 from factored_reps.models.debug.categorical_predictor import CategoricalPredictor
-from factored_reps.plotting import add_heatmap_labels, diagonalize
+from factored_reps.experiments.factorize.analysis.heatmaps import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:

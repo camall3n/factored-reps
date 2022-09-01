@@ -13,7 +13,7 @@ from factored_reps.agents.replaymemory import ReplayMemory
 from factored_reps import utils
 from factored_reps.envs.atoms import AtomsEnv
 from factored_reps.models.factored.focused_autoenc import FocusedAutoencoder
-from factored_reps.plotting import add_heatmap_labels, diagonalize
+from factored_reps.experiments.factorize.analysis.heatmaps import add_heatmap_labels, diagonalize
 
 #%% ------------------ Parse args/hyperparameters ------------------
 if 'ipykernel' in sys.argv[0]:

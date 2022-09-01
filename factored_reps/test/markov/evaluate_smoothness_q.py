@@ -11,7 +11,7 @@ from visgrid.gridworld import GridWorld, MazeWorld, SpiralWorld
 from visgrid.utils import get_parser
 from visgrid.sensors import *
 from factored_reps.models.markov.phinet import PhiNet
-from markov_abstr.gridworld.agents.dqnagent import DQNAgent
+from factored_reps.agents.legacy.dqnagent import DQNAgent
 
 parser = get_parser()
 # parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)
