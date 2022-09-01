@@ -1,5 +1,5 @@
 [submodule "markov_abstr/dmcontrol"]
-	path = markov_abstr/dmcontrol
+	path = dmcontrol
 	url = ../rad.git
 [submodule "markov_abstr/gridworld/visgrid"]
 	path = visgrid
