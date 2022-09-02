@@ -12,7 +12,7 @@ from factored_rl.models.markov.nullabstraction import NullAbstraction
 from factored_rl.models.markov.phinet import PhiNet
 from factored_rl.agents.randomagent import RandomAgent
 from factored_rl.agents.legacy.dqnagent import DQNAgent
-from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.utils import get_parser
 from visgrid.sensors import *
 

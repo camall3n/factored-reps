@@ -12,10 +12,9 @@ from tqdm import tqdm
 from ....models.markov.featurenet import FeatureNet
 from ....models.markov.autoencoder import AutoEncoder
 from .repvis import RepVisualization, CleanVisualization
-from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.utils import reset_seeds, get_parser, MI
 from visgrid.sensors import *
-from visgrid.gridworld.distance_oracle import DistanceOracle
 
 class Args:
     pass

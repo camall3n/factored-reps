@@ -7,7 +7,7 @@ import seeding
 import torch
 from tqdm import tqdm
 
-from visgrid.gridworld import GridWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.sensors import *
 
 p = sns.color_palette(n_colors=6)
@@ -72,6 +72,7 @@ for i in range(20):
     img = img.reshape(fig.canvas.get_width_height()[::-1] + (3, ))
     imgs.append(img)
 import imageio
+
 imageio.mimwrite('x1-above-corner-distribution.mp4', imgs)
 plt.imshow(x)
 plt.axis('off')

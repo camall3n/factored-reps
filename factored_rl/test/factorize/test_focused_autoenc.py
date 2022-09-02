@@ -6,8 +6,8 @@ from tqdm import tqdm
 
 from factored_rl.models.markov.nullabstraction import NullAbstraction
 from factored_rl.models.factored.focused_autoenc import FocusedAutoencoder
-from visgrid.gridworld import GridWorld
-from visgrid.utils import MI
+from visgrid.envs import GridWorld
+from factored_rl.entropy.mi import MI
 from visgrid.sensors import *
 
 #%% ------------------ Define MDP ------------------

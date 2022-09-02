@@ -8,7 +8,7 @@ import os
 import random
 from tqdm import tqdm
 
-from visgrid.taxi.taxi import VisTaxi5x5
+from visgrid.envs.taxi import VisTaxi5x5
 
 args = Namespace
 args.n_samples = 1000
@@ -49,8 +49,12 @@ correlation = np.corrcoef(all_deltas)[:n_vars, -n_factors:]
 plt.imshow(correlation, vmin=-1, vmax=1)
 for i in range(n_vars):
     for j in range(n_factors):
-        text = plt.gca().text(j, i, np.round(correlation[i, j], 2),
-                       ha="center", va="center", color="w")
+        text = plt.gca().text(j,
+                              i,
+                              np.round(correlation[i, j], 2),
+                              ha="center",
+                              va="center",
+                              color="w")
 plt.yticks(np.arange(n_vars))
 plt.xticks(np.arange(n_factors))
 plt.ylabel(r'Ground truth factor ($\Delta s$)')

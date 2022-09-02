@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from visgrid.gridworld import GridWorld, MazeWorld, SpiralWorld
+from visgrid.envs import GridWorld, MazeWorld, SpiralWorld
 from visgrid.utils import get_parser
 from visgrid.sensors import *
 from factored_rl.models.markov.phinet import PhiNet

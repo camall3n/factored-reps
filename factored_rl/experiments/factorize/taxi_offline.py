@@ -17,7 +17,7 @@ from tqdm import tqdm
 from factored_rl.agents.replaymemory import ReplayMemory
 
 from factored_rl import utils
-from visgrid.taxi.taxi import VisTaxi5x5
+from visgrid.envs.taxi import VisTaxi5x5
 from visgrid.sensors import *
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.factored.focused_autoenc import FocusedAutoencoder

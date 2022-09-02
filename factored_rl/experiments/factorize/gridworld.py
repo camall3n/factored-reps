@@ -21,8 +21,7 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.markov.autoencoder import AutoEncoder
 from factored_rl.models.markov.pixelpredictor import PixelPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
-from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
-from visgrid.taxi import VisTaxi5x5
+from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld, VisTaxi5x5
 from visgrid.sensors import *
 
 parser = utils.get_parser()

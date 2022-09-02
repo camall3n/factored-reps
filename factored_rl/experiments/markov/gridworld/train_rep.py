@@ -12,10 +12,10 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.markov.autoencoder import AutoEncoder
 from factored_rl.models.markov.pixelpredictor import PixelPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
-from visgrid.gridworld import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
 from visgrid.utils import get_parser, MI
 from visgrid.sensors import *
-from visgrid.gridworld.distance_oracle import DistanceOracle
+from factored_rl.experiments.markov.analysis.distance_oracle import DistanceOracle
 
 parser = get_parser()
 # parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)
