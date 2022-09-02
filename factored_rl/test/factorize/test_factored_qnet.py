@@ -20,9 +20,9 @@ env.reset_goal()
 env.reset_goal()
 
 #%%
-r = np.arange(env._rows)
-c = np.arange(env._cols)
-s = np.asarray([[(r, c) for r in np.arange(env._rows)] for c in range(env._cols)]).reshape(-1, 2)
+r = np.arange(env.rows)
+c = np.arange(env.cols)
+s = np.asarray([[(r, c) for r in np.arange(env.rows)] for c in range(env.cols)]).reshape(-1, 2)
 
 s.reshape(6, 6, 2)
 v = -np.ones((6, 6)) * 1 / (1 - gamma)
@@ -46,10 +46,10 @@ for i in range(1000):
         v_prev = v.copy()
 
 def plot_value_function(v, ax):
-    x = np.arange(0, env._cols)
+    x = np.arange(0, env.cols)
     xx = np.concatenate([x, x + .98])
     xx.sort()
-    y = np.arange(0, env._rows)
+    y = np.arange(0, env.rows)
     yy = np.concatenate([y, y + .98])
     yy.sort()
     xx, yy = np.meshgrid(xx, yy)

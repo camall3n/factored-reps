@@ -23,7 +23,7 @@ for t in range(n_samples):
     actions.append(a)
 states = np.stack(states)
 s0 = np.asarray(states[:-1, :])
-c0 = s0[:, 0] * env._cols + s0[:, 1]
+c0 = s0[:, 0] * env.cols + s0[:, 1]
 s1 = np.asarray(states[1:, :])
 a = np.asarray(actions)
 

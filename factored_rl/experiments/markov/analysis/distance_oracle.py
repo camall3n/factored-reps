@@ -5,7 +5,7 @@ from visgrid.agents.expert import gridworld_expert
 class DistanceOracle:
     def __init__(self, env):
         self.env = env
-        states = np.indices((env._rows, env._cols)).T.reshape(-1, 2)
+        states = np.indices((env.rows, env.cols)).T.reshape(-1, 2)
         for s in states:
             for sp in states:
                 # Pre-compute all pairwise distances
@@ -31,8 +31,6 @@ if __name__ == '__main__':
     from visgrid.envs import GridWorld, MazeWorld, SpiralWorld
     from visgrid.envs.components import grid
     import matplotlib.pyplot as plt
-
-    grid.directions[3]
 
     seeding.seed(0, np, random)
     env = SpiralWorld(rows=6, cols=6)

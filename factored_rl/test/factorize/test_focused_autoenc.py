@@ -19,7 +19,7 @@ env.reset_agent()
 sensor = SensorChain([
     # OffsetSensor(offset=(0.5,0.5)),
     # NoisySensor(sigma=0.1),
-    # ImageSensor(range=((0,env._rows), (0,env._cols)), pixel_density=1),
+    # ImageSensor(range=((0,env.rows), (0,env.cols)), pixel_density=1),
     # ResampleSensor(scale=(2,1)),
     # BlurSensor(sigma=0.6, truncate=1.),
     # NoisySensor(sigma=0.05),
@@ -42,7 +42,7 @@ for t in range(n_samples):
 states = np.stack(states)
 s0 = np.asarray(states[:-1, :])
 s1 = np.asarray(states[1:, :])
-c0 = s0[:, 0] * env._cols + s0[:, 1]
+c0 = s0[:, 0] * env.cols + s0[:, 1]
 a = np.asarray(actions)
 
 MI_max = MI(s0, s0)

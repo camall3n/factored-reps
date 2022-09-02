@@ -242,7 +242,7 @@ if __name__ == '__main__':
                                         seed=seed):
             if buffer is replay_test:
                 s = exp['state']
-                exp['color'] = s[0] * env._cols + s[1]
+                exp['color'] = s[0] * env.cols + s[1]
             buffer.push(exp)
 
     #% ------------------ Define models ------------------

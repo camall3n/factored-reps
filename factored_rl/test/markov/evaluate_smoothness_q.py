@@ -67,18 +67,18 @@ gamma = 0.9
 #% ------------------ Define sensor ------------------
 sensor_list = []
 if args.rearrange_xy:
-    sensor_list.append(RearrangeXYPositionsSensor((env._rows, env._cols)))
+    sensor_list.append(RearrangeXYPositionsSensor((env.rows, env.cols)))
 if not args.no_sigma:
     if args.one_hot:
         sensor_list += [
             OffsetSensor(offset=(0.5, 0.5)),
-            ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=1),
+            ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=1),
         ]
     else:
         sensor_list += [
             OffsetSensor(offset=(0.5, 0.5)),
             NoisySensor(sigma=0.05),
-            ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=3),
+            ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
             # ResampleSensor(scale=2.0),
             BlurSensor(sigma=0.6, truncate=1.),
             NoisySensor(sigma=0.01)
@@ -122,9 +122,9 @@ env.reset_goal()
 env.goal.position
 
 #%%
-r = np.arange(env._rows)
-c = np.arange(env._cols)
-s = np.asarray([[(r,c) for r in np.arange(env._rows)] for c in range(env._cols)]).reshape(-1,2)
+r = np.arange(env.rows)
+c = np.arange(env.cols)
+s = np.asarray([[(r,c) for r in np.arange(env.rows)] for c in range(env.cols)]).reshape(-1,2)
 
 s.reshape(6,6,2)
 v = -np.ones((6,6))*1/(1-gamma)
@@ -148,10 +148,10 @@ for i in range(1000):
         v_prev = v.copy()
 
 def plot_value_function(v, ax, vmin, vmax):
-    x = np.arange(0, env._cols)
+    x = np.arange(0, env.cols)
     xx = np.concatenate([x, x+.98])
     xx.sort()
-    y = np.arange(0, env._rows)
+    y = np.arange(0, env.rows)
     yy = np.concatenate([y, y+.98])
     yy.sort()
     xx, yy = np.meshgrid(xx, yy)

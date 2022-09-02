@@ -111,7 +111,6 @@ else:
     env = GridWorld(rows=args.rows, cols=args.cols)
 # env = RingWorld(2,4)
 # env = TestWorld()
-# env.add_random_walls(10)
 
 # cmap = 'Set3'
 cmap = None
@@ -127,7 +126,7 @@ for t in range(n_samples):
     actions.append(a)
 states = np.stack(states)
 s0 = np.asarray(states[:-1, :])
-c0 = s0[:, 0] * env._cols + s0[:, 1]
+c0 = s0[:, 0] * env.cols + s0[:, 1]
 s1 = np.asarray(states[1:, :])
 a = np.asarray(actions)
 
@@ -146,12 +145,12 @@ if args.video:
 #% ------------------ Define sensor ------------------
 sensor_list = []
 if args.rearrange_xy:
-    sensor_list.append(RearrangeXYPositionsSensor((env._rows, env._cols)))
+    sensor_list.append(RearrangeXYPositionsSensor((env.rows, env.cols)))
 if not args.no_sigma:
     sensor_list += [
         OffsetSensor(offset=(0.5, 0.5)),
         NoisySensor(sigma=0.05),
-        ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=3),
+        ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
         # ResampleSensor(scale=2.0),
         BlurSensor(sigma=0.6, truncate=1.),
         NoisySensor(sigma=0.01)

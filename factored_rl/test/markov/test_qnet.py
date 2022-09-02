@@ -25,9 +25,9 @@ env.reset_goal()
 env.reset_goal()
 
 #%%
-r = np.arange(env._rows)
-c = np.arange(env._cols)
-s = np.asarray([[(r, c) for r in np.arange(env._rows)] for c in range(env._cols)]).reshape(-1, 2)
+r = np.arange(env.rows)
+c = np.arange(env.cols)
+s = np.asarray([[(r, c) for r in np.arange(env.rows)] for c in range(env.cols)]).reshape(-1, 2)
 
 s.reshape(6, 6, 2)
 v = -np.ones((6, 6)) * 1 / (1 - gamma)
@@ -51,10 +51,10 @@ for i in range(1000):
         v_prev = v.copy()
 
 def plot_value_function(v, ax):
-    s = np.asarray([[np.asarray([x, y]) for x in range(env._cols)] for y in range(env._rows)])
-    xy = OffsetSensor(offset=(0.5, 0.5)).observe(s).reshape(env._cols, env._rows, -1)
-    ax.contourf(np.arange(0.5, env._cols + 0.5),
-                np.arange(0.5, env._rows + 0.5),
+    s = np.asarray([[np.asarray([x, y]) for x in range(env.cols)] for y in range(env.rows)])
+    xy = OffsetSensor(offset=(0.5, 0.5)).observe(s).reshape(env.cols, env.rows, -1)
+    ax.contourf(np.arange(0.5, env.cols + 0.5),
+                np.arange(0.5, env.rows + 0.5),
                 v,
                 vmin=-10,
                 vmax=0)

@@ -31,7 +31,7 @@ for t in range(n_samples):
     states.append(s)
 states = np.stack(states)
 s0 = np.asarray(states[:-1, :])
-c0 = s0[:, 0] * env._cols + s0[:, 1]
+c0 = s0[:, 0] * env.cols + s0[:, 1]
 s1 = np.asarray(states[1:, :])
 x0 = sensor.observe(s0)
 x1 = sensor.observe(s1)
@@ -46,7 +46,7 @@ plt.savefig('foo.png', facecolor='white')
 sensor_list = [
     OffsetSensor(offset=(0.5, 0.5)),
     NoisySensor(sigma=0.05),
-    ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=3),
+    ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
     # ResampleSensor(scale=2.0),
     BlurSensor(sigma=0.6, truncate=1.),
     NoisySensor(sigma=0.01)
@@ -93,7 +93,7 @@ env = GridWorld(rows, cols)
 sensor_list = [
     OffsetSensor(offset=(0.5, 0.5)),
     NoisySensor(sigma=0.05),
-    ImageSensor(range=((0, env._rows), (0, env._cols)), pixel_density=3),
+    ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
     # ResampleSensor(scale=2.0),
     BlurSensor(sigma=0.6, truncate=1.),
     NoisySensor(sigma=0.01)
