@@ -6,14 +6,14 @@ from tqdm import tqdm
 
 from factored_rl.models.markov.nullabstraction import NullAbstraction
 from factored_rl.models.factored.focused_autoenc import FocusedAutoencoder
-from visgrid.envs import GridWorld
+from visgrid.envs import GridworldEnv
 from factored_rl.entropy.mi import MI
 from visgrid.sensors import *
 
 #%% ------------------ Define MDP ------------------
 seeding.seed(0, np)
 
-env = GridWorld(rows=6, cols=6)
+env = GridworldEnv(rows=6, cols=6)
 env.reset_agent()
 
 sensor = SensorChain([
@@ -47,8 +47,8 @@ a = np.asarray(actions)
 
 MI_max = MI(s0, s0)
 
-z0 = phi(sensor.observe(s0))
-z1 = phi(sensor.observe(s1))
+z0 = phi(sensor(s0))
+z1 = phi(sensor(s1))
 
 entangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': -0.1})
 disentangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
@@ -63,8 +63,8 @@ noise_machine = SensorChain([
     NoisySensor(sigma=0.05),
 ])
 
-e0n = noise_machine.observe(e0.detach().numpy())
-e1n = noise_machine.observe(e1.detach().numpy())
+e0n = noise_machine(e0.detach().numpy())
+e1n = noise_machine(e1.detach().numpy())
 
 #%%
 def get_frame(ax, rep, title, save=''):
@@ -89,8 +89,8 @@ seeding.seed(1, np)
 disentangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': 0.1})
 fig, ax = plt.subplots(figsize=(8, 8))
 frames = []
-e0no = sensor.observe(e0n)
-e1no = sensor.observe(e1n)
+e0no = sensor(e0n)
+e1no = sensor(e1n)
 for update in tqdm(range(100)):
     disentangler.train_batch(e0no, e1no)
     d0 = disentangler(e0no)

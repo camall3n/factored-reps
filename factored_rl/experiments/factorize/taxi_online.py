@@ -19,7 +19,7 @@ from factored_rl.experiments.markov.taxi.generate_taxi_experiences import genera
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization
-from visgrid.taxi import VisTaxi5x5
+from visgrid.envs.taxi import TaxiEnv
 from visgrid.sensors import *
 
 #% ------------------ Parse args/hyperparameters ------------------
@@ -106,15 +106,16 @@ torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
 #% ------------------ Define MDP ------------------
-env = VisTaxi5x5(grayscale=args.grayscale)
-env.reset()
-
 sensor_list = []
 if not args.no_sigma:
     sensor_list += [
+        GrayscaleSensor() if args.grayscale else Sensor(),
         MoveAxisSensor(-1, 0) # Move image channel (-1) to front (0)
     ]
 sensor = SensorChain(sensor_list)
+
+env = TaxiEnv(sensor=sensor)
+env.reset()
 
 #% ------------------ Generate & store experiences ------------------
 on_retrieve = {

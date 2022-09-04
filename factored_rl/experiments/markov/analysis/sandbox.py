@@ -7,15 +7,15 @@ import seeding
 import torch
 from tqdm import tqdm
 
-from visgrid.envs import GridWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridworldEnv
 from visgrid.sensors import *
 
 p = sns.color_palette(n_colors=6)
 p[-2]
 
 seeding.seed(1, np, random, torch)
-env = MazeWorld.load_maze(rows=6, cols=6, seed=1)
-env = GridWorld(rows=10, cols=10)
+env = GridworldEnv.from_saved_maze(rows=6, cols=6, seed=1)
+env = GridworldEnv(rows=10, cols=10)
 env.plot()
 env.reset_goal(position=(3, 3))
 env.reset_agent(position=(0, 0))
@@ -33,8 +33,8 @@ states = np.stack(states)
 s0 = np.asarray(states[:-1, :])
 c0 = s0[:, 0] * env.cols + s0[:, 1]
 s1 = np.asarray(states[1:, :])
-x0 = sensor.observe(s0)
-x1 = sensor.observe(s1)
+x0 = sensor(s0)
+x1 = sensor(s1)
 
 ax = env.plot()
 xx = x0[:, 1] + 0.5
@@ -58,10 +58,10 @@ env.reset_agent()
 env.reset_goal()
 
 s = env.get_state()
-x = sensor.observe(s)
+x = sensor(s)
 imgs = []
 for i in range(20):
-    x = sensor.observe(s)
+    x = sensor(s)
     fig, ax = plt.subplots()
     fig.set_figwidth(fig.get_figheight())
     ax.imshow(x)
@@ -82,14 +82,14 @@ plt.savefig('x1-above-corner.png')
 env.step(3)
 
 s = env.get_state()
-x = sensor.observe(s)
+x = sensor(s)
 plt.imshow(x)
 plt.axis('off')
 plt.savefig('x0-at-corner.png')
 
 #%%
 rows, cols = 6, 6
-env = GridWorld(rows, cols)
+env = GridworldEnv(rows, cols)
 sensor_list = [
     OffsetSensor(offset=(0.5, 0.5)),
     NoisySensor(sigma=0.05),
@@ -98,7 +98,7 @@ sensor_list = [
     BlurSensor(sigma=0.6, truncate=1.),
     NoisySensor(sigma=0.01)
 ]
-x = sensor.observe(env.get_state())
+x = sensor(env.get_state())
 # print(x)
 plt.imshow(x)
 
@@ -114,7 +114,7 @@ observations = []
 
 for t in tqdm(range(n_steps)):
     s = env.get_state()
-    x = sensor.observe(s).flatten()
+    x = sensor(s).flatten()
     states.append(s)
     observations.append(x)
 
@@ -123,7 +123,7 @@ for t in tqdm(range(n_steps)):
     actions.append(a)
 
 sp = env.get_state()
-xp = sensor.observe(s).flatten()
+xp = sensor(s).flatten()
 
 states.append(sp)
 observations.append(xp)
@@ -191,7 +191,7 @@ ax.set_ylabel('L2 distance')
 plt.show()
 
 #%%
-x = sensor.observe(env.step(0)[0])
+x = sensor(env.step(0)[0])
 # print(x)
 plt.imshow(x)
 

@@ -7,7 +7,8 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from visgrid.envs import GridWorld, MazeWorld, SpiralWorld
+from visgrid.envs import GridworldEnv
+from visgrid.envs.components.grid import Grid
 from visgrid.utils import get_parser
 from visgrid.sensors import *
 from factored_rl.models.markov.phinet import PhiNet
@@ -56,12 +57,14 @@ if args.train_phi and args.no_phi:
 if args.one_hot and args.no_sigma:
     assert False, '--one_hot and --no_sigma are mutually exclusive'
 
-if args.maze:
-    env = MazeWorld.load_maze(rows=args.rows, cols=args.cols, seed=args.seed)
-elif args.spiral:
-    env = SpiralWorld(rows=args.rows, cols=args.cols)
+if args.walls == 'maze':
+    env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
 else:
-    env = GridWorld(rows=args.rows, cols=args.cols)
+    env = GridworldEnv(rows=args.rows, cols=args.cols)
+    if args.walls == 'spiral':
+        env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
+    elif args.walls == 'loop':
+        env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
 gamma = 0.9
 
 #% ------------------ Define sensor ------------------
@@ -87,7 +90,7 @@ sensor = SensorChain(sensor_list)
 
 #% ------------------ Define abstraction ------------------
 
-x0 = sensor.observe(env.get_state())
+x0 = sensor(env.get_state())
 phinet = PhiNet(input_shape=x0.shape,
                 n_latent_dims=args.latent_dims,
                 n_hidden_layers=1,
@@ -171,7 +174,7 @@ plt.show()
 
 qnet.eval()
 n_sensor_samples = 20
-zz = [phinet(torch.tensor(sensor.observe(s), dtype=torch.float32)) for _ in range(n_sensor_samples)]
+zz = [phinet(torch.tensor(sensor(s), dtype=torch.float32)) for _ in range(n_sensor_samples)]
 q_values = torch.stack([qnet(z).max(dim=-1)[0] for z in zz]).mean(dim=0)
 
 
@@ -195,14 +198,14 @@ for step in tqdm(range(400)):
     qnet.train()
     optimizer.zero_grad()
     with torch.no_grad():
-        z = phinet(torch.tensor(sensor.observe(s), dtype=torch.float32))
+        z = phinet(torch.tensor(sensor(s), dtype=torch.float32))
     q_values = qnet(z).max(dim=-1)[0]
     loss = F.smooth_l1_loss(input=q_values, target=torch.from_numpy(v.reshape(-1)).float())
     loss.backward()
     optimizer.step()
 
     with torch.no_grad():
-        zz = [phinet(torch.tensor(sensor.observe(s), dtype=torch.float32)) for _ in range(n_sensor_samples)]
+        zz = [phinet(torch.tensor(sensor(s), dtype=torch.float32)) for _ in range(n_sensor_samples)]
         q_values = torch.stack([qnet(z).max(dim=-1)[0] for z in zz]).mean(dim=0)
 
     ax[2].clear()

@@ -13,7 +13,7 @@ import seeding
 import torch
 from tqdm import tqdm
 
-from visgrid.envs import GridWorld
+from visgrid.envs import GridworldEnv
 from visgrid.sensors import *
 from factored_rl.models.factored.factornet import FactorNet
 from factored_rl.models.markov.featurenet import FeatureNet

@@ -21,7 +21,8 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.markov.autoencoder import AutoEncoder
 from factored_rl.models.markov.pixelpredictor import PixelPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
-from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld, VisTaxi5x5
+from visgrid.envs import GridworldEnv, VisTaxi5x5
+from visgrid.envs.components.grid import Grid
 from visgrid.sensors import *
 
 parser = utils.get_parser()
@@ -109,16 +110,17 @@ torch.backends.cudnn.benchmark = False
 
 #% ------------------ Define MDP ------------------
 if args.walls == 'maze':
-    env = MazeWorld.load_maze(rows=args.rows, cols=args.cols, seed=args.seed)
-elif args.walls == 'spiral':
-    env = SpiralWorld(rows=args.rows, cols=args.cols)
-elif args.walls == 'loop':
-    env = LoopWorld(rows=args.rows, cols=args.cols)
+    env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
 elif args.walls == 'taxi':
     env = VisTaxi5x5(grayscale=args.grayscale)
     env.reset()
 else:
-    env = GridWorld(rows=args.rows, cols=args.cols)
+    env = GridworldEnv(rows=args.rows, cols=args.cols)
+    if args.walls == 'spiral':
+        env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
+    elif args.walls == 'loop':
+        env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
+
 # env = RingWorld(2,4)
 # env = TestWorld()
 
@@ -166,8 +168,8 @@ if args.walls != 'taxi':
         ]
     sensor = SensorChain(sensor_list)
 
-    x0 = sensor.observe(s0)
-    x1 = sensor.observe(s1)
+    x0 = sensor(s0)
+    x1 = sensor(s1)
 
     env.reset_agent()
 
@@ -208,8 +210,8 @@ else:
     s0 = states
     s1 = next_states
     a = actions
-    x0 = sensor.observe(obs)
-    x1 = sensor.observe(next_obs)
+    x0 = sensor(obs)
+    x1 = sensor(next_obs)
     c0 = s0[:, 0] * env.cols + s0[:, 1]
 
 #% ------------------ Setup experiment ------------------
@@ -270,7 +272,7 @@ def get_obs_negatives(idx, max_idx=n_samples):
     # obs_negatives = obs[idx]  # x' -> x
     # obs_negatives = next_obs[(idx+1) % n_samples]  # x' -> x''
 
-    return sensor.observe(obs_negatives)
+    return sensor(obs_negatives)
 
 n_test_samples = 100 if str(device) == 'cpu' else 2000
 test_s0 = s0[-n_test_samples:, :]

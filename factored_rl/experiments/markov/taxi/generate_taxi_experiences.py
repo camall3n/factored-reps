@@ -9,23 +9,22 @@ import numpy as np
 import seeding
 from tqdm import tqdm
 
-from visgrid.taxi import VisTaxi5x5
+from visgrid.envs.taxi import TaxiEnv
 from visgrid.sensors import *
 from visgrid.utils import get_parser
 
-def generate_experiences(env, sensor, n_episodes, n_steps_per_episode, seed, quiet=False):
+def generate_experiences(env, n_episodes, n_steps_per_episode, seed, quiet=False):
     experiences = []
     episodes = range(n_episodes)
     if not quiet:
         episodes = tqdm(episodes)
     for episode in episodes:
         seeding.seed(n_episodes * (seed - 1) + 1 + episode, np, random)
-        ob = sensor.observe(env.reset(goal=False, explore=True))
+        ob = env.reset()
         state = env.get_state()
-        goal = env.get_goal_state()
         for step in range(n_steps_per_episode):
             action = random.choice(env.actions)
-            next_ob = sensor.observe(env.step(action)[0])
+            next_ob = env.step(action)[0]
             reward = 0
             done = False
             next_state = env.get_state()
@@ -40,7 +39,6 @@ def generate_experiences(env, sensor, n_episodes, n_steps_per_episode, seed, qui
                 'next_ob': next_ob,
                 'next_state': next_state,
                 'done': done,
-                'goal': goal
             }
             experiences.append(experience)
 
@@ -53,7 +51,7 @@ def main():
     # Setup
     if 'ipykernel' in sys.argv[0]:
         import matplotlib.pyplot as plt
-        sys.argv += ["-t", "debugger-5step"]  #, "--rgb"]
+        sys.argv += ["-t", "debugger-5step"] #, "--rgb"]
     else:
         import matplotlib
         # Force matplotlib to not use any Xwindows backend.
@@ -87,23 +85,27 @@ def main():
         else:
             args.tag += '_rgb'
 
-    env = VisTaxi5x5(n_passengers=args.n_passengers, grayscale=args.grayscale)
-
     sensor_list = [
         # MultiplySensor(scale=1 / 255),
+        GrayscaleSensor() if args.grayscale else Sensor(),
         NoisySensor(sigma=0.05),
         ClipSensor(0.0, 1.0),
         # MultiplySensor(scale=255),
         # AsTypeSensor(np.uint8)
     ]
     sensor = SensorChain(sensor_list)
+    env = TaxiEnv(
+        n_passengers=args.n_passengers,
+        exploring_starts=True,
+        terminate_on_goal=False,
+        sensor=sensor,
+    )
 
     prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
     results_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.tag)
     os.makedirs(results_dir, exist_ok=True)
 
-    experiences = generate_experiences(env, sensor, args.n_episodes, args.n_steps_per_episode,
-                                       args.seed)
+    experiences = generate_experiences(env, args.n_episodes, args.n_steps_per_episode, args.seed)
 
     # Save results to file
     filepath = os.path.join(results_dir, 'seed-{:04d}.pkl'.format(args.seed))

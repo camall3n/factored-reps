@@ -6,13 +6,13 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from visgrid.envs import GridWorld
+from visgrid.envs import GridworldEnv
 from visgrid.sensors import *
 from factored_rl.models.factored.factored_qnet import FactoredQNet
 
 seeding.seed(0, np, torch)
 
-env = GridWorld(rows=6, cols=6)
+env = GridworldEnv(rows=6, cols=6)
 gamma = 0.9
 r_step = -1
 r_goal = 0

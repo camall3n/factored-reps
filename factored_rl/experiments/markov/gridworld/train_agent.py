@@ -12,7 +12,8 @@ from factored_rl.models.markov.nullabstraction import NullAbstraction
 from factored_rl.models.markov.phinet import PhiNet
 from factored_rl.agents.randomagent import RandomAgent
 from factored_rl.agents.legacy.dqnagent import DQNAgent
-from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridworldEnv
+from visgrid.envs.components.grid import Grid
 from visgrid.utils import get_parser
 from visgrid.sensors import *
 
@@ -78,13 +79,13 @@ log = open(log_dir + '/scores-{}-{}.txt'.format(args.agent, args.seed), 'w')
 
 #%% ------------------ Define MDP ------------------
 if args.walls == 'maze':
-    env = MazeWorld.load_maze(rows=args.rows, cols=args.cols, seed=args.seed)
-elif args.walls == 'spiral':
-    env = SpiralWorld(rows=args.rows, cols=args.cols)
-elif args.walls == 'loop':
-    env = LoopWorld(rows=args.rows, cols=args.cols)
+    env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
 else:
-    env = GridWorld(rows=args.rows, cols=args.cols)
+    env = GridworldEnv(rows=args.rows, cols=args.cols)
+    if args.walls == 'spiral':
+        env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
+    elif args.walls == 'loop':
+        env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
 gamma = 0.9
 
 #%% ------------------ Define sensor ------------------
@@ -114,7 +115,7 @@ sensor = SensorChain(sensor_list)
 if args.no_phi:
     phinet = NullAbstraction(-1, args.latent_dims)
 else:
-    x0 = sensor.observe(env.get_state())
+    x0 = sensor(env.get_state())
     phinet = PhiNet(input_shape=x0.shape,
                     n_latent_dims=args.latent_dims,
                     n_hidden_layers=1,
@@ -151,7 +152,7 @@ if args.video:
     def plot_value_function(ax):
         s = np.asarray([[np.asarray([x, y]) for x in range(args.cols)] for y in range(args.rows)])
         v = np.asarray(agent.q_values(s).detach().numpy()).max(-1)
-        xy = OffsetSensor(offset=(0.5, 0.5)).observe(s).reshape(args.cols, args.rows, -1)
+        xy = OffsetSensor(offset=(0.5, 0.5))(s).reshape(args.cols, args.rows, -1)
         ax.contourf(np.arange(0.5, args.cols + 0.5),
                     np.arange(0.5, args.rows + 0.5),
                     v,
@@ -188,11 +189,11 @@ for trial in tqdm(range(args.n_trials), desc='trials'):
         ep_rewards = []
         for step in range(args.max_steps):
             s = env.get_state()
-            x = sensor.observe(s)
+            x = sensor(s)
 
             a = agent.act(x)
             sp, r, done = env.step(a)
-            xp = sensor.observe(sp)
+            xp = sensor(sp)
             ep_rewards.append(r)
             if args.video:
                 value_fn.append(agent.v(x))

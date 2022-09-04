@@ -59,7 +59,7 @@ else:
 
 def get_batch(n):
     s, a = vigorito.run_agent(env, n_samples=n)
-    s = sensor.observe(s)
+    s = sensor(s)
     sp = s[1:, :]
     s = s[:-1, :]
     return s, a, sp

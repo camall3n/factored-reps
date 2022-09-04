@@ -116,14 +116,14 @@ class StateAbstractionWrapper(gym.Wrapper):
         return self.encode(obs), reward, done
 
     def encode(self, obs):
-        obs = self.sensor.observe(obs)
+        obs = self.sensor(obs)
         with torch.no_grad():
             obs_tensor = torch.as_tensor(obs).unsqueeze(0).float().to(self.device)
             abstract_state = self.state_abstraction_model(obs_tensor).cpu().numpy()
         return abstract_state
 
 env = VisTaxi5x5(grayscale=markov_args.grayscale)
-example_obs = MoveAxisSensor(-1, 0).observe(env.reset(goal=False, explore=True))
+example_obs = MoveAxisSensor(-1, 0)(env.reset(goal=False, explore=True))
 
 featurenet = FeatureNet(markov_args,
                         n_actions=len(env.actions),

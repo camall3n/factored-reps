@@ -12,7 +12,8 @@ from tqdm import tqdm
 from ....models.markov.featurenet import FeatureNet
 from ....models.markov.autoencoder import AutoEncoder
 from .repvis import RepVisualization, CleanVisualization
-from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridworldEnv
+from visgrid.envs.components.grid import Grid
 from visgrid.utils import reset_seeds, get_parser, MI
 from visgrid.sensors import *
 
@@ -30,13 +31,13 @@ for seed in tqdm(range(1, 301)):
 
     reset_seeds(seed)
     if args.walls == 'maze':
-        env = MazeWorld.load_maze(rows=args.rows, cols=args.cols, seed=seed)
-    elif args.walls == 'spiral':
-        env = SpiralWorld(rows=args.rows, cols=args.cols)
-    elif args.walls == 'loop':
-        env = LoopWorld(rows=args.rows, cols=args.cols)
+        env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
     else:
-        env = GridWorld(rows=args.rows, cols=args.cols)
+        env = GridworldEnv(rows=args.rows, cols=args.cols)
+        if args.walls == 'spiral':
+            env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
+        elif args.walls == 'loop':
+            env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
 
     #% ------------------ Generate experiences ------------------
     n_samples = 20000

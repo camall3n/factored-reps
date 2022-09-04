@@ -3,12 +3,12 @@ import numpy as np
 import seeding
 from sklearn.neighbors import KernelDensity
 
-from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld
+from visgrid.envs import GridworldEnv, TestWorld, SnakeWorld, RingWorld
 from visgrid.sensors import *
 
 seeding.seed(0, np)
 
-env = GridWorld(rows=7, cols=4)
+env = GridworldEnv(rows=7, cols=4)
 
 n_samples = 20000
 states = [env.get_state()]
@@ -32,8 +32,8 @@ sensor = SensorChain([
     NoisySensor(sigma=0.5),
 ])
 
-x0 = sensor.observe(s0)
-x1 = sensor.observe(s1)
+x0 = sensor(s0)
+x1 = sensor(s1)
 
 def phi(x):
     z = x

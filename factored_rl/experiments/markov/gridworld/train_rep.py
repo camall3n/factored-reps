@@ -12,7 +12,8 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.markov.autoencoder import AutoEncoder
 from factored_rl.models.markov.pixelpredictor import PixelPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
-from visgrid.envs import GridWorld, TestWorld, SnakeWorld, RingWorld, MazeWorld, SpiralWorld, LoopWorld
+from visgrid.envs import GridworldEnv
+from visgrid.envs.components.grid import Grid
 from visgrid.utils import get_parser, MI
 from visgrid.sensors import *
 from factored_rl.experiments.markov.analysis.distance_oracle import DistanceOracle
@@ -102,15 +103,13 @@ seeding.seed(args.seed)
 
 #% ------------------ Define MDP ------------------
 if args.walls == 'maze':
-    env = MazeWorld.load_maze(rows=args.rows, cols=args.cols, seed=args.seed)
-elif args.walls == 'spiral':
-    env = SpiralWorld(rows=args.rows, cols=args.cols)
-elif args.walls == 'loop':
-    env = LoopWorld(rows=args.rows, cols=args.cols)
+    env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
 else:
-    env = GridWorld(rows=args.rows, cols=args.cols)
-# env = RingWorld(2,4)
-# env = TestWorld()
+    env = GridworldEnv(rows=args.rows, cols=args.cols)
+    if args.walls == 'spiral':
+        env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
+    elif args.walls == 'loop':
+        env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
 
 # cmap = 'Set3'
 cmap = None
@@ -157,8 +156,8 @@ if not args.no_sigma:
     ]
 sensor = SensorChain(sensor_list)
 
-x0 = sensor.observe(s0)
-x1 = sensor.observe(s1)
+x0 = sensor(s0)
+x1 = sensor(s1)
 
 #% ------------------ Setup experiment ------------------
 n_updates_per_frame = 100
@@ -216,7 +215,7 @@ oracle = DistanceOracle(env)
 
 env.reset_agent()
 state = env.get_state()
-obs = sensor.observe(state)
+obs = sensor(state)
 
 if args.video:
     if not args.cleanvis:

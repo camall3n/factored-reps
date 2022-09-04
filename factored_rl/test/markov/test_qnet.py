@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from visgrid.envs import GridWorld
+from visgrid.envs import GridworldEnv
 from visgrid.sensors import *
 from factored_rl.models.simplenet import SimpleNet
 
@@ -17,7 +17,7 @@ qnet = SimpleNet(n_inputs=2,
                  n_hidden_layers=1,
                  n_units_per_layer=32,
                  activation=torch.nn.ReLU)
-env = GridWorld(rows=6, cols=6)
+env = GridworldEnv(rows=6, cols=6)
 gamma = 0.9
 r_step = -1
 r_goal = 0
@@ -52,7 +52,7 @@ for i in range(1000):
 
 def plot_value_function(v, ax):
     s = np.asarray([[np.asarray([x, y]) for x in range(env.cols)] for y in range(env.rows)])
-    xy = OffsetSensor(offset=(0.5, 0.5)).observe(s).reshape(env.cols, env.rows, -1)
+    xy = OffsetSensor(offset=(0.5, 0.5))(s).reshape(env.cols, env.rows, -1)
     ax.contourf(np.arange(0.5, env.cols + 0.5),
                 np.arange(0.5, env.rows + 0.5),
                 v,
