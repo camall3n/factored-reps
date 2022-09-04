@@ -29,7 +29,7 @@ a = np.asarray(actions)
 
 sensor = SensorChain([
     OffsetSensor(offset=(0.5, 0.5)),
-    NoisySensor(sigma=0.5),
+    NoiseSensor(sigma=0.5),
 ])
 
 x0 = sensor(s0)

@@ -60,7 +60,7 @@ e0 = entangler(z0)
 e1 = entangler(z1)
 
 noise_machine = SensorChain([
-    NoisySensor(sigma=0.05),
+    NoiseSensor(sigma=0.01),
 ])
 
 e0n = noise_machine(e0.detach().numpy())

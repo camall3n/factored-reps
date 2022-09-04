@@ -20,7 +20,7 @@ env.plot()
 env.reset_goal(position=(3, 3))
 env.reset_agent(position=(0, 0))
 
-sensor_list = [NoisySensor(sigma=0.2, truncation=0.4)]
+sensor_list = [NoiseSensor(sigma=0.2, truncation=0.4)]
 sensor = SensorChain(sensor_list)
 
 n_samples = 20000
@@ -45,11 +45,10 @@ plt.savefig('foo.png', facecolor='white')
 #%%
 sensor_list = [
     OffsetSensor(offset=(0.5, 0.5)),
-    NoisySensor(sigma=0.05),
     ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
     # ResampleSensor(scale=2.0),
     BlurSensor(sigma=0.6, truncate=1.),
-    NoisySensor(sigma=0.01)
+    NoiseSensor(sigma=0.01)
 ]
 sensor = SensorChain(sensor_list)
 seeding.seed(0, np, random, torch)
@@ -92,11 +91,10 @@ rows, cols = 6, 6
 env = GridworldEnv(rows, cols)
 sensor_list = [
     OffsetSensor(offset=(0.5, 0.5)),
-    NoisySensor(sigma=0.05),
     ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
     # ResampleSensor(scale=2.0),
     BlurSensor(sigma=0.6, truncate=1.),
-    NoisySensor(sigma=0.01)
+    NoiseSensor(sigma=0.01)
 ]
 x = sensor(env.get_state())
 # print(x)

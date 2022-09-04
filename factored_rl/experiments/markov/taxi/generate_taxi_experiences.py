@@ -88,7 +88,7 @@ def main():
     sensor_list = [
         # MultiplySensor(scale=1 / 255),
         GrayscaleSensor() if args.grayscale else Sensor(),
-        NoisySensor(sigma=0.05),
+        NoiseSensor(sigma=0.01),
         ClipSensor(0.0, 1.0),
         # MultiplySensor(scale=255),
         # AsTypeSensor(np.uint8)
