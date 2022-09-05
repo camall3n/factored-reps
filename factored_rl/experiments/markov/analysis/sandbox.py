@@ -26,7 +26,7 @@ sensor = SensorChain(sensor_list)
 n_samples = 20000
 states = [env.get_state()]
 for t in range(n_samples):
-    a = np.random.choice(env.actions)
+    a = np.random.choice(env.action_space)
     s, _, _ = env.step(a)
     states.append(s)
 states = np.stack(states)

@@ -26,7 +26,7 @@ for i in tqdm(range(args.n_samples)):
         state = env.get_state()
         ep_steps = 0
 
-    a = random.choice(env.actions)
+    a = env.action_space.sample()
     next_ob, reward, done = env.step(a)
     next_state = env.get_state()
     ep_steps += 1

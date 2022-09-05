@@ -23,7 +23,7 @@ def generate_experiences(env, n_episodes, n_steps_per_episode, seed, quiet=False
         ob = env.reset()
         state = env.get_state()
         for step in range(n_steps_per_episode):
-            action = random.choice(env.actions)
+            action = env.action_space.sample()
             next_ob = env.step(action)[0]
             reward = 0
             done = False

@@ -15,7 +15,7 @@ states = [env.get_state()]
 actions = []
 for t in range(n_samples):
     while True:
-        a = np.random.choice(env.actions)
+        a = np.random.choice(env.action_space)
         if env.can_run(a):
             break
     s, _, _ = env.step(a)

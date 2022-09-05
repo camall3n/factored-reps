@@ -148,7 +148,7 @@ for buffer, n_episodes, seed in zip([replay_train, replay_test],
 
 #% ------------------ Define models ------------------
 fnet = FeatureNet(args,
-                  n_actions=len(env.actions),
+                  n_actions=env.action_space.n,
                   input_shape=replay_train.retrieve(0, 'ob').shape[1:],
                   latent_dims=args.latent_dims,
                   device=device).to(device)

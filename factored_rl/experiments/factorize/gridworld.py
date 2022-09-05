@@ -133,7 +133,7 @@ if args.walls != 'taxi':
     states = [env.get_state()]
     actions = []
     for t in range(n_samples):
-        a = np.random.choice(env.actions)
+        a = env.action_space.sample()
         s, _, _ = env.step(a)
         states.append(s)
         actions.append(a)
@@ -222,19 +222,19 @@ n_training = n_samples // 2
 
 if args.model_type == 'factored-split':
     fnet = FactoredFwdModel(args,
-                            n_actions=len(env.actions),
+                            n_actions=env.action_space.n,
                             input_shape=x0.shape[1:],
                             device=device)
 elif args.model_type == 'factored-combined':
-    fnet = FactorNet(args, n_actions=len(env.actions), input_shape=x0.shape[1:], device=device)
+    fnet = FactorNet(args, n_actions=env.action_space.n, input_shape=x0.shape[1:], device=device)
 elif args.model_type == 'focused-autoenc':
     fnet = FocusedAutoencoder(args,
-                              n_actions=len(env.actions),
+                              n_actions=env.action_space.n,
                               input_shape=x0.shape[1:],
                               device=device)
 elif args.model_type == 'markov':
     fnet = FeatureNet(args,
-                      n_actions=len(env.actions),
+                      n_actions=env.action_space.n,
                       input_shape=x0.shape[1:],
                       latent_dims=args.latent_dims,
                       device=device)
@@ -243,9 +243,9 @@ elif args.model_type == 'markov':
     if args.freeze_markov:
         fnet.freeze()
 elif args.model_type == 'autoencoder':
-    fnet = AutoEncoder(args, n_actions=len(env.actions), input_shape=x0.shape[1:])
+    fnet = AutoEncoder(args, n_actions=env.action_space.n, input_shape=x0.shape[1:])
 elif args.model_type == 'pixel-predictor':
-    fnet = PixelPredictor(args, n_actions=len(env.actions), input_shape=x0.shape[1:])
+    fnet = PixelPredictor(args, n_actions=env.action_space.n, input_shape=x0.shape[1:])
 
 fnet.to(device)
 

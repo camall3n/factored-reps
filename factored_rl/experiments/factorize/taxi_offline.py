@@ -101,6 +101,7 @@ torch.backends.cudnn.benchmark = False
 
 #%% ------------------ Define MDP ------------------
 class StateAbstractionWrapper(gym.Wrapper):
+
     def __init__(self, env, state_abstraction_model):
         super().__init__(env)
         self.sensor = MoveAxisSensor(-1, 0)
@@ -126,7 +127,7 @@ env = VisTaxi5x5(grayscale=markov_args.grayscale)
 example_obs = MoveAxisSensor(-1, 0)(env.reset(goal=False, explore=True))
 
 featurenet = FeatureNet(markov_args,
-                        n_actions=len(env.actions),
+                        n_actions=env.action_space.n,
                         input_shape=example_obs.shape,
                         latent_dims=markov_args.latent_dims,
                         device=device).to(device)
@@ -153,7 +154,7 @@ def generate_experiences(env, n_episodes, n_steps_per_episode, seed, quiet=False
         ob = env.reset()
         state = env.get_state()
         for step in range(n_steps_per_episode):
-            action = random.choice(env.actions)
+            action = env.action_space.sample()
             next_ob, reward, done = env.step(action)
             next_state = env.get_state()
 
@@ -216,20 +217,20 @@ else:
 
 #%% ------------------ Define models ------------------
 # facnet = FocusedAutoencoder(args,
-#                             n_actions=len(env.actions),
+#                             n_actions=env.action_space.n,
 #                             n_input_dims=markov_args.latent_dims,
 #                             n_latent_dims=args.latent_dims,
 #                             device=device,
 #                             backprop_next_state=args.autoenc_backprop_next_state).to(device)
 # facnet = CALFNet(args,
-#                  n_actions=len(env.actions),
+#                  n_actions=env.action_space.n,
 #                  n_input_dims=markov_args.latent_dims,
 #                  n_latent_dims=args.latent_dims,
 #                  device=device,
 #                  backprop_next_state=args.autoenc_backprop_next_state,
 #                  identity=args.identity_autoenc).to(device)
 facnet = CAENet(args,
-                n_actions=len(env.actions),
+                n_actions=env.action_space.n,
                 n_input_dims=markov_args.latent_dims,
                 n_latent_dims=args.latent_dims,
                 device=device).to(device)
@@ -350,7 +351,7 @@ for i in tqdm(range(args.n_samples)):
     with torch.no_grad():
         z = facnet.encode(torchify(ob)).cpu().numpy()
 
-    a = random.choice(env.actions)
+    a = env.action_space.sample()
     next_ob, reward, done = env.step(a)
     next_state = env.get_state()
     ep_steps += 1

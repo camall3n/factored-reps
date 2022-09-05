@@ -44,7 +44,7 @@ for seed in tqdm(range(1, 301)):
     states = [env.get_state()]
     actions = []
     for t in range(n_samples):
-        a = np.random.choice(env.actions)
+        a = np.random.choice(env.action_space)
         s, _, _ = env.step(a)
         states.append(s)
         actions.append(a)
