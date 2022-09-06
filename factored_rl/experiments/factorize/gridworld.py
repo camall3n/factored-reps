@@ -1,17 +1,16 @@
 from argparse import Namespace
 import glob
-import imageio
 import json
-#!! do not import matplotlib until you check input arguments
-import numpy as np
 import os
 import pickle
 import platform
 import random
+
+import imageio
+#!! do not import matplotlib until you check input arguments
+import numpy as np
 import seeding
-import sys
 import torch
-from tqdm import tqdm
 
 from factored_rl.models.factored.factornet import FactorNet
 from factored_rl.models.factored.factored_fwd_model import FactoredFwdModel
@@ -22,7 +21,7 @@ from factored_rl.models.markov.autoencoder import AutoEncoder
 from factored_rl.models.markov.pixelpredictor import PixelPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
 from visgrid.envs import GridworldEnv, VisTaxi5x5
-from visgrid.envs.components.grid import Grid
+from visgrid.envs.components import Grid
 from visgrid.sensors import *
 
 parser = utils.get_parser()

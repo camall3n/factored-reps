@@ -13,7 +13,7 @@ from factored_rl.models.markov.phinet import PhiNet
 from factored_rl.agents.randomagent import RandomAgent
 from factored_rl.agents.legacy.dqnagent import DQNAgent
 from visgrid.envs import GridworldEnv
-from visgrid.envs.components.grid import Grid
+from visgrid.envs.components import Grid
 from visgrid.utils import get_parser
 from visgrid.sensors import *
 

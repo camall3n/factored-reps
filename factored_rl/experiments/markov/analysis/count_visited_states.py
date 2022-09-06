@@ -1,20 +1,15 @@
-import imageio
-import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-import os
-import sys
+import seeding
 import torch
 from tqdm import tqdm
 
 from ....models.markov.featurenet import FeatureNet
 from ....models.markov.autoencoder import AutoEncoder
-from .repvis import RepVisualization, CleanVisualization
 from visgrid.envs import GridworldEnv
-from visgrid.envs.components.grid import Grid
-from visgrid.utils import reset_seeds, get_parser, MI
+from visgrid.envs.components import Grid
 from visgrid.sensors import *
 
 class Args:
@@ -29,7 +24,7 @@ args.walls = 'maze'
 data = []
 for seed in tqdm(range(1, 301)):
 
-    reset_seeds(seed)
+    seeding.seed(seed, np, torch)
     if args.walls == 'maze':
         env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
     else:
