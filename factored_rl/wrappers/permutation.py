@@ -2,7 +2,7 @@ import gym
 from gym import spaces
 import numpy as np
 
-from ...visgrid.visgrid.wrappers.base import BaseObservationWrapper
+from visgrid.wrappers.base import BaseObservationWrapper
 
 class FactorPermutationWrapper(BaseObservationWrapper):
     """

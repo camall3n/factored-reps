@@ -3,7 +3,7 @@ from typing import Tuple
 import gym
 import numpy as np
 
-from ...visgrid.visgrid.wrappers.base import BaseObservationWrapper
+from visgrid.wrappers.base import BaseObservationWrapper
 
 class HelixWrapper(BaseObservationWrapper):
     """

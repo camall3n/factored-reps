@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from scipy.stats import special_ortho_group
 
-from ...visgrid.visgrid.wrappers.base import BaseObservationWrapper
+from visgrid.wrappers.base import BaseObservationWrapper
 
 class RotationWrapper(BaseObservationWrapper):
     """
