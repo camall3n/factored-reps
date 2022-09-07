@@ -10,7 +10,7 @@ from tqdm import tqdm
 from visgrid.envs import GridworldEnv
 from visgrid.envs.components import Grid
 from visgrid.utils import get_parser
-from visgrid.sensors import *
+from visgrid.wrappers.sensors import *
 from factored_rl.models.markov.phinet import PhiNet
 from factored_rl.agents.legacy.dqnagent import DQNAgent
 
@@ -74,14 +74,11 @@ if args.rearrange_xy:
 if not args.no_sigma:
     if args.one_hot:
         sensor_list += [
-            OffsetSensor(offset=(0.5, 0.5)),
             ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=1),
         ]
     else:
         sensor_list += [
-            OffsetSensor(offset=(0.5, 0.5)),
             ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
-            # ResampleSensor(scale=2.0),
             BlurSensor(sigma=0.6, truncate=1.),
             NoiseSensor(sigma=0.01)
         ]

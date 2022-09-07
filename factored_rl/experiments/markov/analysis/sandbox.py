@@ -8,20 +8,22 @@ import torch
 from tqdm import tqdm
 
 from visgrid.envs import GridworldEnv
-from visgrid.sensors import *
+from visgrid.wrappers.transforms import wrap_gridworld, NoiseWrapper
 
 p = sns.color_palette(n_colors=6)
 p[-2]
 
 seeding.seed(1, np, random, torch)
 env = GridworldEnv.from_saved_maze(rows=6, cols=6, seed=1)
-env = GridworldEnv(rows=10, cols=10)
+env = GridworldEnv(rows=10,
+                   cols=10,
+                   agent_position=(0, 0),
+                   goal_position=(3, 3),
+                   image_observations=False,
+                   hidden_goal=True)
+env = NoiseWrapper(env, sigma=0.2, truncation=0.4)
 env.plot()
-env.reset_goal(position=(3, 3))
-env.reset_agent(position=(0, 0))
-
-sensor_list = [NoiseSensor(sigma=0.2, truncation=0.4)]
-sensor = SensorChain(sensor_list)
+env.reset()
 
 n_samples = 20000
 states = [env.get_state()]
@@ -43,21 +45,18 @@ ax.scatter(xx, yy, c=c0, alpha=0.05)
 plt.savefig('foo.png', facecolor='white')
 
 #%%
-sensor_list = [
-    OffsetSensor(offset=(0.5, 0.5)),
-    ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
-    # ResampleSensor(scale=2.0),
-    BlurSensor(sigma=0.6, truncate=1.),
-    NoiseSensor(sigma=0.01)
-]
-sensor = SensorChain(sensor_list)
+env = GridworldEnv(rows=10,
+                   cols=10,
+                   agent_position=(0, 0),
+                   goal_position=(3, 3),
+                   image_observations=True,
+                   hidden_goal=True,
+                   dimensions=GridworldEnv.dimensions_6x6_to_18x18)
+env = wrap_gridworld(env)
 seeding.seed(0, np, random, torch)
 
-env.reset_agent()
-env.reset_goal()
-
+x = env.reset()
 s = env.get_state()
-x = sensor(s)
 imgs = []
 for i in range(20):
     x = sensor(s)
@@ -78,25 +77,20 @@ plt.axis('off')
 plt.savefig('x1-above-corner.png')
 #%%
 
-env.step(3)
-
+x = env.step(3)[0]
 s = env.get_state()
-x = sensor(s)
 plt.imshow(x)
 plt.axis('off')
 plt.savefig('x0-at-corner.png')
 
 #%%
-rows, cols = 6, 6
-env = GridworldEnv(rows, cols)
-sensor_list = [
-    OffsetSensor(offset=(0.5, 0.5)),
-    ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
-    # ResampleSensor(scale=2.0),
-    BlurSensor(sigma=0.6, truncate=1.),
-    NoiseSensor(sigma=0.01)
-]
-x = sensor(env.get_state())
+env = GridworldEnv(6,
+                   6,
+                   image_observations=True,
+                   hidden_goal=True,
+                   dimensions=GridworldEnv.dimensions_6x6_to_18x18)
+env = wrap_gridworld(env)
+x = env.reset()[0]
 # print(x)
 plt.imshow(x)
 
@@ -112,19 +106,15 @@ observations = []
 
 for t in tqdm(range(n_steps)):
     s = env.get_state()
-    x = sensor(s).flatten()
     states.append(s)
     observations.append(x)
 
     a = np.random.randint(0, 4)
-    env.step(a)
+    x = env.step(a)[0]
     actions.append(a)
 
-sp = env.get_state()
-xp = sensor(s).flatten()
-
-states.append(sp)
-observations.append(xp)
+states.append(env.get_state())
+observations.append(x)
 
 next_states = states[1:]
 states = states[:-1]

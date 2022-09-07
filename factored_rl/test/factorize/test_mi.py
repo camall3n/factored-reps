@@ -3,14 +3,17 @@ import numpy as np
 import seeding
 from sklearn.neighbors import KernelDensity
 
-from visgrid.envs import GridworldEnv, TestWorld, SnakeWorld, RingWorld
-from visgrid.sensors import *
+from visgrid.envs import GridworldEnv
+from visgrid.wrappers.transforms import TransformWrapper, NoiseWrapper
 
 seeding.seed(0, np)
 
-env = GridworldEnv(rows=7, cols=4)
+env = GridworldEnv(rows=7, cols=4, image_observations=False)
+env = TransformWrapper(env, lambda obs: obs + (0.5, 0.5))
+env = NoiseWrapper(env, 0.5)
 
 n_samples = 20000
+obs = [env.reset()[0]]
 states = [env.get_state()]
 actions = []
 for t in range(n_samples):
@@ -18,22 +21,19 @@ for t in range(n_samples):
         a = np.random.choice(env.action_space)
         if env.can_run(a):
             break
-    s, _, _ = env.step(a)
+    x = env.step(a)[0]
+    s = env.get_state()
+    obs.append(x)
     states.append(s)
     actions.append(a)
+obs = np.stack(obs)
 states = np.stack(states)
+x0 = np.asarray(obs[:-1])
 s0 = np.asarray(states[:-1, :])
 c0 = s0[:, 0] * env.cols + s0[:, 1]
+x1 = np.asarray(obs[1:])
 s1 = np.asarray(states[1:, :])
 a = np.asarray(actions)
-
-sensor = SensorChain([
-    OffsetSensor(offset=(0.5, 0.5)),
-    NoiseSensor(sigma=0.5),
-])
-
-x0 = sensor(s0)
-x1 = sensor(s1)
 
 def phi(x):
     z = x

@@ -15,17 +15,17 @@ from factored_rl.agents.legacy.dqnagent import DQNAgent
 from visgrid.envs import GridworldEnv
 from visgrid.envs.components import Grid
 from visgrid.utils import get_parser
-from visgrid.sensors import *
+from visgrid.wrappers import transforms
+from visgrid.wrappers.transforms import wrap_gridworld
+from factored_rl.wrappers.permutation import ObservationPermutationWrapper
 
 parser = get_parser()
 # parser.add_argument('-d','--dims', help='Number of latent dimensions', type=int, default=2)
 # yapf: disable
 parser.add_argument('-a','--agent', type=str, required=True,
                     choices=['random','dqn'], help='Type of agent to train')
-parser.add_argument('-n','--n_trials', type=int, default=1,
-                    help='Number of trials')
 parser.add_argument('-e','--n_episodes', type=int, default=10,
-                    help='Number of episodes per trial')
+                    help='Number of episodes')
 parser.add_argument('-m','--max_steps', type=int, default=1000,
                     help='Maximum number of steps per episode')
 parser.add_argument('-r','--rows', type=int, default=6,
@@ -50,10 +50,10 @@ parser.add_argument('--no_phi', action='store_true',
                     help='Turn off abstraction and just use observed state; i.e. ϕ(x)=x')
 parser.add_argument('--train_phi', action='store_true',
                     help='Allow simultaneous training of abstraction')
-parser.add_argument('--no_sigma', action='store_true',
-                    help='Turn off sensors and just use true state; i.e. x=s')
+parser.add_argument('--ground_truth', action='store_true',
+                    help='Turn off transforms and just use true state; i.e. x=s')
 parser.add_argument('--one_hot', action='store_true',
-                    help='Bypass sensor and use one-hot representation instead')
+                    help='Bypass transforms and use one-hot representation instead')
 parser.add_argument('--save', action='store_true',
                     help='Save final network weights')
 parser.add_argument('-v','--video', action='store_true',
@@ -67,8 +67,8 @@ args = parser.parse_args()
 if args.train_phi and args.no_phi:
     assert False, '--no_phi and --train_phi are mutually exclusive'
 
-if args.one_hot and args.no_sigma:
-    assert False, '--one_hot and --no_sigma are mutually exclusive'
+if args.one_hot and args.ground_truth:
+    assert False, '--one_hot and --ground_truth are mutually exclusive'
 
 if args.video:
     import matplotlib.pyplot as plt
@@ -78,43 +78,36 @@ os.makedirs(log_dir, exist_ok=True)
 log = open(log_dir + '/scores-{}-{}.txt'.format(args.agent, args.seed), 'w')
 
 #%% ------------------ Define MDP ------------------
+dims = GridworldEnv.dimensions_6x6_to_18x18
+if args.one_hot:
+    dims['cell_width'] = 1
 if args.walls == 'maze':
-    env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
+    env = GridworldEnv.from_saved_maze(rows=args.rows,
+                                       cols=args.cols,
+                                       seed=args.seed,
+                                       image_observations=False,
+                                       dimensions=dims)
 else:
-    env = GridworldEnv(rows=args.rows, cols=args.cols)
+    env = GridworldEnv(rows=args.rows, cols=args.cols, image_observations=False, dimensions=dims)
     if args.walls == 'spiral':
         env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
     elif args.walls == 'loop':
         env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
 gamma = 0.9
 
-#%% ------------------ Define sensor ------------------
-sensor_list = []
+#%% ------------------ Define transforms ------------------
 if args.xy_noise:
-    sensor_list.append(NoiseSensor(sigma=0.2, truncation=0.4))
+    env = transforms.NoiseWrapper(env, sigma=0.2, truncation=0.4)
 if args.rearrange_xy:
-    sensor_list.append(RearrangeXYPositionsSensor((env.rows, env.cols)))
-if not args.no_sigma:
-    if args.one_hot:
-        sensor_list += [
-            OffsetSensor(offset=(0.5, 0.5)),
-            ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=1),
-        ]
-    else:
-        sensor_list += [
-            OffsetSensor(offset=(0.5, 0.5)),
-            ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
-            # ResampleSensor(scale=2.0),
-            BlurSensor(sigma=0.6, truncate=1.),
-            NoiseSensor(sigma=0.01)
-        ]
-sensor = SensorChain(sensor_list)
+    env = ObservationPermutationWrapper(env)
+if not args.ground_truth and not args.one_hot:
+    env = wrap_gridworld(env)
 
 #%% ------------------ Define abstraction ------------------
 if args.no_phi:
     phinet = NullAbstraction(-1, args.latent_dims)
 else:
-    x0 = sensor(env.get_state())
+    x0 = env.reset()[0]
     phinet = PhiNet(input_shape=x0.shape,
                     n_latent_dims=args.latent_dims,
                     n_hidden_layers=1,
@@ -151,7 +144,7 @@ if args.video:
     def plot_value_function(ax):
         s = np.asarray([[np.asarray([x, y]) for x in range(args.cols)] for y in range(args.rows)])
         v = np.asarray(agent.q_values(s).detach().numpy()).max(-1)
-        xy = OffsetSensor(offset=(0.5, 0.5))(s).reshape(args.cols, args.rows, -1)
+        xy = (s + (0.5, 0.5)).reshape(args.cols, args.rows, -1)
         ax.contourf(np.arange(0.5, args.cols + 0.5),
                     np.arange(0.5, args.rows + 0.5),
                     v,
@@ -175,60 +168,58 @@ if args.video:
                         legend=False)
         ax.invert_yaxis()
 
-for trial in tqdm(range(args.n_trials), desc='trials'):
-    env.reset_goal()
-    agent.reset()
-    total_reward = 0
-    total_steps = 0
-    losses = []
-    rewards = []
-    value_fn = []
-    for episode in tqdm(range(args.n_episodes), desc='episodes'):
-        env.reset_agent()
-        ep_rewards = []
-        for step in range(args.max_steps):
-            s = env.get_state()
-            x = sensor(s)
+x = env.reset()[0]
+agent.reset()
+total_reward = 0
+total_steps = 0
+losses = []
+rewards = []
+value_fn = []
+for episode in tqdm(range(args.n_episodes), desc='episodes'):
+    env.reset()
+    ep_rewards = []
+    for step in range(args.max_steps):
+        s = env.get_state()
 
-            a = agent.act(x)
-            sp, r, done = env.step(a)
-            xp = sensor(sp)
-            ep_rewards.append(r)
-            if args.video:
-                value_fn.append(agent.v(x))
-            total_reward += r
-
-            loss = agent.train(x, a, r, xp, done)
-            losses.append(loss)
-            rewards.append(r)
-
-            if done:
-                break
-
+        a = agent.act(x)
+        xp, r, done, _, info = env.step(a)
+        ep_rewards.append(r)
         if args.video:
-            [a.clear() for a in ax]
-            plot_value_function(ax[0])
-            env.plot(ax[0])
-            ax[1].plot(value_fn)
-            ax[2].plot(rewards, c='C3')
-            ax[3].plot(losses, c='C1')
-            # plot_states(ax[3])
-            ax[1].set_ylim([-10, 0])
-            fig.canvas.draw()
-            fig.canvas.flush_events()
+            value_fn.append(agent.v(x))
+        total_reward += r
 
-        total_steps += step
-        score_info = {
-            'trial': trial,
-            'episode': episode,
-            'reward': sum(ep_rewards),
-            'total_reward': total_reward,
-            'total_steps': total_steps,
-            'steps': step
-        }
-        json_str = json.dumps(score_info)
-        log.write(json_str + '\n')
-        log.flush()
+        loss = agent.train(x, a, r, xp, done)
+        losses.append(loss)
+        rewards.append(r)
+
+        if done:
+            break
+
+        x = xp
+
+    if args.video:
+        [a.clear() for a in ax]
+        plot_value_function(ax[0])
+        env.plot(ax[0])
+        ax[1].plot(value_fn)
+        ax[2].plot(rewards, c='C3')
+        ax[3].plot(losses, c='C1')
+        # plot_states(ax[3])
+        ax[1].set_ylim([-10, 0])
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+    total_steps += step
+    score_info = {
+        'episode': episode,
+        'reward': sum(ep_rewards),
+        'total_reward': total_reward,
+        'total_steps': total_steps,
+        'steps': step
+    }
+    json_str = json.dumps(score_info)
+    log.write(json_str + '\n')
+    log.flush()
 print('\n\n')
 
 if args.save:

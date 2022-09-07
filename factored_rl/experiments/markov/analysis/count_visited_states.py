@@ -10,7 +10,7 @@ from ....models.markov.featurenet import FeatureNet
 from ....models.markov.autoencoder import AutoEncoder
 from visgrid.envs import GridworldEnv
 from visgrid.envs.components import Grid
-from visgrid.sensors import *
+from visgrid.wrappers.sensors import *
 
 class Args:
     pass

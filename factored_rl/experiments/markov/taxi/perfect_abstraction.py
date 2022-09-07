@@ -14,7 +14,7 @@ import seeding
 import torch
 from tqdm import tqdm
 
-from visgrid.sensors import *
+from visgrid.wrappers.sensors import *
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
 from factored_rl import utils

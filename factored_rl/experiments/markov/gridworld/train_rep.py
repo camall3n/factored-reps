@@ -15,7 +15,7 @@ from factored_rl.experiments.markov.analysis.repvis import RepVisualization, Cle
 from visgrid.envs import GridworldEnv
 from visgrid.envs.components import Grid
 from visgrid.utils import get_parser, MI
-from visgrid.sensors import *
+from visgrid.wrappers.transforms import wrap_gridworld
 from factored_rl.experiments.markov.analysis.distance_oracle import DistanceOracle
 
 parser = get_parser()
@@ -105,7 +105,14 @@ seeding.seed(args.seed)
 if args.walls == 'maze':
     env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
 else:
-    env = GridworldEnv(rows=args.rows, cols=args.cols)
+    env = GridworldEnv(args.rows,
+                       args.cols,
+                       image_observations=True,
+                       hidden_goal=True,
+                       dimensions=GridworldEnv.dimensions_6x6_to_18x18)
+    if not args.no_sigma:
+        env = wrap_gridworld(env)
+
     if args.walls == 'spiral':
         env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
     elif args.walls == 'loop':
@@ -145,14 +152,6 @@ if args.video:
 sensor_list = []
 if args.rearrange_xy:
     sensor_list.append(RearrangeXYPositionsSensor((env.rows, env.cols)))
-if not args.no_sigma:
-    sensor_list += [
-        OffsetSensor(offset=(0.5, 0.5)),
-        ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
-        # ResampleSensor(scale=2.0),
-        BlurSensor(sigma=0.6, truncate=1.),
-        NoiseSensor(sigma=0.01)
-    ]
 sensor = SensorChain(sensor_list)
 
 x0 = sensor(s0)

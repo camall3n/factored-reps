@@ -18,7 +18,6 @@ from factored_rl.agents.replaymemory import ReplayMemory
 
 from factored_rl import utils
 from visgrid.envs.taxi import VisTaxi5x5
-from visgrid.sensors import *
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.factored.focused_autoenc import FocusedAutoencoder
 from factored_rl.models.factored.calf import CALFNet
@@ -101,10 +100,8 @@ torch.backends.cudnn.benchmark = False
 
 #%% ------------------ Define MDP ------------------
 class StateAbstractionWrapper(gym.Wrapper):
-
     def __init__(self, env, state_abstraction_model):
         super().__init__(env)
-        self.sensor = MoveAxisSensor(-1, 0)
         self.state_abstraction_model = state_abstraction_model
         self.device = next(self.state_abstraction_model.parameters()).device
 
@@ -117,14 +114,14 @@ class StateAbstractionWrapper(gym.Wrapper):
         return self.encode(obs), reward, done
 
     def encode(self, obs):
-        obs = self.sensor(obs)
+        obs = np.moveaxis(obs, -1, 0)
         with torch.no_grad():
             obs_tensor = torch.as_tensor(obs).unsqueeze(0).float().to(self.device)
             abstract_state = self.state_abstraction_model(obs_tensor).cpu().numpy()
         return abstract_state
 
 env = VisTaxi5x5(grayscale=markov_args.grayscale)
-example_obs = MoveAxisSensor(-1, 0)(env.reset(goal=False, explore=True))
+example_obs = np.moveaxis(env.reset(goal=False, explore=True), -1, 0)
 
 featurenet = FeatureNet(markov_args,
                         n_actions=env.action_space.n,

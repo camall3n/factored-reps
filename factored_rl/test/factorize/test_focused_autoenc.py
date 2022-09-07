@@ -3,28 +3,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seeding
 from tqdm import tqdm
+import torch
 
 from factored_rl.models.markov.nullabstraction import NullAbstraction
 from factored_rl.models.factored.focused_autoenc import FocusedAutoencoder
 from visgrid.envs import GridworldEnv
 from factored_rl.entropy.mi import MI
-from visgrid.sensors import *
+from visgrid.wrappers.transforms import TransformWrapper
 
 #%% ------------------ Define MDP ------------------
 seeding.seed(0, np)
 
-env = GridworldEnv(rows=6, cols=6)
+env = GridworldEnv(rows=6, cols=6, image_observations=False)
+env = TransformWrapper(env, lambda obs: torch.as_tensor(obs).float())
 env.reset_agent()
 
-sensor = SensorChain([
-    # OffsetSensor(offset=(0.5,0.5)),
-    # NoisySensor(sigma=0.1),
-    # ImageSensor(range=((0,env.rows), (0,env.cols)), pixel_density=1),
-    # ResampleSensor(scale=(2,1)),
-    # BlurSensor(sigma=0.6, truncate=1.),
-    # NoisySensor(sigma=0.05),
-    TorchSensor(),
-])
 phi = NullAbstraction(-1, 2)
 
 #%% ------------------ Generate experiences ------------------
@@ -39,16 +32,16 @@ for t in range(n_samples):
     s, _, _ = env.step(a)
     states.append(s)
     actions.append(a)
-states = np.stack(states)
-s0 = np.asarray(states[:-1, :])
-s1 = np.asarray(states[1:, :])
+states = torch.stack(states)
+s0 = states[:-1, :]
+s1 = states[1:, :]
 c0 = s0[:, 0] * env.cols + s0[:, 1]
 a = np.asarray(actions)
 
 MI_max = MI(s0, s0)
 
-z0 = phi(sensor(s0))
-z1 = phi(sensor(s1))
+z0 = phi(s0)
+z1 = phi(s1)
 
 entangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': -0.1})
 disentangler = FocusedAutoencoder(lr=0.03, coefs={'L_fac': 0.1})

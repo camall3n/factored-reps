@@ -20,9 +20,10 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.markov.autoencoder import AutoEncoder
 from factored_rl.models.markov.pixelpredictor import PixelPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization, CleanVisualization
-from visgrid.envs import GridworldEnv, VisTaxi5x5
+from visgrid.envs import GridworldEnv, TaxiEnv
 from visgrid.envs.components import Grid
-from visgrid.sensors import *
+from visgrid.wrappers.transforms import wrap_gridworld
+from factored_rl.wrappers.permutation import ObservationPermutationWrapper
 
 parser = utils.get_parser()
 # yapf: disable
@@ -49,10 +50,8 @@ parser.add_argument('--save', action='store_true',
                     help='Save final network weights')
 parser.add_argument('--cleanvis', action='store_true',
                     help='Switch to representation-only visualization')
-parser.add_argument('--no_sigma', action='store_true',
-                    help='Turn off sensors and just use true state; i.e. x=s')
-parser.add_argument('--grayscale', action='store_true', help='Grayscale observations (default)')
-parser.add_argument('--rgb', action='store_true', help='RGB observations (overrides grayscale)')
+parser.add_argument('--ground_truth', action='store_true',
+                    help='Turn off image transformations and just use true state; i.e. x=s')
 parser.add_argument('--rearrange_xy', action='store_true',
                     help='Rearrange discrete x-y positions to break smoothness')
 # yapf: enable
@@ -60,11 +59,6 @@ parser.add_argument('--rearrange_xy', action='store_true',
 args = utils.parse_args_and_load_hyperparams(parser)
 if args.load_markov is not None:
     args.load_markov = os.path.join(args.load_markov, 'fnet-{}_best.pytorch'.format(args.seed))
-
-assert not (args.grayscale and args.rgb), 'Cannot specify both grayscale and RGB observations'
-args.grayscale = True if args.grayscale else (not args.rgb)
-del args.rgb
-args.grayscale
 
 # Move all loss coefficients to a sub-namespace
 coefs = Namespace(**{name: value for (name, value) in vars(args).items() if name[:2] == 'L_'})
@@ -108,20 +102,31 @@ torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
 #% ------------------ Define MDP ------------------
-if args.walls == 'maze':
-    env = GridworldEnv.from_saved_maze(rows=args.rows, cols=args.cols, seed=args.seed)
-elif args.walls == 'taxi':
-    env = VisTaxi5x5(grayscale=args.grayscale)
+if args.walls == 'taxi':
+    env = TaxiEnv()
     env.reset()
 else:
-    env = GridworldEnv(rows=args.rows, cols=args.cols)
-    if args.walls == 'spiral':
-        env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
-    elif args.walls == 'loop':
-        env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
+    dims = GridworldEnv.dimensions_6x6_to_18x18
+    if args.walls == 'maze':
+        env = GridworldEnv.from_saved_maze(rows=args.rows,
+                                           cols=args.cols,
+                                           seed=args.seed,
+                                           image_observations=False,
+                                           dimensions=dims)
+    else:
+        env = GridworldEnv(rows=args.rows,
+                           cols=args.cols,
+                           image_observations=False,
+                           dimensions=dims)
+        if args.walls == 'spiral':
+            env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
+        elif args.walls == 'loop':
+            env.grid = Grid.generate_spiral_with_shortcut(rows=args.rows, cols=args.cols)
 
-# env = RingWorld(2,4)
-# env = TestWorld()
+    if args.rearrange_xy:
+        env = ObservationPermutationWrapper(env)
+    elif not args.ground_truth:
+        env = wrap_gridworld(env)
 
 # cmap = 'Set3'
 cmap = None
@@ -129,16 +134,20 @@ cmap = None
 #% ------------------ Generate experiences ------------------
 if args.walls != 'taxi':
     n_samples = 20000
+    obs = [env.reset()[0]]
     states = [env.get_state()]
     actions = []
     for t in range(n_samples):
         a = env.action_space.sample()
-        s, _, _ = env.step(a)
-        states.append(s)
+        x = env.step(a)[0]
+        obs.append(x)
+        states.append(env.get_state())
         actions.append(a)
     states = np.stack(states)
+    x0 = np.stack(obs[:-1])
     s0 = np.asarray(states[:-1, :])
     c0 = s0[:, 0] * env.cols + s0[:, 1]
+    x1 = np.stack(obs[:-1])
     s1 = np.asarray(states[1:, :])
     a = np.asarray(actions)
 
@@ -152,24 +161,7 @@ if args.walls != 'taxi':
     # Confirm that we're covering the state space relatively evenly
     # np.histogram2d(states[:,0], states[:,1], bins=6)
 
-    #% ------------------ Define sensor ------------------
-    sensor_list = []
-    if args.rearrange_xy:
-        sensor_list.append(RearrangeXYPositionsSensor((env.rows, env.cols)))
-    if not args.no_sigma:
-        sensor_list += [
-            OffsetSensor(offset=(0.5, 0.5)),
-            ImageSensor(range=((0, env.rows), (0, env.cols)), pixel_density=3),
-            # ResampleSensor(scale=2.0),
-            BlurSensor(sigma=0.6, truncate=1.),
-            NoiseSensor(sigma=0.01)
-        ]
-    sensor = SensorChain(sensor_list)
-
-    x0 = sensor(s0)
-    x1 = sensor(s1)
-
-    env.reset_agent()
+    env.reset()
 
 else:
     prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
@@ -196,20 +188,11 @@ else:
     next_obs = extract_array(experiences, 'next_ob')
     next_states = extract_array(experiences, 'next_state')
 
-    sensor_list = []
-    if not args.no_sigma:
-        sensor_list += [
-            AsTypeSensor(np.float32),
-            MultiplySensor(scale=1 / 255),
-            MoveAxisSensor(-1, 1) # Move image channels to front (after batch dim)
-        ]
-    sensor = SensorChain(sensor_list)
-
     s0 = states
     s1 = next_states
     a = actions
-    x0 = sensor(obs)
-    x1 = sensor(next_obs)
+    x0 = np.moveaxis(obs.astype(np.float32), -1, 1)
+    x1 = np.moveaxis(next_obs.astype(np.float32), -1, 1)
     c0 = s0[:, 0] * env.cols + s0[:, 1]
 
 #% ------------------ Setup experiment ------------------
@@ -270,7 +253,7 @@ def get_obs_negatives(idx, max_idx=n_samples):
     # obs_negatives = obs[idx]  # x' -> x
     # obs_negatives = next_obs[(idx+1) % n_samples]  # x' -> x''
 
-    return sensor(obs_negatives)
+    return obs_negatives
 
 n_test_samples = 100 if str(device) == 'cpu' else 2000
 test_s0 = s0[-n_test_samples:, :]

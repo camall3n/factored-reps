@@ -1,3 +1,27 @@
+from argparse import Namespace
+import glob
+import imageio
+import json
+#!! do not import matplotlib until you check input arguments
+import numpy as np
+import os
+import pickle
+import platform
+import random
+import seeding
+import sys
+import torch
+from tqdm import tqdm
+from factored_rl.agents.replaymemory import ReplayMemory
+
+from factored_rl import utils
+from factored_rl.experiments.markov.taxi.generate_taxi_experiences import generate_experiences
+from factored_rl.models.markov.featurenet import FeatureNet
+from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
+from factored_rl.experiments.markov.analysis.repvis import RepVisualization
+from visgrid.envs import TaxiEnv
+from visgrid.wrappers.transforms import TransformWrapper
+
 def analyze_results(output_dir, replay_test, fnet, predictor):
     import os
     import numpy as np
@@ -97,30 +121,6 @@ def analyze_results(output_dir, replay_test, fnet, predictor):
     generate_confusion_plots(states.detach().cpu().numpy(), test_reconstructions)
 
 if __name__ == '__main__':
-    from argparse import Namespace
-    import glob
-    import imageio
-    import json
-    #!! do not import matplotlib until you check input arguments
-    import numpy as np
-    import os
-    import pickle
-    import platform
-    import random
-    import seeding
-    import sys
-    import torch
-    from tqdm import tqdm
-    from factored_rl.agents.replaymemory import ReplayMemory
-
-    from factored_rl import utils
-    from factored_rl.experiments.markov.taxi.generate_taxi_experiences import generate_experiences
-    from factored_rl.models.markov.featurenet import FeatureNet
-    from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
-    from factored_rl.experiments.markov.analysis.repvis import RepVisualization
-    from visgrid.taxi import VisTaxi5x5
-    from visgrid.sensors import *
-
     #% ------------------ Parse args/hyperparameters ------------------
     parser = utils.get_parser()
     # yapf: disable
@@ -205,15 +205,9 @@ if __name__ == '__main__':
     torch.backends.cudnn.benchmark = False
 
     #% ------------------ Define MDP ------------------
-    env = VisTaxi5x5(grayscale=args.grayscale)
+    env = TaxiEnv()
+    env = TransformWrapper(env, lambda obs: np.moveaxis(obs, -1, 0))
     env.reset()
-
-    sensor_list = []
-    if not args.no_sigma:
-        sensor_list += [
-            MoveAxisSensor(-1, 0) # Move image channel (-1) to front (0)
-        ]
-    sensor = SensorChain(sensor_list)
 
     #% ------------------ Generate & store experiences ------------------
     on_retrieve = {
@@ -236,7 +230,7 @@ if __name__ == '__main__':
                                         [n_train_episodes, n_test_episodes],
                                         [train_seed, test_seed]):
         for exp in generate_experiences(env,
-                                        sensor,
+                                        lambda x: x,
                                         n_episodes,
                                         n_steps_per_episode=args.n_steps_per_episode,
                                         seed=seed):

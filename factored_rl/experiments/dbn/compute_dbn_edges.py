@@ -4,7 +4,7 @@ from sklearn.neighbors import KernelDensity
 import sys
 
 from factored_rl.envs import vigorito
-import visgrid.sensors as sensors
+from factored_rl.wrappers.rotation import RotationWrapper
 
 def fit_kde(x, bw=0.03):
     kde = KernelDensity(bandwidth=bw)
@@ -45,21 +45,14 @@ sigma_threshold = 1.65
 
 seeding.seed(0, np)
 env = vigorito.VigoritoWorld()
+
 if len(sys.argv) > 2:
-    sensor = sensors.SensorChain([
-        sensors.PairEntangleSensor(env.n_states, index_a=0, index_b=1),
-        # sensors.PairEntangleSensor(env.n_states, index_a=2, index_b=3),
-        # sensors.PairEntangleSensor(env.n_states, index_a=0, index_b=2),
-    ])
-    for s in sensor.sensors:
-        print('Entangling f{} and f{}'.format(s.index_a, s.index_b))
-    print()
-else:
-    sensor = sensors.NullSensor()
+    env = RotationWrapper(env, axes=(0, 1))
+    # env = RotationWrapper(env, axes=(2,3))
+    # env = RotationWrapper(env, axes=(0,2))
 
 def get_batch(n):
     s, a = vigorito.run_agent(env, n_samples=n)
-    s = sensor(s)
     sp = s[1:, :]
     s = s[:-1, :]
     return s, a, sp

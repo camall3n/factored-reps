@@ -20,7 +20,6 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
 from factored_rl.experiments.markov.analysis.repvis import RepVisualization
 from visgrid.envs.taxi import TaxiEnv
-from visgrid.sensors import *
 
 #% ------------------ Parse args/hyperparameters ------------------
 parser = utils.get_parser()
@@ -52,8 +51,6 @@ parser.add_argument('--save', action='store_true',
                     help='Save final network weights')
 parser.add_argument('--no_sigma', action='store_true',
                     help='Turn off sensors and just use true state; i.e. x=s')
-parser.add_argument('--grayscale', action='store_true',
-                    help='Grayscale observations (default is RGB)')
 parser.add_argument('--quick', action='store_true',
                     help='Flag to reduce number of updates for quick testing')
 # yapf: enable
@@ -109,7 +106,6 @@ torch.backends.cudnn.benchmark = False
 sensor_list = []
 if not args.no_sigma:
     sensor_list += [
-        GrayscaleSensor() if args.grayscale else Sensor(),
         MoveAxisSensor(-1, 0) # Move image channel (-1) to front (0)
     ]
 sensor = SensorChain(sensor_list)

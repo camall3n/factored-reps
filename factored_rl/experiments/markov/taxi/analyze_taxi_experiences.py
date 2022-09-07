@@ -11,15 +11,16 @@ import seaborn as sns
 from tqdm import tqdm
 
 from visgrid.taxi import VisTaxi5x5
-from visgrid.sensors import *
+from visgrid.wrappers.sensors import *
 from visgrid.utils import get_parser
 
 if 'ipykernel' in sys.argv[0]:
-    sys.argv += ["-t", 'foo']#, '--restrict_samples']
+    sys.argv += ["-t", 'foo'] #, '--restrict_samples']
 parser = get_parser()
 parser.add_argument('-t', '--tag', type=str, required=True)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
-parser.add_argument('--restrict_samples', action='store_true',
+parser.add_argument('--restrict_samples',
+                    action='store_true',
                     help='Restrict training samples to more easily learn the in_taxi bit')
 args = parser.parse_args()
 del args.fool_ipython
@@ -39,17 +40,20 @@ if 'ipykernel' in sys.argv[0]:
     # args.tag = 'iid100k_steps-1_passengers-1_gray'
     # args.tag = 'iid100k_steps-1_passengers-1_rgb'
 
-args.n_passengers = int(args.tag.split('passengers-')[-1].replace('_plus', '').replace('_gray', '').replace('_rgb', ''))
+args.n_passengers = int(
+    args.tag.split('passengers-')[-1].replace('_plus', '').replace('_gray',
+                                                                   '').replace('_rgb', ''))
 args.n_steps_per_episode = int(args.tag.split('_')[1].replace('steps-', ''))
-args.n_episodes_per_chunk = 1000 if 'iid100k' in args.tag else (100 if 'debugger' in args.tag else 1)
+args.n_episodes_per_chunk = 1000 if 'iid100k' in args.tag else (
+    100 if 'debugger' in args.tag else 1)
 
 #%% Load results
 prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
-results_dir = os.path.join(prefix+'results', 'taxi-experiences', args.tag)
+results_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.tag)
 filename_pattern = os.path.join(results_dir, 'seed-*.pkl')
 results_files = glob.glob(filename_pattern)
 
-experiences_limit = 20000//args.n_steps_per_episode//args.n_episodes_per_chunk*4
+experiences_limit = 20000 // args.n_steps_per_episode // args.n_episodes_per_chunk * 4
 
 n_chunks = 0
 experiences = []
@@ -70,6 +74,7 @@ def extract_array(experiences, key, condition=None):
 
 condition = None
 if args.restrict_samples:
+
     def condition(experience):
         x = experience
         state_a = np.array_equal(x['state'][:2], [4, 0])
@@ -80,8 +85,8 @@ if args.restrict_samples:
             return False
         if not (state_a or state_b):
             return False
-        if ((state_a and x['action'] in [1, 2, 4])# >, ^, interact
-            or (state_b and x['action'] in [1, 3, 4])):# >, v, interact
+        if ((state_a and x['action'] in [1, 2, 4]) # >, ^, interact
+                or (state_b and x['action'] in [1, 3, 4])): # >, v, interact
             return True
         return False
 
@@ -111,7 +116,7 @@ goal_in_taxi = 2
 
 #%%
 def taxi_heatmap(x, y, title=''):
-    counts = plt.hist2d(x, y, bins=5, range=((-.5,4.5),(-.5,4.5)))[0]
+    counts = plt.hist2d(x, y, bins=5, range=((-.5, 4.5), (-.5, 4.5)))[0]
     plt.colorbar()
     plt.gca().invert_yaxis()
     plt.title(title)
@@ -119,8 +124,8 @@ def taxi_heatmap(x, y, title=''):
     return counts
 
 counts = taxi_heatmap(states[:, taxi_col], states[:, taxi_row], 'taxi location')
-np.min(counts*25/len(states))
-np.max(counts*25/len(states))
+np.min(counts * 25 / len(states))
+np.max(counts * 25 / len(states))
 
 #%%
 counts = taxi_heatmap(next_states[:, taxi_col], next_states[:, taxi_row], 'taxi location')
@@ -129,34 +134,35 @@ counts = taxi_heatmap(next_states[:, taxi_col], next_states[:, taxi_row], 'taxi 
 # plt.gca().invert_yaxis()
 # plt.title('taxi location')
 # plt.show()
-np.min(counts*25/len(next_states))
-np.max(counts*25/len(next_states))
+np.min(counts * 25 / len(next_states))
+np.max(counts * 25 / len(next_states))
 
 #%%
 if args.n_passengers > 0:
     counts = taxi_heatmap(states[:, passenger_col], states[:, passenger_row], 'passenger location')
-    np.min(counts*25/len(states))
-    np.max(counts*25/len(states))
+    np.min(counts * 25 / len(states))
+    np.max(counts * 25 / len(states))
 
 #%%
 if args.n_passengers > 0:
     counts = taxi_heatmap(goals[:, goal_col], goals[:, goal_row], 'goal')
-    np.min(counts[counts>0]*4/len(states))
-    np.max(counts*4/len(states))
+    np.min(counts[counts > 0] * 4 / len(states))
+    np.max(counts * 4 / len(states))
 
 #%%
 if args.n_passengers > 0:
     sns.histplot(states[:, in_taxi], discrete=True)
-    np.histogram(states[:, in_taxi], bins=2)[0]/len(states)
+    np.histogram(states[:, in_taxi], bins=2)[0] / len(states)
     plt.title('passenger in taxi?')
     plt.show()
 
 #%%
 if args.n_passengers > 0:
-    taxi_at_passenger = ((states[:, passenger_col] == states[:, taxi_col]) & (states[:, passenger_row] == states[:, taxi_row]))
+    taxi_at_passenger = ((states[:, passenger_col] == states[:, taxi_col]) &
+                         (states[:, passenger_row] == states[:, taxi_row]))
 
     sns.histplot(taxi_at_passenger, discrete=True)
-    np.histogram(taxi_at_passenger, bins=2)[0]/len(states)
+    np.histogram(taxi_at_passenger, bins=2)[0] / len(states)
     plt.title('taxi at passenger?')
     plt.show()
 
@@ -171,27 +177,29 @@ plt.show()
 different_taxi_col = states[:, taxi_col] != next_states[:, taxi_col]
 different_taxi_row = states[:, taxi_row] != next_states[:, taxi_row]
 taxi_moved = (different_taxi_col ^ different_taxi_row)
-taxi_moved.sum()/len(states)
+taxi_moved.sum() / len(states)
 
 #%% Passenger moved
 if args.n_passengers > 0:
     different_passenger_col = states[:, passenger_col] != next_states[:, passenger_col]
     different_passenger_row = states[:, passenger_row] != next_states[:, passenger_row]
     passenger_moved = (different_passenger_col ^ different_passenger_row)
-    passenger_moved.sum()/len(states)
+    passenger_moved.sum() / len(states)
 
 #%% Pickup/dropoff
 if args.n_passengers > 0:
     pickup_or_dropoff = (states[:, in_taxi] != next_states[:, in_taxi])
-    pickup_or_dropoff.sum()/len(states)
+    pickup_or_dropoff.sum() / len(states)
 
 #%% Taxi at passenger
 if args.n_passengers > 0:
-    taxi_at_passenger = ((states[:, passenger_col] == states[:, taxi_col]) & (states[:, passenger_row] == states[:, taxi_row]))
-    taxi_at_passenger.sum()/len(states)
+    taxi_at_passenger = ((states[:, passenger_col] == states[:, taxi_col]) &
+                         (states[:, passenger_row] == states[:, taxi_row]))
+    taxi_at_passenger.sum() / len(states)
 
-    next_taxi_at_passenger = ((next_states[:, passenger_col] == next_states[:, taxi_col]) & (next_states[:, passenger_row] == next_states[:, taxi_row]))
-    next_taxi_at_passenger.sum()/len(next_states)
+    next_taxi_at_passenger = ((next_states[:, passenger_col] == next_states[:, taxi_col]) &
+                              (next_states[:, passenger_row] == next_states[:, taxi_row]))
+    next_taxi_at_passenger.sum() / len(next_states)
 
 #%% Taxi L1 distance from passenger
 if args.n_passengers > 0:
@@ -204,7 +212,7 @@ if args.n_passengers > 0:
 
 #%% Goal frequencies
 if args.n_passengers > 0:
-    np.unique(goals, axis=0, return_counts=True)[1]/len(states)
+    np.unique(goals, axis=0, return_counts=True)[1] / len(states)
 
 #%% -------------- Sanity checks --------------
 
@@ -216,10 +224,10 @@ if args.n_passengers > 0:
     fish_out_of_water.sum()
     np.argwhere(fish_out_of_water > 0).squeeze()
 
-    waiting = (1-states[:, in_taxi]) & (1-next_states[:, in_taxi])
+    waiting = (1 - states[:, in_taxi]) & (1 - next_states[:, in_taxi])
     riding = states[:, in_taxi] & next_states[:, in_taxi]
-    dropoff = states[:, in_taxi] & (1-next_states[:, in_taxi])
-    pickup = (1-states[:, in_taxi]) & next_states[:, in_taxi]
+    dropoff = states[:, in_taxi] & (1 - next_states[:, in_taxi])
+    pickup = (1 - states[:, in_taxi]) & next_states[:, in_taxi]
     [waiting.sum(), riding.sum(), dropoff.sum(), pickup.sum()]
 
     tried_dropoff = (states[:, in_taxi] & (actions == 4))
@@ -235,7 +243,7 @@ episode_length = args.n_steps_per_episode
 
 #%% Taxi L1 distance traveled
 ep_start_states = states[0::episode_length]
-ep_end_states = next_states[episode_length-1::episode_length]
+ep_end_states = next_states[episode_length - 1::episode_length]
 row_dist = np.abs(ep_start_states[:, taxi_row] - ep_end_states[:, taxi_row])
 col_dist = np.abs(ep_start_states[:, taxi_col] - ep_end_states[:, taxi_col])
 taxi_dist = (row_dist + col_dist)
@@ -246,7 +254,7 @@ plt.show()
 #%% Passenger L1 distance traveled
 if args.n_passengers > 0:
     ep_start_states = states[0::episode_length]
-    ep_end_states = next_states[episode_length-1::episode_length]
+    ep_end_states = next_states[episode_length - 1::episode_length]
     row_dist = np.abs(ep_start_states[:, passenger_row] - ep_end_states[:, passenger_row])
     col_dist = np.abs(ep_start_states[:, passenger_col] - ep_end_states[:, passenger_col])
     passenger_dist = (row_dist + col_dist).astype(int)
@@ -267,9 +275,9 @@ def get_negatives(idx, max_idx=n_samples):
     # otherwise we'll draw a random obs from the buffer
 
     shuffled_idx = np.random.permutation(idx)
-    state_negatives = next_states[shuffled_idx]  # replace x' samples with random samples
-    state_negatives[to_keep] = states[idx[to_keep]]  # replace x' samples with x
-    state_negatives[to_offset] = next_states[idx[to_offset] + 1]  # replace x' samples with x''
+    state_negatives = next_states[shuffled_idx] # replace x' samples with random samples
+    state_negatives[to_keep] = states[idx[to_keep]] # replace x' samples with x
+    state_negatives[to_offset] = next_states[idx[to_offset] + 1] # replace x' samples with x''
     # state_negatives = next_states[shuffled_idx]  # x' -> \tilde x'
     # state_negatives = states[idx]  # x' -> x
     # state_negatives = next_states[(idx+1) % n_samples]  # x' -> x''
@@ -291,14 +299,14 @@ plt.title('Number of state variables changed')
 plt.show()
 
 #%% When it's only 1 state variable, which variable is it?
-single_change = np.argwhere(n_changes==1).squeeze()
+single_change = np.argwhere(n_changes == 1).squeeze()
 changed_var = np.argmax(distinctions[single_change, :] != 0, axis=1)
 sns.histplot(changed_var, discrete=True)
 plt.title('Distribution of which single state variable changed')
 plt.show()
 
 #%% When it's 2 state variables, which variables are those?
-changes_to_2_vars = np.argwhere(n_changes==2).squeeze()
+changes_to_2_vars = np.argwhere(n_changes == 2).squeeze()
 changed_2_vars = distinctions[changes_to_2_vars, :] != 0
 changed_2_var_counts = np.sum(changed_2_vars, axis=0)
 plt.bar(np.arange(5), changed_2_var_counts)
@@ -307,16 +315,15 @@ plt.show()
 
 #%% When it's 2 state variables, how are those correlated?
 split_vars = np.hsplit(changed_2_vars.astype(float), 5)
-correlations = np.zeros((5,5))
+correlations = np.zeros((5, 5))
 for i, x in enumerate(split_vars):
     for j, y in enumerate(split_vars):
-        correlations[i,j] = np.corrcoef(x, y, rowvar=False)[0, 1]
+        correlations[i, j] = np.corrcoef(x, y, rowvar=False)[0, 1]
 
 plt.imshow(correlations)
 plt.title('Correlations between variables when 2 changed')
 plt.colorbar()
 plt.show()
-
 
 #%% Analyze negative samples
 if args.n_passengers > 0:
@@ -335,10 +342,10 @@ if args.n_passengers > 0:
 
     valid_delta = valid_taxi_delta & valid_passenger_delta
 
-valid_taxi_delta.sum()/len(states)
+valid_taxi_delta.sum() / len(states)
 if args.n_passengers > 0:
-    valid_passenger_delta.sum()/len(states)
-    valid_delta.sum()/len(states)
+    valid_passenger_delta.sum() / len(states)
+    valid_delta.sum() / len(states)
 pass
 
 # -----------------------------------------------------------------
