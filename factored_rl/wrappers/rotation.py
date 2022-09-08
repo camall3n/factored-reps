@@ -2,9 +2,7 @@ import gym
 import numpy as np
 from scipy.stats import special_ortho_group
 
-from visgrid.wrappers.base import BaseObservationWrapper
-
-class RotationWrapper(BaseObservationWrapper):
+class RotationWrapper(gym.ObservationWrapper):
     """
     Applies a random (fixed) rotation matrix to all observations
     """

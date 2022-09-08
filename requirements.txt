@@ -48,7 +48,7 @@ google-auth==2.9.1
 google-auth-oauthlib==0.4.6
 graphviz==0.14.1
 grpcio==1.43.0
-gym==0.21.0
+gym==0.26.0
 h5py==3.7.0
 hydra-colorlog==1.1.0
 hydra-core==1.1.1

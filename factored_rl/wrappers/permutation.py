@@ -2,9 +2,7 @@ import gym
 from gym import spaces
 import numpy as np
 
-from visgrid.wrappers.base import BaseObservationWrapper
-
-class FactorPermutationWrapper(BaseObservationWrapper):
+class FactorPermutationWrapper(gym.ObservationWrapper):
     """
     Randomly permutes the list of values for each factor
 
@@ -28,7 +26,7 @@ class FactorPermutationWrapper(BaseObservationWrapper):
     def observation(self, obs):
         return np.array([p[obs[i]] for i, p in enumerate(self.permutations)])
 
-class ObservationPermutationWrapper(BaseObservationWrapper):
+class ObservationPermutationWrapper(gym.ObservationWrapper):
     """
     Randomly permutes the list of states in the factor-product space
 

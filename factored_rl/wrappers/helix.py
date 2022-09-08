@@ -3,9 +3,7 @@ from typing import Tuple
 import gym
 import numpy as np
 
-from visgrid.wrappers.base import BaseObservationWrapper
-
-class HelixWrapper(BaseObservationWrapper):
+class HelixWrapper(gym.ObservationWrapper):
     """
     Applies a helix transformation to all observations
 
