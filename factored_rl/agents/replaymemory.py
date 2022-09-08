@@ -18,7 +18,7 @@ class ReplayMemory:
         self.memory = []
         self.position = 0
 
-    def push(self, experience):
+    def push(self, experience: dict):
         if len(self.memory) < self.capacity:
             self.memory.append(None)
         experience['_index_'] = self.position
@@ -26,7 +26,7 @@ class ReplayMemory:
         self.memory[self.position] = experience
         self.position = (self.position + 1) % self.capacity
 
-    def sample(self, batch_size, fields=None):
+    def sample(self, batch_size: int, fields: list = None):
         idx = np.random.choice(len(self.memory), batch_size, replace=False)
         return self.retrieve(idx, fields)
 
