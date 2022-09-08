@@ -4,7 +4,7 @@ import copy
 
 import numpy as np
 
-from factored_rl.wrappers.permutation import FactorPermutationWrapper, ObservationPermutationWrapper
+from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
 from visgrid.envs import TaxiEnv
 
 #%%

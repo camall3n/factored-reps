@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from factored_rl.wrappers.rotation import RotationWrapper
+from factored_rl.wrappers import RotationWrapper
 from visgrid.envs.point import PointEnv
 
 def get_curves(axes=None):

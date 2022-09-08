@@ -2,7 +2,7 @@ import pytest
 import matplotlib.pyplot as plt
 import numpy as np
 
-from factored_rl.wrappers.helix import HelixWrapper
+from factored_rl.wrappers import HelixWrapper
 from visgrid.envs.point import PointEnv
 
 def get_curves():
