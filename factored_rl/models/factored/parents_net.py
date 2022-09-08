@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional
 
 from factored_rl.models.nnutils import Network, one_hot
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class ParentsNet(Network):
     def __init__(self,
@@ -23,10 +23,10 @@ class ParentsNet(Network):
         n_outputs = n_latent_dims + (n_actions if include_parent_actions else 0)
 
         if not self.factored:
-            self.model = SimpleNet(n_inputs, n_outputs, n_hidden_layers, n_units_per_layer)
+            self.model = MLP(n_inputs, n_outputs, n_hidden_layers, n_units_per_layer)
         else:
             self.models = nn.ModuleList([
-                SimpleNet(n_inputs, n_outputs, n_hidden_layers, n_units_per_layer)
+                MLP(n_inputs, n_outputs, n_hidden_layers, n_units_per_layer)
                 for _ in range(n_latent_dims)
             ])
 

@@ -3,7 +3,7 @@ import torch
 import torch.nn
 
 from factored_rl.models.nnutils import Network, one_hot, extract
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class FactoredQNet(Network):
     def __init__(self, n_features, n_actions, n_hidden_layers=1, n_units_per_layer=32):
@@ -12,7 +12,7 @@ class FactoredQNet(Network):
         self.n_actions = n_actions
 
         self.q = torch.nn.ModuleList([
-            SimpleNet(1, n_actions, n_hidden_layers, n_units_per_layer, activation=torch.nn.ReLU)
+            MLP(1, n_actions, n_hidden_layers, n_units_per_layer, activation=torch.nn.ReLU)
             for _ in range(n_features)
         ])
 

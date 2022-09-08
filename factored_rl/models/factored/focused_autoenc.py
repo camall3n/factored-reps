@@ -5,7 +5,7 @@ import torch.nn
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.factored.parents_net import ParentsNet
 from factored_rl.models.nnutils import Network
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class FocusedAutoencoder(Network):
     def __init__(self,
@@ -21,16 +21,16 @@ class FocusedAutoencoder(Network):
         self.device = device
         self.backprop_next_state = backprop_next_state
 
-        self.encoder = SimpleNet(n_inputs=n_input_dims,
-                                 n_outputs=n_latent_dims,
-                                 n_hidden_layers=args.n_hidden_layers,
-                                 n_units_per_layer=args.n_units_per_layer,
-                                 final_activation=torch.nn.Tanh)
-        self.decoder = SimpleNet(n_inputs=n_latent_dims,
-                                 n_outputs=n_input_dims,
-                                 n_hidden_layers=args.n_hidden_layers,
-                                 n_units_per_layer=args.n_units_per_layer,
-                                 final_activation=torch.nn.Tanh)
+        self.encoder = MLP(n_inputs=n_input_dims,
+                           n_outputs=n_latent_dims,
+                           n_hidden_layers=args.n_hidden_layers,
+                           n_units_per_layer=args.n_units_per_layer,
+                           final_activation=torch.nn.Tanh)
+        self.decoder = MLP(n_inputs=n_latent_dims,
+                           n_outputs=n_input_dims,
+                           n_hidden_layers=args.n_hidden_layers,
+                           n_units_per_layer=args.n_units_per_layer,
+                           final_activation=torch.nn.Tanh)
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
         self.bce_loss = torch.nn.BCELoss()

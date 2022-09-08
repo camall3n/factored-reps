@@ -5,7 +5,7 @@ import torch
 import torch.nn
 
 from factored_rl.models.nnutils import Network, Identity
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class GANLoss(torch.nn.Module):
     """Define different GAN objectives.
@@ -95,22 +95,22 @@ class CALFNet(Network):
                 raise ValueError(
                     "'n_input_dims' must match 'n_latent_dims' when using identity autoencoder")
         else:
-            self.encoder = SimpleNet(n_inputs=n_input_dims,
-                                     n_outputs=n_latent_dims,
-                                     n_hidden_layers=args.n_hidden_layers,
-                                     n_units_per_layer=args.n_units_per_layer,
-                                     final_activation=torch.nn.Tanh)
-            self.decoder = SimpleNet(n_inputs=n_latent_dims,
-                                     n_outputs=n_input_dims,
-                                     n_hidden_layers=args.n_hidden_layers,
-                                     n_units_per_layer=args.n_units_per_layer,
-                                     final_activation=torch.nn.Tanh)
+            self.encoder = MLP(n_inputs=n_input_dims,
+                               n_outputs=n_latent_dims,
+                               n_hidden_layers=args.n_hidden_layers,
+                               n_units_per_layer=args.n_units_per_layer,
+                               final_activation=torch.nn.Tanh)
+            self.decoder = MLP(n_inputs=n_latent_dims,
+                               n_outputs=n_input_dims,
+                               n_hidden_layers=args.n_hidden_layers,
+                               n_units_per_layer=args.n_units_per_layer,
+                               final_activation=torch.nn.Tanh)
 
-        self.discriminator = SimpleNet(n_inputs=(2 * n_latent_dims),
-                                       n_outputs=1,
-                                       n_hidden_layers=args.n_hidden_layers,
-                                       n_units_per_layer=args.n_units_per_layer,
-                                       final_activation=None)
+        self.discriminator = MLP(n_inputs=(2 * n_latent_dims),
+                                 n_outputs=1,
+                                 n_hidden_layers=args.n_hidden_layers,
+                                 n_units_per_layer=args.n_units_per_layer,
+                                 final_activation=None)
 
         self.criterionGAN = GANLoss(args.gan_mode).to(self.device)
         self.criterionCycle = torch.nn.MSELoss()

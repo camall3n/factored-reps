@@ -8,15 +8,15 @@ from tqdm import tqdm
 
 from visgrid.envs import GridworldEnv
 from visgrid.wrappers.sensors import *
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 seeding.seed(0, np, torch)
 
-qnet = SimpleNet(n_inputs=2,
-                 n_outputs=4,
-                 n_hidden_layers=1,
-                 n_units_per_layer=32,
-                 activation=torch.nn.ReLU)
+qnet = MLP(n_inputs=2,
+           n_outputs=4,
+           n_hidden_layers=1,
+           n_units_per_layer=32,
+           activation=torch.nn.ReLU)
 env = GridworldEnv(rows=6, cols=6)
 gamma = 0.9
 r_step = -1

@@ -3,7 +3,7 @@ import torch
 import torch.nn
 
 from ..nnutils import Network, Reshape, conv2d_size_out
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class PhiNet(Network):
     def __init__(self,
@@ -21,7 +21,7 @@ class PhiNet(Network):
             self.layers = []
             self.layers.append(Reshape(-1, shape_flat))
             self.layers.append(
-                SimpleNet(
+                MLP(
                     n_inputs=shape_flat,
                     n_outputs=n_latent_dims,
                     n_hidden_layers=n_hidden_layers,

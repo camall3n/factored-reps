@@ -3,7 +3,7 @@ import torch
 import torch.nn
 
 from ..nnutils import Network, one_hot, extract
-from ..simplenet import SimpleNet
+from ..mlp import MLP
 
 class FwdNet(Network):
     def __init__(self,
@@ -20,11 +20,10 @@ class FwdNet(Network):
         n_inputs = n_latent_dims + self.n_actions
 
         if not self.factored:
-            self.fwd_model = SimpleNet(n_inputs, n_latent_dims, n_hidden_layers, n_units_per_layer)
+            self.fwd_model = MLP(n_inputs, n_latent_dims, n_hidden_layers, n_units_per_layer)
         else:
             self.fwd_models = torch.nn.ModuleList([
-                SimpleNet(n_inputs, 1, n_hidden_layers, n_units_per_layer)
-                for _ in range(n_latent_dims)
+                MLP(n_inputs, 1, n_hidden_layers, n_units_per_layer) for _ in range(n_latent_dims)
             ])
 
     def forward(self, z, a, parent_dependencies):

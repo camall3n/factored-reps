@@ -3,7 +3,7 @@ import torch
 import torch.nn
 
 from ..nnutils import Network, one_hot
-from ..simplenet import SimpleNet
+from ..mlp import MLP
 
 class ContrastiveNet(Network):
     def __init__(self, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32):
@@ -37,7 +37,7 @@ class ActionContrastiveNet(Network):
 
         self.layers = []
         input_size = 2 * n_latent_dims + n_actions
-        self.model = SimpleNet(
+        self.model = MLP(
             n_inputs=input_size,
             n_outputs=1,
             n_hidden_layers=n_hidden_layers,

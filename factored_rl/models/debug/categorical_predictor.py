@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from factored_rl.models.nnutils import Network, one_hot
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class CategoricalPredictor(Network):
     def __init__(self, n_inputs, n_values, learning_rate=1e-3):
@@ -27,7 +27,7 @@ class CategoricalPredictor(Network):
             self.n_values = list(n_values)
 
         self.predictors = torch.nn.ModuleList([
-            SimpleNet(
+            MLP(
                 n_inputs=self.n_inputs,
                 n_outputs=n_val,
                 n_hidden_layers=2,

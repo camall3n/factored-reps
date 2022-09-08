@@ -1,6 +1,6 @@
 import torch
 
-from .. import nnutils
+from . import nnutils
 
 class NatureDQN(nnutils.Network):
     def __init__(self, input_shape=(4, 84, 84), n_actions=18):
@@ -23,5 +23,5 @@ class NatureDQN(nnutils.Network):
 
     def forward(self, x):
         if len(x.shape) == 3:
-            x = x.unsqueeze(0)  # add a batch dimension
+            x = x.unsqueeze(0) # add a batch dimension
         return self.model(self.encoder(x))

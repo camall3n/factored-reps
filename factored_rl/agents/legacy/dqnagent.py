@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 from factored_rl.models.nnutils import one_hot, extract
 from .replaymemory import ReplayMemory, Experience
 
@@ -36,7 +36,7 @@ class DQNAgent():
         self.decay_period = 2500
         self.train_phi = train_phi
         self.replay = ReplayMemory(10000)
-        self.make_qnet = SimpleNet
+        self.make_qnet = MLP
         self.reset()
 
     def reset(self):

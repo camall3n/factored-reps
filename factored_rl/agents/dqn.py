@@ -3,7 +3,8 @@ import math
 import numpy as np
 import torch
 
-from factored_rl.models.nnutils import extract, MLP, one_hot
+from factored_rl.models.nnutils import extract, Sequential, Reshape
+from factored_rl.models.mlp import MLP
 from .replaymemory import ReplayMemory
 from ..models.dqn_nature import NatureDQN
 

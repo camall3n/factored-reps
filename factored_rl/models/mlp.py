@@ -4,7 +4,7 @@ import torch.nn
 
 from .nnutils import Network
 
-class SimpleNet(Network):
+class MLP(Network):
     def __init__(self,
                  n_inputs,
                  n_outputs,

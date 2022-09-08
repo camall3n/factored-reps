@@ -2,13 +2,13 @@ import numpy as np
 import torch
 
 from .autoencoder import AutoEncoder
-from ..simplenet import SimpleNet
+from ..mlp import MLP
 from ..nnutils import one_hot
 
 class PixelPredictor(AutoEncoder):
     def __init__(self, args, n_actions, input_shape=2):
         super().__init__(args, n_actions, input_shape)
-        self.transition_model = SimpleNet(
+        self.transition_model = MLP(
             n_inputs=(args.latent_dims + n_actions),
             n_outputs=args.latent_dims,
             n_units_per_layer=args.n_units_per_layer,

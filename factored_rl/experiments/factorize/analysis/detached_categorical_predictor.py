@@ -22,7 +22,7 @@ from factored_rl.models.factored.factornet import FactorNet
 from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.utils import get_parser, load_hyperparams_and_inject_args
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)

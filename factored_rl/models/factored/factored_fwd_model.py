@@ -6,7 +6,7 @@ from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.factored.parents_net import ParentsNet
 from factored_rl.models.nnutils import Network
 from factored_rl.models.markov.fwdnet import FwdNet
-from factored_rl.models.simplenet import SimpleNet
+from factored_rl.models.mlp import MLP
 
 class FactoredFwdModel(Network):
     def __init__(self, args, n_actions, input_shape=2, device='cpu'):
@@ -29,16 +29,16 @@ class FactoredFwdModel(Network):
             self.featurenet.freeze()
             self.phi.freeze()
 
-        self.encoder = SimpleNet(n_inputs=args.markov_dims,
-                                 n_outputs=args.latent_dims,
-                                 n_hidden_layers=args.n_hidden_layers_factored_autoenc,
-                                 n_units_per_layer=args.n_units_per_layer,
-                                 final_activation=torch.nn.Tanh)
-        self.decoder = SimpleNet(n_inputs=args.latent_dims,
-                                 n_outputs=args.markov_dims,
-                                 n_hidden_layers=args.n_hidden_layers_factored_autoenc,
-                                 n_units_per_layer=args.n_units_per_layer,
-                                 final_activation=torch.nn.Tanh)
+        self.encoder = MLP(n_inputs=args.markov_dims,
+                           n_outputs=args.latent_dims,
+                           n_hidden_layers=args.n_hidden_layers_factored_autoenc,
+                           n_units_per_layer=args.n_units_per_layer,
+                           final_activation=torch.nn.Tanh)
+        self.decoder = MLP(n_inputs=args.latent_dims,
+                           n_outputs=args.markov_dims,
+                           n_hidden_layers=args.n_hidden_layers_factored_autoenc,
+                           n_units_per_layer=args.n_units_per_layer,
+                           final_activation=torch.nn.Tanh)
         self.parents_model = ParentsNet(n_actions=n_actions,
                                         n_latent_dims=args.latent_dims,
                                         n_units_per_layer=args.n_units_per_layer,
