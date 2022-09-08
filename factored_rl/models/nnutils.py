@@ -65,9 +65,10 @@ class Network(torch.nn.Module):
             shutil.copyfile(model_file, best_file)
             logging.info('New best model! Model copied to {}'.format(best_file))
 
-    def load(self, model_file, to=None):
+    def load(self, model_file, force_cpu=False):
         logging.info('Loading model from {}...'.format(model_file))
-        state_dict = torch.load(model_file, map_location=to)
+        map_loc = 'cpu' if force_cpu else None
+        state_dict = torch.load(model_file, map_location=map_loc)
         self.load_state_dict(state_dict)
 
     def freeze(self):
@@ -81,6 +82,24 @@ class Network(torch.nn.Module):
             for param in self.parameters():
                 param.requires_grad = True
             self.frozen = False
+
+    def hard_copy_from(self, other: torch.nn.Module):
+        self.load_state_dict(other.state_dict())
+
+    def soft_copy_from(self, other: torch.nn.Module, alpha: float = 0.1):
+        """
+        Soft update current network towards weights of other network
+        using an exponential moving average.
+
+        θ_dest = alpha * θ_src + (1 - alpha) * θ_dest
+
+        Args:
+            local_model: weights will be copied from
+            dest_model: weights will be copied to
+            alpha: interpolation parameter, usually small (e.g. 0.0001)
+        """
+        for theta_dest, theta_src in zip(self.parameters(), other.parameters()):
+            theta_dest.data.copy_(alpha * theta_src.data + (1.0 - alpha) * theta_dest.data)
 
 class Sequential(torch.nn.Sequential, Network):
     pass
