@@ -3,7 +3,7 @@ from visgrid.wrappers.sensors import *
 
 from time import time
 
-N = 1000  # steps per trial
+N = 1000 # steps per trial
 
 #%%
 start = time()
@@ -13,7 +13,7 @@ env = TaxiEnv(
     exploring_starts=True,
     terminate_on_goal=False,
     depot_dropoff_only=False,
-    image_observations=False,
+    should_render=False,
 )
 env.reset()
 for _ in range(N):
@@ -29,7 +29,7 @@ env = TaxiEnv(
     exploring_starts=True,
     terminate_on_goal=False,
     depot_dropoff_only=False,
-    image_observations=False,
+    should_render=False,
 )
 env.reset()
 for _ in range(N):
@@ -45,7 +45,7 @@ env = TaxiEnv(
     exploring_starts=True,
     terminate_on_goal=False,
     depot_dropoff_only=False,
-    image_observations=True,
+    should_render=True,
     dimensions=TaxiEnv.dimensions_5x5_to_64x64,
 )
 env.reset()
@@ -62,7 +62,7 @@ env = TaxiEnv(
     exploring_starts=True,
     terminate_on_goal=False,
     depot_dropoff_only=False,
-    image_observations=True,
+    should_render=True,
 )
 env.reset()
 for _ in range(N):
@@ -78,7 +78,7 @@ env = TaxiEnv(
     exploring_starts=True,
     terminate_on_goal=False,
     depot_dropoff_only=False,
-    image_observations=True,
+    should_render=True,
 )
 env.reset()
 for _ in range(N):

@@ -19,7 +19,7 @@ env = GridworldEnv(
     hidden_goal=True,
     agent_position=(5, 3),
     goal_position=(4, 0),
-    image_observations=False,
+    should_render=False,
 )
 env.reset()
 for _ in range(N):
@@ -37,7 +37,7 @@ env = GridworldEnv(rows=6,
                    hidden_goal=True,
                    agent_position=(5, 3),
                    goal_position=(4, 0),
-                   image_observations=True,
+                   should_render=True,
                    dimensions=GridworldEnv.dimensions_6x6_to_18x18)
 env = wrap_gridworld(env)
 env.reset()
@@ -57,7 +57,7 @@ env = GridworldEnv(
     hidden_goal=True,
     agent_position=(5, 3),
     goal_position=(4, 0),
-    image_observations=True,
+    should_render=True,
 )
 env.reset()
 for _ in range(N):

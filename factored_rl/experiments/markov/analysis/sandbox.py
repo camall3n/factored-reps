@@ -19,7 +19,7 @@ env = GridworldEnv(rows=10,
                    cols=10,
                    agent_position=(0, 0),
                    goal_position=(3, 3),
-                   image_observations=False,
+                   should_render=False,
                    hidden_goal=True)
 env = NoiseWrapper(env, sigma=0.2, truncation=0.4)
 env.plot()
@@ -49,7 +49,7 @@ env = GridworldEnv(rows=10,
                    cols=10,
                    agent_position=(0, 0),
                    goal_position=(3, 3),
-                   image_observations=True,
+                   should_render=True,
                    hidden_goal=True,
                    dimensions=GridworldEnv.dimensions_6x6_to_18x18)
 env = wrap_gridworld(env)
@@ -86,7 +86,7 @@ plt.savefig('x0-at-corner.png')
 #%%
 env = GridworldEnv(6,
                    6,
-                   image_observations=True,
+                   should_render=True,
                    hidden_goal=True,
                    dimensions=GridworldEnv.dimensions_6x6_to_18x18)
 env = wrap_gridworld(env)

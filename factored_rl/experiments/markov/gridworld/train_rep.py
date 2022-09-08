@@ -107,7 +107,7 @@ if args.walls == 'maze':
 else:
     env = GridworldEnv(args.rows,
                        args.cols,
-                       image_observations=True,
+                       should_render=True,
                        hidden_goal=True,
                        dimensions=GridworldEnv.dimensions_6x6_to_18x18)
     if not args.no_sigma:

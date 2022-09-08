@@ -8,7 +8,7 @@ from visgrid.wrappers.transforms import TransformWrapper, NoiseWrapper
 
 seeding.seed(0, np)
 
-env = GridworldEnv(rows=7, cols=4, image_observations=False)
+env = GridworldEnv(rows=7, cols=4, should_render=False)
 env = TransformWrapper(env, lambda obs: obs + (0.5, 0.5))
 env = NoiseWrapper(env, 0.5)
 

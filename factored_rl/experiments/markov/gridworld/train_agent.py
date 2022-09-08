@@ -85,10 +85,10 @@ if args.walls == 'maze':
     env = GridworldEnv.from_saved_maze(rows=args.rows,
                                        cols=args.cols,
                                        seed=args.seed,
-                                       image_observations=False,
+                                       should_render=False,
                                        dimensions=dims)
 else:
-    env = GridworldEnv(rows=args.rows, cols=args.cols, image_observations=False, dimensions=dims)
+    env = GridworldEnv(rows=args.rows, cols=args.cols, should_render=False, dimensions=dims)
     if args.walls == 'spiral':
         env.grid = Grid.generate_spiral(rows=args.rows, cols=args.cols)
     elif args.walls == 'loop':

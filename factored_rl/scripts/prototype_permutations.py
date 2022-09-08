@@ -5,7 +5,7 @@ from visgrid.envs import GridworldEnv
 from factored_rl.wrappers.permutation import ObservationPermutationWrapper, FactorPermutationWrapper
 
 #%% ------------------ Define MDP ------------------
-env = GridworldEnv(rows=6, cols=6, image_observations=False)
+env = GridworldEnv(rows=6, cols=6, should_render=False)
 env = FactorPermutationWrapper(env)
 
 #%% ------------------ Generate experiences ------------------

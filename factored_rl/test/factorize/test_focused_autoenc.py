@@ -14,7 +14,7 @@ from visgrid.wrappers.transforms import TransformWrapper
 #%% ------------------ Define MDP ------------------
 seeding.seed(0, np)
 
-env = GridworldEnv(rows=6, cols=6, image_observations=False)
+env = GridworldEnv(rows=6, cols=6, should_render=False)
 env = TransformWrapper(env, lambda obs: torch.as_tensor(obs).float())
 env.reset_agent()
 

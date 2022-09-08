@@ -46,7 +46,7 @@ def env():
         n_passengers=1,
         exploring_starts=True,
         terminate_on_goal=False,
-        image_observations=False,
+        should_render=False,
     )
     return env
 
