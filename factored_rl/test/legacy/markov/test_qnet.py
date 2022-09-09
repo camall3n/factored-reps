@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from visgrid.envs import GridworldEnv
-from visgrid.wrappers.sensors import *
 from factored_rl.models.mlp import MLP
 
 seeding.seed(0, np, torch)
