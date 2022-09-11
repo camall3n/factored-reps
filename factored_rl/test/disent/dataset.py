@@ -68,3 +68,13 @@ def test_compute_dci(unwrapped_env_data, wrapped_env_data):
     assert entangled_dci_score < disentangled_dci_score
     print(f'disentangled: {disentangled_dci_score}')
     print(f'entangled: {entangled_dci_score}')
+
+def test_gymenvdata_protocol_checking():
+    class FakeGymEnv():
+        pass
+
+    with pytest.raises(AssertionError):
+        GymEnvData(FakeGymEnv())
+
+    with pytest.raises(AssertionError):
+        GymEnvData(gym.make('CartPole-v1'))
