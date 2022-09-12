@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import datetime
 import logging
 import os
+import platform
 from typing import Tuple
 import yaml
 
@@ -111,7 +112,8 @@ def _initialize_experiment_dir(args, cfg: ExperimentConfig) -> str:
     cfg.experiment.name = args.experiment
     cfg.experiment.trial = trial_name
     cfg.experiment.seed = args.seed
-    cfg.experiment.dir = f'results/factored_rl/{args.experiment}/{trial_name}/{args.seed:04d}/'
+    prefix = '~/data-gdk/csal/factored' if platform.system() == 'Linux' else '~/dev/factored-reps'
+    cfg.experiment.dir = f'{prefix}/results/factored_rl/{args.experiment}/{trial_name}/{args.seed:04d}/'
     os.makedirs(cfg.experiment.dir, exist_ok=True)
     return cfg.experiment.dir
 
