@@ -126,3 +126,4 @@ results.update({
 filename = cfg.experiment.dir + 'results.json'
 with open(filename, 'w') as file:
     json.dump(results, file)
+log.info(f'Results logged to: {filename}')
