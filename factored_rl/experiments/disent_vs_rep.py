@@ -18,6 +18,7 @@ from disent.dataset.data import GymEnvData
 from disent.dataset import DisentDataset
 from disent.dataset.sampling import SingleSampler
 
+#%%
 # ----------------------------------------
 # Args & hyperparameters
 # ----------------------------------------
@@ -48,7 +49,13 @@ def initialize_env(args, cfg: configs.EnvConfig):
                            fixed_goal=True,
                            hidden_goal=True,
                            should_render=False,
-                           dimensions=GridworldEnv.dimensions_6x6_to_18x18)
+                           dimensions={
+                               'wall_width': 0,
+                               'cell_width': 1,
+                               'character_width': 1,
+                               'depot_width': 0,
+                               'border_widths': (0, 0)
+                           })
     elif args.env == 'taxi':
         env = TaxiEnv(size=5,
                       n_passengers=1,
