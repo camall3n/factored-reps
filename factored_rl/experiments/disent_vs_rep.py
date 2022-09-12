@@ -65,7 +65,7 @@ def initialize_env(args, cfg: configs.EnvConfig):
     disent_seed(args.seed)
 
     if args.transform == 'images':
-        env.set_rendering(enabled=args.images)
+        env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
         env = FlattenObservation(env)
     else:
@@ -111,9 +111,7 @@ results.update({
     'seed': args.seed,
     'env': args.env,
     'noise': args.noise,
-    'rotate': args.rotate,
-    'permute': args.permutation,
-    'images': args.images,
+    'transform': args.transform,
 })
 
 # ----------------------------------------
