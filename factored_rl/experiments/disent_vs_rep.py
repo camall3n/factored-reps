@@ -5,6 +5,7 @@ from factored_rl import configs
 
 # Env
 import gym
+from gym.wrappers.flatten_observation import FlattenObservation
 from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper
 from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
@@ -29,9 +30,7 @@ parser.add_argument('-s', '--seed', type=int, default=0, help='A seed for the ra
 parser.add_argument('--env', type=str, default='gridworld', help="['gridworld', 'taxi', 'CartPole-v1', ...]")
 parser.add_argument('--no-timestamp', action='store_true', help='Disable automatic trial timestamps')
 parser.add_argument('--noise', action='store_true')
-parser.add_argument('--rotate', action='store_true')
-parser.add_argument('--permutation', type=str, default='identity', choices=['identity', 'factors', 'states'])
-parser.add_argument('--images', action='store_true')
+parser.add_argument('--transform', type=str, default='identity', choices=['identity', 'images', 'permute_factors', 'permute_states', 'rotate'])
 parser.add_argument('--test', action='store_true')
 parser.add_argument('-f', '--fool-ipython', action='store_true',
     help='Dummy arg to make ipython happy')
@@ -65,23 +64,20 @@ def initialize_env(args, cfg: configs.EnvConfig):
     env.action_space.seed(args.seed)
     disent_seed(args.seed)
 
-    if args.permutation != 'identity':
-        assert not args.images
-        if args.permutation == 'factors':
-            env = FactorPermutationWrapper(env)
-        elif args.permutation == 'states':
-            env = ObservationPermutationWrapper(env)
-    if args.images:
-        assert not args.rotate
+    if args.transform == 'images':
         env.set_rendering(enabled=args.images)
         env = InvertWrapper(GrayscaleWrapper(env))
+        env = FlattenObservation(env)
     else:
-        env = NormalizedFloatWrapper(env)
-        if args.rotate:
+        if args.transform == 'permute_factors':
+            env = FactorPermutationWrapper(env)
+        elif args.transform == 'permute_states':
+            env = ObservationPermutationWrapper(env)
+        elif args.rotate:
             env = RotationWrapper(env)
+        env = NormalizedFloatWrapper(env)
     if args.noise:
         env = NoiseWrapper(env, cfg.noise_std)
-
     return env
 
 # ----------------------------------------
