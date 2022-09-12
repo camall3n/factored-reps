@@ -15,10 +15,19 @@ class RotationWrapper(gym.ObservationWrapper):
             self.axes = np.asarray(axes)
             n_dims = len(self.axes)
 
-        self.rotation_matrix = special_ortho_group.rvs(n_dims, random_state=self.np_random)
+        if n_dims == 2:
+            self._rotation_matrix = self._get_rotation_matrix(np.pi / 4)
+        else:
+            self._rotation_matrix = special_ortho_group.rvs(n_dims, random_state=self.np_random)
 
     def observation(self, obs):
         factors = obs[self.axes]
-        r_factors = self.rotation_matrix @ factors
+        r_factors = self._rotation_matrix @ factors
         obs[self.axes] = r_factors
         return obs
+
+    def _get_rotation_matrix(self, radians: float):
+        return np.array([
+            [np.cos(radians), -np.sin(radians)],
+            [np.sin(radians), np.cos(radians)],
+        ])
