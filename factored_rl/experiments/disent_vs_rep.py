@@ -80,7 +80,7 @@ def initialize_env(args, cfg: configs.EnvConfig):
             env = FactorPermutationWrapper(env)
         elif args.transform == 'permute_states':
             env = ObservationPermutationWrapper(env)
-        elif args.rotate:
+        elif args.transform == 'rotate':
             env = RotationWrapper(env)
         env = NormalizedFloatWrapper(env)
     if args.noise:
