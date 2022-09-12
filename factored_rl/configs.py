@@ -113,6 +113,7 @@ def _initialize_experiment_dir(args, cfg: ExperimentConfig) -> str:
     cfg.experiment.trial = trial_name
     cfg.experiment.seed = args.seed
     prefix = '~/data-gdk/csal/factored' if platform.system() == 'Linux' else '~/dev/factored-reps'
+    prefix = os.path.expanduser(prefix)
     cfg.experiment.dir = f'{prefix}/results/factored_rl/{args.experiment}/{trial_name}/{args.seed:04d}/'
     os.makedirs(cfg.experiment.dir, exist_ok=True)
     return cfg.experiment.dir
