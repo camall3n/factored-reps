@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 from typing import Tuple
+import yaml
 
 import hydra
 import hydra.core
@@ -66,8 +67,8 @@ class Config:
     env: EnvConfig = EnvConfig()
     agent: AgentConfig = AgentConfig()
 
-def print_config(cfg):
-    print(OmegaConf.to_yaml(cfg))
+def get_config_yaml_str(cfg):
+    return OmegaConf.to_yaml(cfg)
 
 def new_parser():
     """Return a nicely formatted argument parser
@@ -118,8 +119,6 @@ def _initialize_device(cfg) -> torch.device:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     torch.zeros(1).to(device)
     cfg.agent.model.device = device
-    print_config(cfg)
-    print(f'Training on device: {device}\n')
     return device
 
 def _initialize_logger(cfg: ExperimentConfig) -> logging.Logger:
@@ -135,4 +134,7 @@ def initialize_experiment(parser):
     _initialize_experiment_dir(args, cfg)
     _initialize_device(cfg)
     log = _initialize_logger(cfg)
+    log.info('\n' + yaml.dump(vars(args), sort_keys=False))
+    log.info('\n' + get_config_yaml_str(cfg))
+    log.info(f'Training on device: {cfg.agent.model.device}\n')
     return args, cfg, log
