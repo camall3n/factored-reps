@@ -49,10 +49,6 @@ class DQNAgentConfig(AgentConfig):
 
 @dataclass
 class EnvConfig:
-    exploring_starts: bool = True
-    terminate_on_goal: bool = True
-    fixed_goal: bool = True
-    hidden_goal: bool = True
     noise_std: float = 0.01
 
 @dataclass

@@ -41,10 +41,10 @@ parser.add_argument('-f', '--fool-ipython', action='store_true',
 def initialize_env(args, cfg: configs.EnvConfig):
     env = GridworldEnv(10,
                        10,
-                       exploring_starts=cfg.exploring_starts,
-                       terminate_on_goal=cfg.terminate_on_goal,
-                       fixed_goal=cfg.fixed_goal,
-                       hidden_goal=cfg.hidden_goal,
+                       exploring_starts=True,
+                       terminate_on_goal=True,
+                       fixed_goal=True,
+                       hidden_goal=True,
                        should_render=False,
                        dimensions=GridworldEnv.dimensions_6x6_to_18x18)
     env.reset(seed=args.seed)
