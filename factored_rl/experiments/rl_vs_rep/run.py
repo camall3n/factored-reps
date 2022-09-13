@@ -94,6 +94,7 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
     total_reward = 0
     total_steps = 0
     losses = []
+    results_file.write('[\n')
     for episode in tqdm(range(n_episodes), desc='episodes'):
         ob, info = env.reset()
         terminal, truncated = False, False
@@ -131,9 +132,10 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
         }
         if results_file is not None:
             json_str = json.dumps(episode_result)
-            results_file.write(json_str + '\n')
+            results_file.write(json_str + ',\n')
             results_file.flush()
         log.info('\n' + yaml.dump(episode_result, sort_keys=False))
+    results_file.write(']\n')
 
 # ----------------------------------------
 # Run experiment
@@ -145,6 +147,4 @@ agent = initialize_agent(env, args, cfg.agent)
 
 filename = cfg.experiment.dir + 'results.json'
 with open(filename, 'w') as results_file:
-    results_file.write('[\n')
     train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
-    results_file.write(']\n')
