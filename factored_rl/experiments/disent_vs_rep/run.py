@@ -49,20 +49,14 @@ def initialize_env(args, cfg: configs.EnvConfig):
                            fixed_goal=True,
                            hidden_goal=True,
                            should_render=False,
-                           dimensions={
-                               'wall_width': 0,
-                               'cell_width': 1,
-                               'character_width': 1,
-                               'depot_width': 0,
-                               'border_widths': (0, 0)
-                           })
+                           dimensions=GridworldEnv.dimensions_onehot)
     elif args.env == 'taxi':
         env = TaxiEnv(size=5,
                       n_passengers=1,
                       exploring_starts=True,
                       terminate_on_goal=True,
-                      should_render=False,
-                      dimensions=TaxiEnv.dimensions_5x5_to_64x64)
+                      should_render=True,
+                      dimensions=TaxiEnv.dimensions_5x5_to_48x48)
     else:
         env = gym.make(args.env)
         # TODO: wrap env to support disent protocol
