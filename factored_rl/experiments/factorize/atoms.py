@@ -25,7 +25,7 @@ parser.add_argument('-s','--seed', type=int, default=0,
                     help='Random seed')
 parser.add_argument('-t','--tag', type=str, required=True,
                     help='Tag for identifying experiment')
-parser.add_argument('--hyperparams', type=str, default='hyperparams/atoms.csv',
+parser.add_argument('--hyperparams', type=str, default='factored_rl/hyperparams/atoms.csv',
                     help='Path to hyperparameters csv file')
 parser.add_argument('--save', action='store_true',
                     help='Save final network weights')

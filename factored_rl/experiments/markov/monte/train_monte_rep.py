@@ -35,7 +35,7 @@ parser.add_argument('--n_expected_times_to_sample_experience', type=int, default
                     help='Expected number of times to sample each experience in the replay buffer before replacement')
 parser.add_argument('-t','--tag', type=str, required=True,
                     help='Tag for identifying experiment')
-parser.add_argument('--hyperparams', type=str, default='hyperparams/monte.csv',
+parser.add_argument('--hyperparams', type=str, default='factored_rl/hyperparams/monte.csv',
                     help='Path to hyperparameters csv file')
 parser.add_argument('--no_graphics', action='store_true',
                     help='Turn off graphics (e.g. for running on cluster)')

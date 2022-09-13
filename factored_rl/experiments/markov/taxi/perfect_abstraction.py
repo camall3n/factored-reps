@@ -30,7 +30,7 @@ parser.add_argument('-t', '--tag', type=str, required=True, help='Tag for identi
 parser.add_argument('--save', action='store_true', help='Save final network weights')
 parser.add_argument('--hyperparams',
                     type=str,
-                    default='hyperparams/taxi.csv',
+                    default='factored_rl/hyperparams/taxi.csv',
                     help='Path to hyperparameters csv file')
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
 # yapf: enable
