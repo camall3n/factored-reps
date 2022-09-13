@@ -11,7 +11,7 @@ from disent.metrics import metric_dci, metric_mig
 
 from visgrid.envs.components import Grid
 from visgrid.envs import GridworldEnv
-from visgrid.wrappers import NormalizedFloatWrapper, NoiseWrapper
+from visgrid.wrappers import FloatWrapper, NormalizeWrapper, NoiseWrapper
 
 from factored_rl.wrappers import ObservationPermutationWrapper, FactorPermutationWrapper
 
@@ -47,7 +47,8 @@ def test_unwrapped_shapes(unwrapped_env_data):
 def wrapped_env_data():
     env = GridworldEnv(10, 10, hidden_goal=True, should_render=False)
     env = ObservationPermutationWrapper(env)
-    env = NormalizedFloatWrapper(env)
+    env = FloatWrapper(env)
+    env = NormalizeWrapper(env)
     env = NoiseWrapper(env)
     data = GymEnvData(env)
     return data

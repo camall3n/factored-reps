@@ -11,10 +11,13 @@ import logging
 from factored_rl.agents.dqn import DQNAgent
 
 # Env
-from visgrid.envs import GridworldEnv
+import gym
+from gym.wrappers.flatten_observation import FlattenObservation
+import numpy as np
+from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper
 from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
-from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, NormalizedFloatWrapper, NoiseWrapper
+from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, FloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
 
 # ----------------------------------------
 # Args & hyperparameters
@@ -39,33 +42,43 @@ parser.add_argument('-f', '--fool-ipython', action='store_true',
 # Environment & wrappers
 # ----------------------------------------
 def initialize_env(args, cfg: configs.EnvConfig):
-    env = GridworldEnv(10,
-                       10,
-                       exploring_starts=True,
-                       terminate_on_goal=True,
-                       fixed_goal=True,
-                       hidden_goal=True,
-                       should_render=False,
-                       dimensions=GridworldEnv.dimensions_6x6_to_18x18)
+    if args.env == 'gridworld':
+        env = GridworldEnv(10,
+                           10,
+                           exploring_starts=True,
+                           terminate_on_goal=True,
+                           fixed_goal=True,
+                           hidden_goal=True,
+                           should_render=False,
+                           dimensions=GridworldEnv.dimensions_onehot)
+    elif args.env == 'taxi':
+        env = TaxiEnv(size=5,
+                      n_passengers=1,
+                      exploring_starts=True,
+                      terminate_on_goal=True,
+                      should_render=False,
+                      dimensions=TaxiEnv.dimensions_5x5_to_48x48)
+    else:
+        env = gym.make(args.env)
+        # TODO: wrap env to support disent protocol
+
     env.reset(seed=args.seed)
     env.action_space.seed(args.seed)
 
-    if args.permute:
-        assert not args.images
-        if args.permute == 'factors':
-            env = FactorPermutationWrapper(env)
-        elif args.permute == 'states':
-            env = ObservationPermutationWrapper(env)
-    if args.images:
-        env.set_rendering(enabled=args.images)
+    if args.transform == 'images':
+        env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
+        env = FlattenObservation(env)
     else:
-        env = NormalizedFloatWrapper(env)
-    if args.rotate:
-        env = RotationWrapper(env)
+        if args.transform == 'permute_factors':
+            env = FactorPermutationWrapper(env)
+        elif args.transform == 'permute_states':
+            env = ObservationPermutationWrapper(env)
+        env = NormalizeWrapper(FloatWrapper(env), -1, 1)
+        if args.transform == 'rotate':
+            env = TransformWrapper(RotationWrapper(env), lambda x: x / np.sqrt(2))
     if args.noise:
         env = NoiseWrapper(env, cfg.noise_std)
-
     return env
 
 # ----------------------------------------

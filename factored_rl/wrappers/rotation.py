@@ -1,3 +1,5 @@
+from typing import SupportsFloat
+
 import gym
 import numpy as np
 from scipy.stats import special_ortho_group
@@ -8,8 +10,11 @@ class RotationWrapper(gym.ObservationWrapper):
     """
     def __init__(self, env: gym.Env, axes=None):
         super().__init__(env)
+
+        ob_space = env.observation_space
+        assert np.issubdtype(ob_space.dtype, np.floating)
         if axes is None:
-            n_dims = env.observation_space.shape[0]
+            n_dims = ob_space.shape[0]
             self.axes = np.arange(n_dims)
         else:
             self.axes = np.asarray(axes)

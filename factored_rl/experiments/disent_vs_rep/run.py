@@ -6,10 +6,11 @@ from factored_rl import configs
 # Env
 import gym
 from gym.wrappers.flatten_observation import FlattenObservation
+import numpy as np
 from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper
 from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
-from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, NormalizedFloatWrapper, NoiseWrapper
+from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, FloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
 
 # Disent
 from disent import metrics
@@ -74,9 +75,9 @@ def initialize_env(args, cfg: configs.EnvConfig):
             env = FactorPermutationWrapper(env)
         elif args.transform == 'permute_states':
             env = ObservationPermutationWrapper(env)
-        elif args.transform == 'rotate':
-            env = RotationWrapper(env)
-        env = NormalizedFloatWrapper(env)
+        env = NormalizeWrapper(FloatWrapper(env), -1, 1)
+        if args.transform == 'rotate':
+            env = TransformWrapper(RotationWrapper(env), lambda x: x / np.sqrt(2))
     if args.noise:
         env = NoiseWrapper(env, cfg.noise_std)
     return env
