@@ -53,7 +53,7 @@ class DQNAgentConfig(AgentConfig):
 class EnvConfig:
     name: str = 'gridworld'
     noise_std: float = 0.01
-    n_training_episodes: int = 100
+    n_training_episodes: int = 200
     n_steps_per_episode: int = 1000
 
 @dataclass
