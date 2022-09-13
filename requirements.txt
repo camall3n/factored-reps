@@ -26,7 +26,6 @@ Cython==0.29.21
 dataclasses==0.6
 decorator==4.4.2
 defusedxml==0.6.0
--e git+ssh://git@github.com/camall3n/disent.git@4575947bd49af7ce4066bbe3e4517b2c3c57a761#egg=disent&subdirectory=../../disent
 distlib==0.3.5
 dm-control==0.0.322773188
 dm-env==1.3
