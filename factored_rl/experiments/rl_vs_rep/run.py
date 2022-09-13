@@ -41,8 +41,8 @@ parser.add_argument('-f', '--fool-ipython', action='store_true',
 # ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
-def initialize_env(args, cfg: configs.EnvConfig):
-    if args.env == 'gridworld':
+def initialize_env(args, env_cfg: configs.EnvConfig):
+    if env_cfg.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
                            exploring_starts=True,
@@ -51,7 +51,7 @@ def initialize_env(args, cfg: configs.EnvConfig):
                            hidden_goal=True,
                            should_render=False,
                            dimensions=GridworldEnv.dimensions_onehot)
-    elif args.env == 'taxi':
+    elif env_cfg.name == 'taxi':
         env = TaxiEnv(size=5,
                       n_passengers=1,
                       exploring_starts=True,
@@ -59,7 +59,7 @@ def initialize_env(args, cfg: configs.EnvConfig):
                       should_render=False,
                       dimensions=TaxiEnv.dimensions_5x5_to_48x48)
     else:
-        env = gym.make(args.env)
+        env = gym.make(env_cfg.name)
         # TODO: wrap env to support disent protocol
 
     env.reset(seed=args.seed)
@@ -78,7 +78,7 @@ def initialize_env(args, cfg: configs.EnvConfig):
         if args.transform == 'rotate':
             env = TransformWrapper(RotationWrapper(env), lambda x: x / np.sqrt(2))
     if args.noise:
-        env = NoiseWrapper(env, cfg.noise_std)
+        env = NoiseWrapper(env, env_cfg.noise_std)
     return env
 
 # ----------------------------------------

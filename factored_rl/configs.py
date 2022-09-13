@@ -51,6 +51,7 @@ class DQNAgentConfig(AgentConfig):
 
 @dataclass
 class EnvConfig:
+    name: str = 'gridworld'
     noise_std: float = 0.01
 
 @dataclass
