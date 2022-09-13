@@ -43,7 +43,7 @@ class AgentConfig:
 @dataclass
 class DQNAgentConfig(AgentConfig):
     target_copy_mode: str = 'soft'
-    target_copy_every_n_steps: int = None
+    target_copy_every_n_steps: int = MISSING
     target_copy_alpha: float = 0.01 # per-step EMA contribution from online network
     epsilon_initial: float = 1.0 # initial exploration probability
     epsilon_final: float = 0.01 # final / eval exploration probability
@@ -53,6 +53,8 @@ class DQNAgentConfig(AgentConfig):
 class EnvConfig:
     name: str = 'gridworld'
     noise_std: float = 0.01
+    n_training_episodes: int = 100
+    n_steps_per_episode: int = 1000
 
 @dataclass
 class ExperimentConfig:
@@ -67,7 +69,7 @@ class ExperimentConfig:
 class Config:
     experiment: ExperimentConfig = ExperimentConfig()
     env: EnvConfig = EnvConfig()
-    agent: AgentConfig = AgentConfig()
+    agent: AgentConfig = DQNAgentConfig()
 
 def get_config_yaml_str(cfg):
     return OmegaConf.to_yaml(cfg)
