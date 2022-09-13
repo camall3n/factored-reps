@@ -35,14 +35,14 @@ for env in ['gridworld', 'taxi']:
                 y='score',
                 x='metric',
                 hue='transform',
-                hue_order=['identity', 'permute_factors', 'permute_states', 'rotate', 'images'],
+                hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
                 # palette='colorblind',
                 )
     plt.title(f'Metric score vs. representation transform ({env})')
     plt.xlabel('Metric')
     plt.ylabel('Score')
-    plt.savefig(f'images/disent_vs_rep/{env}.png', facecolor='white')
     plt.tight_layout()
+    plt.savefig(f'images/disent_vs_rep/{env}.png', facecolor='white')
     plt.show()
 
 #%%
