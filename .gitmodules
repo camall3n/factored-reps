@@ -1,9 +1,13 @@
-[submodule "markov_abstr/dmcontrol"]
+[submodule "dmcontrol"]
 	path = dmcontrol
-	url = ../rad.git
-[submodule "markov_abstr/gridworld/visgrid"]
+	url = git@github.com:camall3n/rad.git
+[submodule "visgrid"]
 	path = visgrid
-	url = ../visgrid.git
+	url = git@github.com:camall3n/visgrid.git
 [submodule "disent"]
 	path = disent
 	url = git@github.com:camall3n/disent.git
+[submodule "dreamerv2"]
+	path = dreamerv2
+	url = git@github.com:camall3n/dreamerv2.git
+
