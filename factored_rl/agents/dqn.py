@@ -15,7 +15,16 @@ class DQNAgent():
         self.action_space = action_space
         self.cfg = cfg
 
-        self.replay = ReplayMemory(cfg.replay_buffer_size)
+        on_retrieve = {
+            '*': lambda x: torch.as_tensor(np.asarray(x)).to(cfg.model.device),
+            'ob': lambda x: x.float(),
+            'reward': lambda x: x.float(),
+            'terminal': lambda x: x.bool(),
+            'truncated': lambda x: x.bool(),
+            'next_ob': lambda x: x.float(),
+            'action': lambda x: x.long()
+        }
+        self.replay = ReplayMemory(cfg.replay_buffer_size, on_retrieve=on_retrieve)
 
         self.n_training_steps = 0
         input_shape = self.observation_space.shape
@@ -38,7 +47,7 @@ class DQNAgent():
             with torch.no_grad():
                 q_values = self._get_q_values_for_observation(observation)
                 action = torch.argmax(q_values.squeeze())
-        return action
+        return int(action)
 
     def store(self, experience: dict):
         self.replay.push(experience)
@@ -48,15 +57,15 @@ class DQNAgent():
             return 0.0
 
         if len(self.replay) >= self.cfg.batch_size:
-            fields = ['ob', 'state', 'action', 'reward', 'terminal', 'next_ob']
+            fields = ['ob', 'action', 'reward', 'terminal', 'next_ob']
             batch = self.replay.sample(self.cfg.batch_size, fields)
-            obs, states, actions, rewards, terminals, next_obs = batch
+            obs, actions, rewards, terminals, next_obs = batch
         else:
             return 0.0
 
         self.q.train()
         self.optimizer.zero_grad()
-        q_values = self._get_q_predictions(obs)
+        q_values = self._get_q_predictions(obs, actions)
         q_targets = self._get_q_targets(rewards, terminals, next_obs)
         loss = torch.nn.functional.smooth_l1_loss(input=q_values, target=q_targets)
         loss.backward()
@@ -75,10 +84,9 @@ class DQNAgent():
         if testing:
             epsilon = self.cfg.epsilon_final
         else:
-            t = self.n_training_steps - self.cfg.replay_warmup_steps
+            training_faction = self.n_training_steps / self.cfg.epsilon_half_life_steps
             scale = self.cfg.epsilon_initial - self.cfg.epsilon_final
-            epsilon = self.cfg.epsilon_final + scale * math.pow(0.5,
-                                                                t / self.cfg.epsilon_half_life)
+            epsilon = self.cfg.epsilon_final + scale * math.pow(0.5, training_faction)
         return epsilon
 
     def _get_q_targets(self, rewards, terminals, next_obs):
@@ -93,7 +101,7 @@ class DQNAgent():
 
     def _get_q_predictions(self, obs, action):
         q_values = self.q(obs) # (-1, A)
-        q_acted = extract(q_values, idx=torch.stack(action).long(), idx_dim=-1) #(-1, )
+        q_acted = extract(q_values, idx=action, idx_dim=-1) #(-1, )
         return q_acted
 
     def _get_q_values_for_observation(self, obs):
@@ -111,7 +119,7 @@ class DQNAgent():
             else:
                 return mlp
         elif cfg.architecture == 'nature_dqn':
-            return NatureDQN(n_actions=n_actions).to(cfg.device)
+            return NatureDQN(n_actions=n_actions)
         else:
             raise NotImplementedError('"{}" is not a known network architecture'.format(
                 cfg.architecture))
