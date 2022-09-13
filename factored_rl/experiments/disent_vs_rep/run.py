@@ -55,7 +55,7 @@ def initialize_env(args, cfg: configs.EnvConfig):
                       n_passengers=1,
                       exploring_starts=True,
                       terminate_on_goal=True,
-                      should_render=True,
+                      should_render=False,
                       dimensions=TaxiEnv.dimensions_5x5_to_48x48)
     else:
         env = gym.make(args.env)
