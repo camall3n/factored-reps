@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+experiment_name = 'disent_vs_rep'
+os.makedirs(f'images/{experiment_name}', exist_ok=True)
+
 results = []
-experiment_dirs = glob.glob('results/factored_rl/disent_vs_rep/*/*')
+experiment_dirs = glob.glob(f'results/factored_rl/{experiment_name}/*/*')
 for experiment_dir in experiment_dirs:
     filename = experiment_dir + '/results.json'
     if os.path.exists(filename):
@@ -42,7 +45,7 @@ for env in ['gridworld', 'taxi']:
     plt.xlabel('Metric')
     plt.ylabel('Score')
     plt.tight_layout()
-    plt.savefig(f'images/disent_vs_rep/{env}.png', facecolor='white')
+    plt.savefig(f'images/{experiment_name}/{env}.png', facecolor='white')
     plt.show()
 
 #%%
