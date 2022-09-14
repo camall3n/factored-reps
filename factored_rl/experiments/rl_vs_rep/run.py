@@ -146,11 +146,15 @@ agent = initialize_agent(env, args, cfg.agent)
 
 filename = cfg.experiment.dir + 'args.json'
 with open(filename, 'w') as args_file:
-    json.dump({
-        'env': cfg.env.name,
-        'noise': args.noise,
-        'transform': args.transform,
-    }, args_file)
+    json.dump(
+        {
+            'experiment': args.experiment,
+            'trial': args.trial,
+            'seed': args.seed,
+            'env': cfg.env.name,
+            'noise': args.noise,
+            'transform': args.transform,
+        }, args_file)
 
 filename = cfg.experiment.dir + 'results.json'
 with open(filename, 'w') as results_file:
