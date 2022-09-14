@@ -1,14 +1,15 @@
-import numpy as np
-
 class RandomAgent:
-    def __init__(self, n_actions):
-        self.n_actions = n_actions
+    def __init__(self, action_space):
+        self.action_space = action_space
 
-    def reset(self):
+    def save(self):
         pass
 
-    def act(self, x):
-        return np.random.randint(self.n_actions)
+    def act(self, _: int):
+        return self.action_space.sample()
 
-    def train(self, x, a, r, xp, done):
+    def store(self, _: dict):
         pass
+
+    def update(self) -> float:
+        return 0.0
