@@ -41,7 +41,7 @@ for transform, ax in zip(['identity', 'rotate', 'permute_factors', 'permute_stat
         env = FactorPermutationWrapper(env)
     env = NormalizeWrapper(FloatWrapper(env), -1, 1)
     if transform == 'rotate':
-        env = TransformWrapper(RotationWrapper(env), lambda x: x / np.sqrt(2))
+        env = RotationWrapper(env)
     env = ClipWrapper(NoiseWrapper(env, sigma=0.01), -1, 1)
     obs = []
     states = []

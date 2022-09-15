@@ -72,7 +72,7 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
             env = ObservationPermutationWrapper(env)
         env = NormalizeWrapper(FloatWrapper(env), -1, 1)
         if args.transform == 'rotate':
-            env = TransformWrapper(RotationWrapper(env), lambda x: x / np.sqrt(2))
+            env = RotationWrapper(env)
     if args.noise:
         env = NoiseWrapper(env, env_cfg.noise_std)
 

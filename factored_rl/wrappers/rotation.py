@@ -14,20 +14,22 @@ class RotationWrapper(gym.ObservationWrapper):
         ob_space = env.observation_space
         assert np.issubdtype(ob_space.dtype, np.floating)
         if axes is None:
-            n_dims = ob_space.shape[0]
-            self.axes = np.arange(n_dims)
+            self.n_dims = ob_space.shape[0]
+            self.axes = np.arange(self.n_dims)
         else:
             self.axes = np.asarray(axes)
-            n_dims = len(self.axes)
+            self.n_dims = len(self.axes)
 
-        if n_dims == 2:
+        if self.n_dims == 2:
             self._rotation_matrix = self._get_rotation_matrix(np.pi / 4)
         else:
-            self._rotation_matrix = special_ortho_group.rvs(n_dims, random_state=self.np_random)
+            self._rotation_matrix = special_ortho_group.rvs(self.n_dims,
+                                                            random_state=self.np_random)
 
     def observation(self, obs):
         factors = obs[self.axes]
         r_factors = self._rotation_matrix @ factors
+        r_factors /= np.sqrt(self.n_dims) # rescale so that factor values stay within same range
         obs[self.axes] = r_factors
         return obs
 
