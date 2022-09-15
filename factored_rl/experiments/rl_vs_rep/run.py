@@ -29,6 +29,7 @@ parser.add_argument('-s', '--seed', type=int, default=0, help='A seed for the ra
 parser.add_argument('--no-timestamp', action='store_true', help='Disable automatic trial timestamps')
 parser.add_argument('--noise', action='store_true')
 parser.add_argument('--transform', type=str, default='identity', choices=['identity', 'images', 'permute_factors', 'permute_states', 'rotate'])
+# parser.add_argument('--agent', type=str, default='dqn', choices=['dqn', 'expert', 'random'])
 parser.add_argument('--test', action='store_true')
 parser.add_argument('-f', '--fool-ipython', action='store_true',
     help='Dummy arg to make ipython happy')
@@ -64,7 +65,8 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
     if args.transform == 'images':
         env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
-        env = FlattenObservation(env)
+        if cfg.model.architecture == 'mlp':
+            env = FlattenObservation(env)
     else:
         if args.transform == 'permute_factors':
             env = FactorPermutationWrapper(env)
@@ -141,21 +143,23 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
 # ----------------------------------------
 
 args, cfg, log = configs.initialize_experiment(parser)
-env = initialize_env(args, cfg.env)
-agent = initialize_agent(env, args, cfg.agent)
 
-filename = cfg.experiment.dir + 'args.json'
-with open(filename, 'w') as args_file:
-    json.dump(
-        {
-            'experiment': args.experiment,
-            'trial': args.trial,
-            'seed': args.seed,
-            'env': cfg.env.name,
-            'noise': args.noise,
-            'transform': args.transform,
-        }, args_file)
+# env = initialize_env(args, cfg.env)
+# agent = initialize_agent(env, args, cfg.agent)
+# filename = cfg.experiment.dir + 'args.json'
+# with open(filename, 'w') as args_file:
+#     json.dump(
+#         {
+#             'experiment': args.experiment,
+#             'trial': args.trial,
+#             'seed': args.seed,
+#             'env': cfg.env.name,
+#             'noise': args.noise,
+#             'transform': args.transform,
+#             'agent': cfg.agent.name,
+#             'model': cfg.model.architecture,
+#         }, args_file)
 
-filename = cfg.experiment.dir + 'results.json'
-with open(filename, 'w') as results_file:
-    train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+# filename = cfg.experiment.dir + 'results.json'
+# with open(filename, 'w') as results_file:
+#     train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
