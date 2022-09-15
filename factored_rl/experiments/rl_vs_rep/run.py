@@ -3,8 +3,8 @@ import logging
 import yaml
 
 # Args & hyperparams
-from factored_rl import configs
 import hydra
+from factored_rl import configs
 
 # Env
 import gym
@@ -22,8 +22,24 @@ from visgrid.agents.expert import GridworldExpert, TaxiExpert
 from tqdm import tqdm
 
 # ----------------------------------------
+# Args & hyperparams
+# ----------------------------------------
+
+@hydra.main(config_path=None, config_name='rl_vs_rep', version_base=None)
+def main(cfg):
+    configs.initialize_experiment(cfg)
+
+    env = initialize_env(cfg)
+    agent = initialize_agent(env, cfg)
+
+    filename = cfg.dir + 'results.json'
+    with open(filename, 'w') as results_file:
+        train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+
+# ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
+
 def initialize_env(cfg: configs.RLvsRepConfig):
     if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
@@ -88,6 +104,7 @@ def initialize_agent(env, cfg: configs.RLvsRepConfig):
 # ----------------------------------------
 # Evaluate RL performance
 # ----------------------------------------
+
 def train_agent_on_env(agent, env, n_episodes, results_file=None):
     total_reward = 0
     total_steps = 0
@@ -135,19 +152,8 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
     return results
 
 # ----------------------------------------
-# Run experiment & save results
+# Run experiment
 # ----------------------------------------
-
-@hydra.main(config_path=None, config_name='rl_vs_rep', version_base=None)
-def main(cfg):
-    configs.initialize_experiment(cfg)
-
-    env = initialize_env(cfg)
-    agent = initialize_agent(env, cfg)
-
-    filename = cfg.dir + 'results.json'
-    with open(filename, 'w') as results_file:
-        train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
 
 if __name__ == '__main__':
     main()

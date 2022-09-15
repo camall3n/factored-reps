@@ -1,6 +1,8 @@
 import json
+import logging
 
 # Args & hyperparams
+import hydra
 from factored_rl import configs
 
 # Env
@@ -19,29 +21,43 @@ from disent.dataset.data import GymEnvData
 from disent.dataset import DisentDataset
 from disent.dataset.sampling import SingleSampler
 
-#%%
 # ----------------------------------------
-# Args & hyperparameters
+# Args & hyperparams
 # ----------------------------------------
 
-parser = configs.new_parser()
-# yapf: disable
-parser.add_argument('-e', '--experiment', type=str, default='rl_vs_disent', help='A name for the experiment')
-parser.add_argument('-t', '--trial', type=str, default='trial', help='A name for the trial')
-parser.add_argument('-s', '--seed', type=int, default=0, help='A seed for the random number generator')
-parser.add_argument('--no-timestamp', action='store_true', help='Disable automatic trial timestamps')
-parser.add_argument('--noise', action='store_true')
-parser.add_argument('--transform', type=str, default='identity', choices=['identity', 'images', 'permute_factors', 'permute_states', 'rotate'])
-parser.add_argument('--test', action='store_true')
-parser.add_argument('-f', '--fool-ipython', action='store_true',
-    help='Dummy arg to make ipython happy')
-# yapf: enable
+@hydra.main(config_path=None, config_name='rl_vs_rep', version_base=None)
+def main(cfg):
+    configs.initialize_experiment(cfg)
+    env = initialize_env(cfg)
+    data = GymEnvData(env)
+
+    metric_scores = {}
+    for metric in initialize_metrics():
+        dataset = DisentDataset(dataset=data, sampler=SingleSampler())
+        scores = metric(dataset, lambda x: x)
+        metric_scores.update(scores)
+
+    results = dict(**metric_scores)
+    results.update({
+        'experiment': cfg.experiment,
+        'trial': cfg.trial,
+        'seed': cfg.seed,
+        'env': cfg.env.name,
+        'noise': cfg.noise,
+        'transform': cfg.transform.name,
+    })
+
+    # Save results
+    filename = cfg.dir + 'results.json'
+    with open(filename, 'w') as file:
+        json.dump(results, file)
+    logging.getLogger().info(f'Results logged to: {filename}')
 
 # ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
-def initialize_env(args, env_cfg: configs.EnvConfig):
-    if env_cfg.name == 'gridworld':
+def initialize_env(cfg: configs.RLvsRepConfig):
+    if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
                            exploring_starts=True,
@@ -50,7 +66,7 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
                            hidden_goal=True,
                            should_render=False,
                            dimensions=GridworldEnv.dimensions_onehot)
-    elif env_cfg.name == 'taxi':
+    elif cfg.env.name == 'taxi':
         env = TaxiEnv(size=5,
                       n_passengers=1,
                       exploring_starts=True,
@@ -58,27 +74,28 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
                       should_render=False,
                       dimensions=TaxiEnv.dimensions_5x5_to_48x48)
     else:
-        env = gym.make(env_cfg.name)
+        env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
 
-    env.reset(seed=args.seed)
-    env.action_space.seed(args.seed)
-    disent_seed(args.seed)
+    env.reset(seed=cfg.seed)
+    env.action_space.seed(cfg.seed)
 
-    if args.transform == 'images':
+    if cfg.transform.name == 'images':
         env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
-        env = FlattenObservation(env)
+        if cfg.agent.model.architecture == 'mlp':
+            env = FlattenObservation(env)
     else:
-        if args.transform == 'permute_factors':
+        if cfg.transform.name == 'permute_factors':
             env = FactorPermutationWrapper(env)
-        elif args.transform == 'permute_states':
+        elif cfg.transform.name == 'permute_states':
             env = ObservationPermutationWrapper(env)
         env = NormalizeWrapper(FloatWrapper(env), -1, 1)
-        if args.transform == 'rotate':
+        if cfg.transform.name == 'rotate':
             env = RotationWrapper(env)
-    if args.noise:
-        env = NoiseWrapper(env, env_cfg.noise_std)
+    if cfg.noise:
+        env = NoiseWrapper(env, cfg.env.noise_std)
+
     return env
 
 # ----------------------------------------
@@ -91,34 +108,5 @@ def initialize_metrics():
         metrics.metric_mig,
     ]
 
-# ----------------------------------------
-# Run experiment trial
-# ----------------------------------------
-
-args, cfg, log = configs.initialize_experiment(parser)
-env = initialize_env(args, cfg.env)
-data = GymEnvData(env)
-
-metric_scores = {}
-for metric in initialize_metrics():
-    dataset = DisentDataset(dataset=data, sampler=SingleSampler())
-    scores = metric(dataset, lambda x: x)
-    metric_scores.update(scores)
-
-results = dict(**metric_scores)
-results.update({
-    'experiment': args.experiment,
-    'trial': args.trial,
-    'seed': args.seed,
-    'env': cfg.env.name,
-    'noise': args.noise,
-    'transform': args.transform,
-})
-
-# ----------------------------------------
-# Save results
-# ----------------------------------------
-filename = cfg.experiment.dir + 'results.json'
-with open(filename, 'w') as file:
-    json.dump(results, file)
-log.info(f'Results logged to: {filename}')
+if __name__ == '__main__':
+    main()
