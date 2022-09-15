@@ -65,7 +65,7 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
     if args.transform == 'images':
         env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
-        if cfg.model.architecture == 'mlp':
+        if cfg.agent.model.architecture == 'mlp':
             env = FlattenObservation(env)
     else:
         if args.transform == 'permute_factors':
@@ -157,7 +157,7 @@ args, cfg, log = configs.initialize_experiment(parser)
 #             'noise': args.noise,
 #             'transform': args.transform,
 #             'agent': cfg.agent.name,
-#             'model': cfg.model.architecture,
+#             'model': cfg.agent.model.architecture,
 #         }, args_file)
 
 # filename = cfg.experiment.dir + 'results.json'

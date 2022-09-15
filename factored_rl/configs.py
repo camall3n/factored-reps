@@ -38,14 +38,20 @@ class CNNModelConfig(ModelConfig):
     architecture: str = 'cnn'
     flatten_input: bool = False
 
-cs.store(group='model', name='base', node=ModelConfig)
-cs.store(group='model', name='mlp', node=MLPModelConfig)
-cs.store(group='model', name='cnn', node=CNNModelConfig)
+cs.store(group='agent/model', name='base', node=ModelConfig)
+cs.store(group='agent/model', name='mlp', node=MLPModelConfig)
+cs.store(group='agent/model', name='cnn', node=CNNModelConfig)
 
 @dataclass
 class AgentConfig:
+    defaults: List[Any] = immutable([
+        '_self_',
+        {'model': 'base'},
+    ]) # yapf: disable
+
     name: str = MISSING
     discount_factor: float = 0.99
+    model: ModelConfig = MISSING
 
 @dataclass
 class ExpertAgentConfig(AgentConfig):
@@ -57,6 +63,11 @@ class RandomAgentConfig(AgentConfig):
 
 @dataclass
 class DQNAgentConfig(AgentConfig):
+    defaults: List[Any] = immutable([
+        '_self_',
+        {'model': 'mlp'},
+    ]) # yapf: disable
+
     name: str = 'dqn'
     batch_size: int = 128
     epsilon_final: float = 0.01 # final / eval exploration probability
@@ -108,13 +119,11 @@ class Config:
         '_self_',
         {'env': 'base'},
         {'agent': 'base'},
-        {'model': 'base'},
     ]) # yapf: disable
 
     experiment: ExperimentConfig = ExperimentConfig()
     env: EnvConfig = MISSING
     agent: AgentConfig = MISSING
-    model: ModelConfig = MISSING
 
 cs.store(name='config', node=Config)
 
@@ -169,7 +178,7 @@ def _initialize_experiment_dir(args, exp_cfg: ExperimentConfig) -> str:
 def _initialize_device(cfg) -> torch.device:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     torch.zeros(1).to(device)
-    cfg.model.device = device
+    cfg.agent.model.device = device
     return device
 
 def _initialize_logger(exp_cfg: ExperimentConfig) -> logging.Logger:
@@ -187,5 +196,5 @@ def initialize_experiment(parser):
     log = _initialize_logger(cfg.experiment)
     log.info('\n' + yaml.dump(vars(args), sort_keys=False))
     log.info('\n' + get_config_yaml_str(cfg))
-    log.info(f'Training on device: {cfg.model.device}\n')
+    log.info(f'Training on device: {cfg.agent.model.device}\n')
     return args, cfg, log
