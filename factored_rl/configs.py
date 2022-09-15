@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import platform
-from typing import Any, List
+from typing import Any, List, Optional
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
@@ -16,7 +16,7 @@ cs = ConfigStore.instance()
 
 @dataclass
 class ModelConfig:
-    architecture: str = MISSING
+    architecture: Optional[str] = None
     device: str = MISSING
 
 @dataclass
@@ -141,6 +141,7 @@ class Config:
     timestamp: bool = True # Whether to add a timestamp to the experiment directory path
     noise: bool = False
     transform: TransformConfig = MISSING
+    test: bool = False
     verbose: bool = False
 
 @dataclass
@@ -189,3 +190,7 @@ def initialize_experiment(cfg):
     log = logging.getLogger()
     log.info('\n' + get_config_yaml_str(cfg))
     log.info(f'Training on device: {cfg.agent.model.device}\n')
+
+    filename = cfg.dir + 'config.yaml'
+    with open(filename, 'w') as args_file:
+        args_file.write(get_config_yaml_str(cfg))

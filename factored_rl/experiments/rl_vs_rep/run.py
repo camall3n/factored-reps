@@ -17,12 +17,14 @@ from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, FloatWrapper, Norm
 
 # Agent
 from factored_rl.agents.dqn import DQNAgent
+from factored_rl.agents.randomagent import RandomAgent
+from visgrid.agents.expert import GridworldExpert, TaxiExpert
 from tqdm import tqdm
 
 # ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
-def initialize_env(args, cfg: configs.RLvsRepConfig):
+def initialize_env(cfg: configs.RLvsRepConfig):
     if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
@@ -43,23 +45,23 @@ def initialize_env(args, cfg: configs.RLvsRepConfig):
         env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
 
-    env.reset(seed=args.seed)
-    env.action_space.seed(args.seed)
+    env.reset(seed=cfg.seed)
+    env.action_space.seed(cfg.seed)
 
-    if args.transform == 'images':
+    if cfg.transform.name == 'images':
         env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
         if cfg.agent.model.architecture == 'mlp':
             env = FlattenObservation(env)
     else:
-        if args.transform == 'permute_factors':
+        if cfg.transform.name == 'permute_factors':
             env = FactorPermutationWrapper(env)
-        elif args.transform == 'permute_states':
+        elif cfg.transform.name == 'permute_states':
             env = ObservationPermutationWrapper(env)
         env = NormalizeWrapper(FloatWrapper(env), -1, 1)
-        if args.transform == 'rotate':
+        if cfg.transform.name == 'rotate':
             env = RotationWrapper(env)
-    if args.noise:
+    if cfg.noise:
         env = NoiseWrapper(env, cfg.env.noise_std)
 
     env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
@@ -69,8 +71,18 @@ def initialize_env(args, cfg: configs.RLvsRepConfig):
 # Agent
 # ----------------------------------------
 
-def initialize_agent(env, args, cfg: configs.AgentConfig):
-    agent = DQNAgent(env.observation_space, env.action_space, cfg)
+def initialize_agent(env, cfg: configs.RLvsRepConfig):
+    if cfg.agent.name == 'expert':
+        if cfg.env.name == 'gridworld':
+            agent = GridworldExpert(env)
+        elif cfg.env.name == 'taxi':
+            agent = TaxiExpert(env)
+    elif cfg.agent.name == 'dqn':
+        agent = DQNAgent(env.observation_space, env.action_space, cfg.agent)
+    elif cfg.agent.name == 'random':
+        agent = RandomAgent(env.action_space)
+    else:
+        raise NotImplementedError
     return agent
 
 # ----------------------------------------
@@ -130,24 +142,12 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
 def main(cfg):
     configs.initialize_experiment(cfg)
 
-    # env = initialize_env(args, cfg.env)
-    # agent = initialize_agent(env, args, cfg.agent)
-    # filename = cfg.experiment.dir + 'args.json'
-    # with open(filename, 'w') as args_file:
-    #     json.dump(
-    #         {
-    #             'experiment': args.experiment,
-    #             'trial': args.trial,
-    #             'seed': args.seed,
-    #             'env': cfg.env.name,
-    #             'noise': args.noise,
-    #             'transform': args.transform,
-    #             'agent': cfg.agent.name,
-    #             'model': cfg.agent.model.architecture,
-    #         }, args_file)
+    env = initialize_env(cfg)
+    agent = initialize_agent(env, cfg)
 
-    # filename = cfg.experiment.dir + 'results.json'
-    # with open(filename, 'w') as results_file:
-    #     train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+    filename = cfg.dir + 'results.json'
+    with open(filename, 'w') as results_file:
+        train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
 
-main()
+if __name__ == '__main__':
+    main()
