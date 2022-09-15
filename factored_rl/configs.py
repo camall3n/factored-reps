@@ -1,20 +1,13 @@
-import argparse
 from dataclasses import dataclass, field
 import datetime
 import logging
 import os
 import platform
-from typing import Any, List, Optional, Tuple
-import yaml
+from typing import Any, List
 
-import hydra
-import hydra.core
 from hydra.core.config_store import ConfigStore
-from hydra.core.utils import configure_log
-from omegaconf import OmegaConf, MISSING, SI
+from omegaconf import OmegaConf, MISSING
 import torch
-
-from . import utils
 
 def immutable(obj):
     return field(default_factory=lambda: obj)
@@ -105,13 +98,30 @@ cs.store(group='env', name='gridworld', node=GridworldEnvConfig)
 cs.store(group='env', name='taxi', node=TaxiEnvConfig)
 
 @dataclass
-class ExperimentConfig:
-    name: str = MISSING
-    trial: str = MISSING
-    seed: int = MISSING
-    dir: str = MISSING
-    verbose: bool = False
-    timestamp: bool = True
+class TransformConfig:
+    name: str = 'identity'
+
+@dataclass
+class RotateConfig:
+    name: str = 'rotate'
+
+@dataclass
+class PermuteFactorsConfig:
+    name: str = 'permute_factors'
+
+@dataclass
+class PermuteStatesConfig:
+    name: str = 'permute_states'
+
+@dataclass
+class ImagesConfig:
+    name: str = 'images'
+
+cs.store(group='transform', name='identity', node=TransformConfig)
+cs.store(group='transform', name='rotate', node=RotateConfig)
+cs.store(group='transform', name='permute_factors', node=PermuteFactorsConfig)
+cs.store(group='transform', name='permute_states', node=PermuteStatesConfig)
+cs.store(group='transform', name='images', node=ImagesConfig)
 
 @dataclass
 class Config:
@@ -119,61 +129,47 @@ class Config:
         '_self_',
         {'env': 'base'},
         {'agent': 'base'},
+        {'transform': 'identity'},
     ]) # yapf: disable
 
-    experiment: ExperimentConfig = ExperimentConfig()
+    experiment: str = MISSING
+    dir: str = MISSING
     env: EnvConfig = MISSING
     agent: AgentConfig = MISSING
+    trial: str = 'trial' # A name for the trial
+    seed: int = 0 # A seed for the random number generator
+    timestamp: bool = True # Whether to add a timestamp to the experiment directory path
+    noise: bool = False
+    transform: TransformConfig = MISSING
+    verbose: bool = False
 
-cs.store(name='config', node=Config)
+@dataclass
+class RLvsRepConfig(Config):
+    experiment: str = 'rl_vs_rep'
+
+@dataclass
+class DisentvsRepConfig(Config):
+    experiment: str = 'disent_vs_rep'
+
+@dataclass
+class DisentvsRLConfig(Config):
+    experiment: str = 'disent_vs_rl'
+
+cs.store(name='rl_vs_rep', node=RLvsRepConfig)
+cs.store(name='disent_vs_rep', node=DisentvsRepConfig)
+cs.store(name='disent_vs_rl', node=DisentvsRLConfig)
 
 def get_config_yaml_str(cfg):
     return OmegaConf.to_yaml(cfg)
 
-def new_parser():
-    """Return a nicely formatted argument parser
-
-    This function is a simple wrapper for the argument parser I like to use,
-    which has a stupidly long argument that I always forget.
-    """
-    return argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-def _parse_args_and_overrides(parser) -> Tuple[argparse.ArgumentParser, list]:
-    """
-    1. Parse known args registered with the argparse parser
-    2. Keep track of unknown args (e.g. '--some_hyperparameter')
-    2. Load default hyperparameters from args.hyperparams file
-    3. For known args, add them directly to the list of hyperparameters
-    4. For unknown args, check if they match a valid hyperparameter, and update the value
-    5. Return a namespace so we can access values easily (e.g. `args.some_hyperparameter`)
-    """
-    args, unknown = parser.parse_known_args()
-    del args.fool_ipython
-    unknown = [term for arg in unknown for term in arg.split('=')]
-    overrides = [
-        f"{utils.remove_prefix(key, '--')}={val}"
-        for (key, val) in zip(unknown[::2], unknown[1::2])
-    ]
-    return args, overrides
-
-def _initialize_hydra_config(args, overrides: list) -> Config:
-    if not hydra.core.global_hydra.GlobalHydra.instance().is_initialized():
-        hydra.initialize(version_base=None, config_path=None, job_name=args.experiment)
-    cfg = hydra.compose(config_name='config', overrides=overrides)
-    return cfg
-
-def _initialize_experiment_dir(args, exp_cfg: ExperimentConfig) -> str:
-    trial_name = args.trial
-    if exp_cfg.timestamp and not args.no_timestamp:
-        trial_name += '__' + datetime.datetime.now().strftime(r'%Y-%m-%d_%H-%M-%S')
-    exp_cfg.name = args.experiment
-    exp_cfg.trial = trial_name
-    exp_cfg.seed = args.seed
+def _initialize_experiment_dir(cfg: Config) -> str:
+    if cfg.timestamp:
+        cfg.trial += '__' + datetime.datetime.now().strftime(r'%Y-%m-%d_%H-%M-%S')
     prefix = '~/data-gdk/csal/factored' if platform.system() == 'Linux' else '~/dev/factored-reps'
     prefix = os.path.expanduser(prefix)
-    exp_cfg.dir = f'{prefix}/results/factored_rl/{args.experiment}/{trial_name}/{args.seed:04d}/'
-    os.makedirs(exp_cfg.dir, exist_ok=True)
-    return exp_cfg.dir
+    cfg.dir = f'{prefix}/results/factored_rl/{cfg.experiment}/{cfg.trial}/{cfg.seed:04d}/'
+    os.makedirs(cfg.dir, exist_ok=True)
+    return cfg.dir
 
 def _initialize_device(cfg) -> torch.device:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -181,20 +177,15 @@ def _initialize_device(cfg) -> torch.device:
     cfg.agent.model.device = device
     return device
 
-def _initialize_logger(exp_cfg: ExperimentConfig) -> logging.Logger:
-    configure_log(None, verbose_config=exp_cfg.verbose)
+def _initialize_logger(cfg: Config) -> logging.Logger:
     log = logging.getLogger()
-    log_filename = exp_cfg.dir + 'log.txt'
+    log_filename = cfg.dir + 'log.txt'
     log.addHandler(logging.FileHandler(log_filename, mode='w'))
-    return log
 
-def initialize_experiment(parser):
-    args, overrides = _parse_args_and_overrides(parser)
-    cfg = _initialize_hydra_config(args, overrides)
-    _initialize_experiment_dir(args, cfg.experiment)
+def initialize_experiment(cfg):
+    _initialize_experiment_dir(cfg)
     _initialize_device(cfg)
-    log = _initialize_logger(cfg.experiment)
-    log.info('\n' + yaml.dump(vars(args), sort_keys=False))
+    _initialize_logger(cfg)
+    log = logging.getLogger()
     log.info('\n' + get_config_yaml_str(cfg))
     log.info(f'Training on device: {cfg.agent.model.device}\n')
-    return args, cfg, log

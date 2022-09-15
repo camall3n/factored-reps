@@ -1,8 +1,10 @@
 import json
+import logging
 import yaml
 
 # Args & hyperparams
 from factored_rl import configs
+import hydra
 
 # Env
 import gym
@@ -18,28 +20,10 @@ from factored_rl.agents.dqn import DQNAgent
 from tqdm import tqdm
 
 # ----------------------------------------
-# Args & hyperparameters
-# ----------------------------------------
-
-parser = configs.new_parser()
-# yapf: disable
-parser.add_argument('-e', '--experiment', type=str, default='rl_vs_rep', help='A name for the experiment')
-parser.add_argument('-t', '--trial', type=str, default='trial', help='A name for the trial')
-parser.add_argument('-s', '--seed', type=int, default=0, help='A seed for the random number generator')
-parser.add_argument('--no-timestamp', action='store_true', help='Disable automatic trial timestamps')
-parser.add_argument('--noise', action='store_true')
-parser.add_argument('--transform', type=str, default='identity', choices=['identity', 'images', 'permute_factors', 'permute_states', 'rotate'])
-# parser.add_argument('--agent', type=str, default='dqn', choices=['dqn', 'expert', 'random'])
-parser.add_argument('--test', action='store_true')
-parser.add_argument('-f', '--fool-ipython', action='store_true',
-    help='Dummy arg to make ipython happy')
-# yapf: enable
-
-# ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
-def initialize_env(args, env_cfg: configs.EnvConfig):
-    if env_cfg.name == 'gridworld':
+def initialize_env(args, cfg: configs.RLvsRepConfig):
+    if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
                            exploring_starts=True,
@@ -48,7 +32,7 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
                            hidden_goal=True,
                            should_render=False,
                            dimensions=GridworldEnv.dimensions_onehot)
-    elif env_cfg.name == 'taxi':
+    elif cfg.env.name == 'taxi':
         env = TaxiEnv(size=5,
                       n_passengers=1,
                       exploring_starts=True,
@@ -56,7 +40,7 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
                       should_render=False,
                       dimensions=TaxiEnv.dimensions_5x5_to_48x48)
     else:
-        env = gym.make(env_cfg.name)
+        env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
 
     env.reset(seed=args.seed)
@@ -76,9 +60,9 @@ def initialize_env(args, env_cfg: configs.EnvConfig):
         if args.transform == 'rotate':
             env = RotationWrapper(env)
     if args.noise:
-        env = NoiseWrapper(env, env_cfg.noise_std)
+        env = NoiseWrapper(env, cfg.env.noise_std)
 
-    env = TimeLimit(env, max_episode_steps=env_cfg.n_steps_per_episode)
+    env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
     return env
 
 # ----------------------------------------
@@ -135,31 +119,35 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
         results.append(episode_result)
         if results_file is not None:
             results_file.write(json.dumps(episode_result) + '\n')
-        log.info('\n' + yaml.dump(episode_result, sort_keys=False))
+        logging.getLogger().info('\n' + yaml.dump(episode_result, sort_keys=False))
     return results
 
 # ----------------------------------------
 # Run experiment & save results
 # ----------------------------------------
 
-args, cfg, log = configs.initialize_experiment(parser)
+@hydra.main(config_path=None, config_name='rl_vs_rep', version_base=None)
+def main(cfg):
+    configs.initialize_experiment(cfg)
 
-# env = initialize_env(args, cfg.env)
-# agent = initialize_agent(env, args, cfg.agent)
-# filename = cfg.experiment.dir + 'args.json'
-# with open(filename, 'w') as args_file:
-#     json.dump(
-#         {
-#             'experiment': args.experiment,
-#             'trial': args.trial,
-#             'seed': args.seed,
-#             'env': cfg.env.name,
-#             'noise': args.noise,
-#             'transform': args.transform,
-#             'agent': cfg.agent.name,
-#             'model': cfg.agent.model.architecture,
-#         }, args_file)
+    # env = initialize_env(args, cfg.env)
+    # agent = initialize_agent(env, args, cfg.agent)
+    # filename = cfg.experiment.dir + 'args.json'
+    # with open(filename, 'w') as args_file:
+    #     json.dump(
+    #         {
+    #             'experiment': args.experiment,
+    #             'trial': args.trial,
+    #             'seed': args.seed,
+    #             'env': cfg.env.name,
+    #             'noise': args.noise,
+    #             'transform': args.transform,
+    #             'agent': cfg.agent.name,
+    #             'model': cfg.agent.model.architecture,
+    #         }, args_file)
 
-# filename = cfg.experiment.dir + 'results.json'
-# with open(filename, 'w') as results_file:
-#     train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+    # filename = cfg.experiment.dir + 'results.json'
+    # with open(filename, 'w') as results_file:
+    #     train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+
+main()
