@@ -1,27 +1,24 @@
+import numpy as np
 import torch
 
-from . import nnutils
+from .nnutils import Network, Sequential, Reshape
+from . import CNN, MLP
 
-class NatureDQN(nnutils.Network):
+class NatureDQN(Network):
     def __init__(self, input_shape=(4, 84, 84), n_actions=18):
         super().__init__()
-        shape = nnutils.get_conv2d_output_size(input_shape[1:], (8, 8), 4)
-        shape = nnutils.get_conv2d_output_size(shape, (4, 4), 2)
-        shape = nnutils.get_conv2d_output_size(shape, (3, 3), 1)
-        flattened_size = shape[0] * shape[1] * 64
-        self.encoder = nnutils.Sequential(
-            torch.nn.Conv2d(input_shape[0], 32, kernel_size=(8, 8), stride=4),
-            torch.nn.ReLU(),
-            torch.nn.Conv2d(32, 64, kernel_size=(4, 4), stride=2),
-            torch.nn.ReLU(),
-            torch.nn.Conv2d(64, 64, kernel_size=(3, 3), stride=1),
-            torch.nn.ReLU(),
-            nnutils.Reshape(-1, flattened_size),
-        )
-        self.model = nnutils.Sequential(torch.nn.Linear(flattened_size, 512), torch.nn.ReLU(),
-                                        torch.nn.Linear(512, n_actions))
+        assert input_shape[-2:] == (84, 84)
+        cnn = CNN(input_shape=input_shape,
+                  kernel_sizes=[8, 4, 3],
+                  n_output_channels=[32, 64, 64],
+                  strides=[4, 2, 1])
+        n_flattened = np.prod(cnn.output_shape)
+        mlp = MLP(n_inputs=n_flattened,
+                  n_outputs=n_actions,
+                  n_hidden_layers=1,
+                  n_units_per_layer=512,
+                  activation=torch.nn.ReLU)
+        self.model = Sequential(*[cnn, Reshape(-1, n_flattened), mlp])
 
     def forward(self, x):
-        if len(x.shape) == 3:
-            x = x.unsqueeze(0) # add a batch dimension
-        return self.model(self.encoder(x))
+        return self.model(x)

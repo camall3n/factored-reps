@@ -119,7 +119,7 @@ class DQNAgent():
             else:
                 return mlp
         elif cfg.architecture == 'nature_dqn':
-            return NatureDQN(n_actions=n_actions)
+            return NatureDQN(input_shape, n_actions)
         else:
             raise NotImplementedError('"{}" is not a known network architecture'.format(
                 cfg.architecture))
