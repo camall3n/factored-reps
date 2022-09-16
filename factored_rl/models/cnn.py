@@ -79,6 +79,11 @@ class CNN(Network):
 
         self.model = torch.nn.Sequential(*self.layers)
 
+    def forward(self, x):
+        if self.n_input_channels == 0:
+            x = torch.unsqueeze(x, -3)
+        return self.model(x)
+
     def _list_of_pairs(self, pair, argname: str, default_value):
         """
         Check if pair is a valid PairListType and output a list of pairs with length self.n_layers
@@ -102,12 +107,10 @@ class CNN(Network):
         assert len(pair_list) == self.n_layers
         return pair_list
 
-    def forward(self, x):
-        if self.n_input_channels == 0:
-            x = torch.unsqueeze(x, -3)
-        return self.model(x)
-
     def _conv2d_size(self, input_shape: Tuple[int], layer: torch.nn.Conv2d):
+        """
+        Compute the output shape after applying the Conv2d layer to the input shape
+        """
         _, h_in, w_in = input_shape
         k = layer.kernel_size
         s = layer.stride
@@ -124,6 +127,11 @@ class CNN(Network):
                      stride: int = 1,
                      dilation: int = 1,
                      padding: int = 0):
+        """
+        Compute the linear size associated with a 1D convolution operation
+
+        Code shared by David Tao
+        """
         numerator = v_in + 2 * padding - dilation * (kernel_size - 1) - 1
         float_out = (numerator / stride) + 1
         return int(np.floor(float_out))
