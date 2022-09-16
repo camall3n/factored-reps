@@ -5,7 +5,7 @@ import torch
 
 from factored_rl import configs
 from factored_rl.models.nnutils import extract, Sequential, Reshape
-from factored_rl.models.mlp import MLP
+from factored_rl.models import MLP, CNN
 from .replaymemory import ReplayMemory
 from ..models.dqn_nature import NatureDQN
 
@@ -120,6 +120,27 @@ class DQNAgent():
                 return mlp
         elif cfg.architecture == 'nature_dqn':
             return NatureDQN(input_shape, n_actions)
+        elif cfg.architecture == 'cnn10x10':
+            assert input_shape[-2:] == (10, 10)
+            cnn = CNN(
+                input_shape=input_shape,
+                kernel_sizes=[8, 4, 3],
+                n_output_channels=[32, 64, 64],
+                strides=[4, 2, 1],
+            )
+            n_flattened = np.prod(cnn.output_shape)
+            mlp = MLP(
+                n_inputs=n_flattened,
+                n_outputs=n_actions,
+                n_hidden_layers=cfg.n_hidden_layers,
+                n_units_per_layer=cfg.n_units_per_layer,
+                activation=torch.nn.ReLU,
+            )
+            return Sequential(*[
+                cnn,
+                Reshape(-1, n_flattened),
+                mlp,
+            ])
         else:
             raise NotImplementedError('"{}" is not a known network architecture'.format(
                 cfg.architecture))
