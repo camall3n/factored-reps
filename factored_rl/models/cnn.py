@@ -56,6 +56,7 @@ class CNN(Network):
             activations = activation + [final_activation]
 
         self.layers = []
+        self.layer_shapes = [(1, ) + input_shape if self.n_input_channels == 0 else input_shape]
         for i in range(self.n_layers):
             conv = torch.nn.Conv2d(
                 in_channels=n_channels[i],
@@ -67,15 +68,21 @@ class CNN(Network):
                 **kwargs,
             )
             self.layers.append(conv)
-            self.output_shape = self._conv2d_size(input_shape=self.output_shape, layer=conv)
+            out_shape = self._conv2d_size(input_shape=self.layer_shapes[-1], layer=conv)
+            self.layer_shapes.append(out_shape)
             if activations[i] is not None:
                 try:
                     self.layers.append(activations[i]())
                 except TypeError:
                     self.layers.append(activations[i])
 
-        assert all(np.array(self.output_shape) >= 1
-                   ), f'The specified CNN has invalid output shape: {self.output_shape}'
+        self.output_shape = self.layer_shapes[-1]
+        if not all(np.array(self.output_shape) >= 1):
+            raise ValueError(
+                f'The specified CNN has invalid output shape: {self.output_shape}\n'
+                f'\n'
+                f'Layer sizes:\n' +
+                f'\n'.join([f'  {i:2d}. {shape}' for i, shape in enumerate(self.layer_shapes)]))
 
         self.model = torch.nn.Sequential(*self.layers)
 

@@ -35,7 +35,7 @@ def test_3d_input(cnn48x48):
 
 def test_warning_for_HWC():
     with pytest.warns():
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             CNN(input_shape=(48, 48, 3),
                 n_output_channels=[32, 64, 64],
                 kernel_sizes=[11, 9, 6],
