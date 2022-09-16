@@ -8,7 +8,6 @@ from factored_rl import configs
 from factored_rl.models.nnutils import extract, Sequential, Reshape
 from factored_rl.models import MLP, CNN
 from .replaymemory import ReplayMemory
-from ..models.dqn_nature import NatureDQN
 
 class DQNAgent():
     def __init__(self, observation_space, action_space, cfg: configs.AgentConfig):
