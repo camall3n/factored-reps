@@ -108,7 +108,7 @@ class DQNAgent():
         return self.q(torch.as_tensor(obs).float().to(self.cfg.model.device))
 
     def _make_qnet(self, input_shape, n_actions, cfg: configs.ModelConfig):
-        if 'mlp' in cfg.architecture:
+        if cfg.architecture == 'mlp':
             n_features = np.prod(input_shape) if len(input_shape) > 1 else input_shape[0]
             mlp = MLP(n_inputs=n_features,
                       n_outputs=n_actions,
@@ -119,7 +119,7 @@ class DQNAgent():
                 return Sequential(*[Reshape(-1, n_features), mlp])
             else:
                 return mlp
-        elif 'cnn' in cfg.architecture:
+        elif cfg.architecture == 'cnn':
             assert input_shape[-2:] == cfg.supported_2d_input_shape
             cnn = CNN(
                 input_shape=input_shape,
