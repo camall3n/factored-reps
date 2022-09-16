@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import platform
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
@@ -19,20 +19,22 @@ class ModelConfig:
 
 @dataclass
 class MLPModelConfig(ModelConfig):
-    architecture: str = 'mlp'
+    architecture: str = 'base_mlp'
     flatten_input: bool = True
-    n_hidden_layers: int = 1
-    n_units_per_layer: int = 32
+    n_hidden_layers: int = MISSING
+    n_units_per_layer: int = MISSING
+    activation: Optional[Dict[str, str]] = None
 
 @dataclass
 class CNNModelConfig(MLPModelConfig):
-    architecture: str = 'cnn'
+    architecture: str = 'base_cnn'
     flatten_input: bool = False
+    supported_2d_input_shape: Tuple[int, int] = MISSING # (H, W)
     n_output_channels: List[int] = MISSING
     kernel_sizes: Any = MISSING
     strides: Any = MISSING
-    padding: Any = MISSING
-    dilations: Any = MISSING
+    padding: Any = None
+    dilations: Any = None
 
 @dataclass
 class AgentConfig:

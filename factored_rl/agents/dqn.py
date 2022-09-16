@@ -1,5 +1,6 @@
 import math
 
+import hydra
 import numpy as np
 import torch
 
@@ -108,39 +109,35 @@ class DQNAgent():
         return self.q(torch.as_tensor(obs).float().to(self.cfg.model.device))
 
     def _make_qnet(self, input_shape, n_actions, cfg: configs.ModelConfig):
-        if cfg.architecture == 'mlp':
+        if 'mlp' in cfg.architecture:
             n_features = np.prod(input_shape) if len(input_shape) > 1 else input_shape[0]
             mlp = MLP(n_inputs=n_features,
                       n_outputs=n_actions,
                       n_hidden_layers=cfg.n_hidden_layers,
-                      n_units_per_layer=cfg.n_units_per_layer)
+                      n_units_per_layer=cfg.n_units_per_layer,
+                      activation=hydra.utils.instantiate(cfg.activation))
             if len(input_shape) > 1:
                 return Sequential(*[Reshape(-1, n_features), mlp])
             else:
                 return mlp
-        elif cfg.architecture == 'nature_dqn':
-            return NatureDQN(input_shape, n_actions)
-        elif cfg.architecture == 'cnn10x10':
-            assert input_shape[-2:] == (10, 10)
+        elif 'cnn' in cfg.architecture:
+            assert input_shape[-2:] == cfg.supported_2d_input_shape
             cnn = CNN(
                 input_shape=input_shape,
-                kernel_sizes=[8, 4, 3],
-                n_output_channels=[32, 64, 64],
-                strides=[4, 2, 1],
+                n_output_channels=cfg.n_output_channels,
+                kernel_sizes=cfg.kernel_sizes,
+                strides=cfg.strides,
+                activation=hydra.utils.instantiate(cfg.activation),
             )
-            n_flattened = np.prod(cnn.output_shape)
+            n_features = np.prod(cnn.output_shape)
             mlp = MLP(
-                n_inputs=n_flattened,
+                n_inputs=n_features,
                 n_outputs=n_actions,
                 n_hidden_layers=cfg.n_hidden_layers,
                 n_units_per_layer=cfg.n_units_per_layer,
-                activation=torch.nn.ReLU,
+                activation=hydra.utils.instantiate(cfg.activation),
             )
-            return Sequential(*[
-                cnn,
-                Reshape(-1, n_flattened),
-                mlp,
-            ])
+            return Sequential(*[cnn, Reshape(-1, n_features), mlp])
         else:
             raise NotImplementedError('"{}" is not a known network architecture'.format(
                 cfg.architecture))

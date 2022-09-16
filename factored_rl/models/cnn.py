@@ -81,7 +81,7 @@ class CNN(Network):
             raise ValueError(
                 f'The specified CNN has invalid output shape: {self.output_shape}\n'
                 f'\n'
-                f'Layer sizes:\n' +
+                f'Layer shapes:\n' +
                 f'\n'.join([f'  {i:2d}. {shape}' for i, shape in enumerate(self.layer_shapes)]))
 
         self.model = torch.nn.Sequential(*self.layers)
@@ -90,6 +90,10 @@ class CNN(Network):
         if self.n_input_channels == 0:
             x = torch.unsqueeze(x, -3)
         return self.model(x)
+
+    def print_layers(self):
+        print(f'Layer shapes:\n' +
+              f'\n'.join([f'  {i:2d}. {shape}' for i, shape in enumerate(self.layer_shapes)]))
 
     def _list_of_pairs(self, pair, argname: str, default_value):
         """

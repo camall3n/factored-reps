@@ -9,8 +9,8 @@ class NatureDQN(Network):
         super().__init__()
         assert input_shape[-2:] == (84, 84)
         cnn = CNN(input_shape=input_shape,
-                  kernel_sizes=[8, 4, 3],
                   n_output_channels=[32, 64, 64],
+                  kernel_sizes=[8, 4, 3],
                   strides=[4, 2, 1])
         n_flattened = np.prod(cnn.output_shape)
         mlp = MLP(n_inputs=n_flattened,

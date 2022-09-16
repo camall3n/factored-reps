@@ -1,9 +1,0 @@
-defaults:
-  - base_cnn
-
-architecture: 'nature_dqn'
-n_output_channels: []
-kernel_sizes: []
-strides: []
-padding: null
-dilations: null
