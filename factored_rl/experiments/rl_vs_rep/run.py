@@ -25,9 +25,9 @@ from tqdm import tqdm
 # Args & hyperparams
 # ----------------------------------------
 
-@hydra.main(config_path=None, config_name='rl_vs_rep', version_base=None)
+@hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg):
-    configs.initialize_experiment(cfg)
+    configs.initialize_experiment(cfg, 'rl_vs_rep')
 
     env = initialize_env(cfg)
     agent = initialize_agent(env, cfg)

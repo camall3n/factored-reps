@@ -1,0 +1,4 @@
+defaults:
+  - base_agent
+
+name: random

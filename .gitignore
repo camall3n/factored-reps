@@ -2,7 +2,6 @@
 **.ipynb_checkpoints/
 .vscode/
 data/
-env/
 venv/
 images/
 videos/

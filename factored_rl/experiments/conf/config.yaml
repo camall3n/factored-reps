@@ -1,0 +1,8 @@
+defaults:
+  - _self_
+  - base_config
+  - env: base_env
+  - agent: base_agent
+  - transform: base_transform
+
+debug: true

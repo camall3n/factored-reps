@@ -1,0 +1,16 @@
+defaults:
+  - base_dqn_agent
+  - model: mlp
+  - _self_
+
+name: dqn
+batch_size: 128
+epsilon_final: 0.01
+epsilon_half_life_steps: 1000
+epsilon_initial: 1.0
+learning_rate: 0.001
+replay_buffer_size: 50000
+replay_warmup_steps: 500
+target_copy_alpha: 0.01
+target_copy_every_n_steps: ???
+target_copy_mode: 'soft'

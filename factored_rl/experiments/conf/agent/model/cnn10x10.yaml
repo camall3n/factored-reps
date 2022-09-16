@@ -1,0 +1,9 @@
+defaults:
+  - base_cnn
+
+architecture: 'cnn_10x10'
+n_output_channels: []
+kernel_sizes: []
+strides: []
+padding: null
+dilations: null
