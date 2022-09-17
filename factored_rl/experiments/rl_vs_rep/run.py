@@ -90,9 +90,9 @@ def initialize_env(cfg: configs.RLvsRepConfig):
 def initialize_agent(env, cfg: configs.RLvsRepConfig):
     if cfg.agent.name == 'expert':
         if cfg.env.name == 'gridworld':
-            agent = GridworldExpert(env)
+            agent = GridworldExpert(env.unwrapped)
         elif cfg.env.name == 'taxi':
-            agent = TaxiExpert(env)
+            agent = TaxiExpert(env.unwrapped)
     elif cfg.agent.name == 'dqn':
         agent = DQNAgent(env.observation_space, env.action_space, cfg.agent)
     elif cfg.agent.name == 'random':
