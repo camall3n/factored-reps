@@ -1,0 +1,11 @@
+defaults:
+  - base_cnn
+
+supported_2d_input_shape: [64, 64]
+n_output_channels: [32, 32, 64, 64]
+kernel_sizes: 4
+strides: 2
+n_hidden_layers: 1
+n_units_per_layer: 256
+activation:
+  _target_: torch.nn.ReLU

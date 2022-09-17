@@ -3,8 +3,8 @@ defaults:
 
 supported_2d_input_shape: [10, 10]
 n_output_channels: [8, 16, 32]
-kernel_sizes: [6, 4, 2]
-strides: null
+kernel_sizes: [4, 3, 2]
+strides: [2, 1, 1]
 n_hidden_layers: 1
 n_units_per_layer: 64
 activation:
