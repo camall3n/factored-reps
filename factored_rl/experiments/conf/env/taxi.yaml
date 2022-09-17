@@ -2,3 +2,5 @@ defaults:
   - base_env
 
 name: taxi
+n_training_episodes: 2000
+n_steps_per_episode: 500

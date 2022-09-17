@@ -77,8 +77,8 @@ def initialize_env(cfg: configs.RLvsRepConfig):
         env = NormalizeWrapper(FloatWrapper(env), -1, 1)
         if cfg.transform.name == 'rotate':
             env = RotationWrapper(env)
-    if cfg.noise:
-        env = NoiseWrapper(env, cfg.env.noise_std)
+    if cfg.transform.noise_std is not None:
+        env = NoiseWrapper(env, cfg.transform.noise_std)
 
     env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
     return env
@@ -148,7 +148,7 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
         results.append(episode_result)
         if results_file is not None:
             results_file.write(json.dumps(episode_result) + '\n')
-        logging.getLogger().info('\n' + yaml.dump(episode_result, sort_keys=False))
+        # logging.getLogger().info('\n' + yaml.dump(episode_result, sort_keys=False))
     return results
 
 # ----------------------------------------

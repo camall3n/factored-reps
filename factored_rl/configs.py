@@ -58,13 +58,13 @@ class DQNAgentConfig(AgentConfig):
 @dataclass
 class EnvConfig:
     name: str = MISSING
-    noise_std: float = 0.01
-    n_training_episodes: int = 200
-    n_steps_per_episode: int = 1000
+    n_training_episodes: int = MISSING
+    n_steps_per_episode: int = MISSING
 
 @dataclass
 class TransformConfig:
     name: str = MISSING
+    noise_std: float = 0.01
 
 @dataclass
 class Config:
