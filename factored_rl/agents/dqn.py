@@ -84,9 +84,9 @@ class DQNAgent():
         if testing:
             epsilon = self.cfg.epsilon_final
         else:
-            training_faction = self.n_training_steps / self.cfg.epsilon_half_life_steps
+            n_fractional_half_lives = self.n_training_steps / self.cfg.epsilon_half_life_steps
             scale = self.cfg.epsilon_initial - self.cfg.epsilon_final
-            epsilon = self.cfg.epsilon_final + scale * math.pow(0.5, training_faction)
+            epsilon = self.cfg.epsilon_final + scale * math.pow(0.5, n_fractional_half_lives)
         return epsilon
 
     def _get_q_targets(self, rewards, terminals, next_obs):
