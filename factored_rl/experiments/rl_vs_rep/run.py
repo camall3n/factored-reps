@@ -148,7 +148,7 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
         results.append(episode_result)
         if results_file is not None:
             results_file.write(json.dumps(episode_result) + '\n')
-        # logging.getLogger().info('\n' + yaml.dump(episode_result, sort_keys=False))
+        logging.getLogger().info('\n' + yaml.dump(episode_result, sort_keys=False))
     return results
 
 # ----------------------------------------
