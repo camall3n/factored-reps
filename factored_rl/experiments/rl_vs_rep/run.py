@@ -56,7 +56,7 @@ def initialize_env(cfg: configs.RLvsRepConfig):
                       exploring_starts=True,
                       terminate_on_goal=True,
                       should_render=False,
-                      dimensions=TaxiEnv.dimensions_5x5_to_48x48)
+                      dimensions=TaxiEnv.dimensions_5x5_to_64x64)
     else:
         env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
