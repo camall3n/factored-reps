@@ -68,12 +68,24 @@ def test_incorrect_arg_lengths():
         CNN(input_shape=(3, 48, 48),
             n_output_channels=[32, 64, 64],
             kernel_sizes=[11, 9, 6],
-            strides=[0, 1, 2, 3])
+            strides=[1, 1, 1, 1])
     with pytest.raises(AssertionError):
         CNN(input_shape=(3, 48, 48),
             n_output_channels=[32, 64, 64],
             kernel_sizes=[11, 9, 6],
             dilations=[0])
+
+def test_not_list_of_ints():
+    with pytest.raises(AssertionError):
+        CNN(input_shape=(3, 48, 48),
+            n_output_channels=[32, 64, 64],
+            kernel_sizes=[[5, 5], [4, 4], [3, 3]],
+            strides=[1, 2, 3])
+    with pytest.raises(AssertionError):
+        CNN(input_shape=(3, 48, 48),
+            n_output_channels=[32, 64, 64],
+            kernel_sizes=2,
+            strides=[[5, 5], [4, 4], [3, 3]])
 
 def test_known_output_shapes():
     nature_dqn_cnn = CNN(

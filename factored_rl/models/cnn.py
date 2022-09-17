@@ -8,18 +8,15 @@ from torch.nn.functional import assert_int_or_pair
 
 from .nnutils import Network
 
-IntOrPairType = Union[int, Tuple[int]]
-PairListType = Union[IntOrPairType, List[IntOrPairType]]
-
 class CNN(Network):
     def __init__(
             self,
             input_shape: Tuple[int],
             n_output_channels: List[int],
-            kernel_sizes: PairListType,
-            strides: Optional[PairListType] = None, # default=1
-            padding: Optional[Union[str, PairListType]] = None, # default=0
-            dilations: Optional[PairListType] = None, # default=1
+            kernel_sizes: Union[int, List[int]],
+            strides: Optional[Union[int, List[int]]] = None, # default=1
+            padding: Optional[Union[int, List[int]]] = None, # default=0
+            dilations: Optional[Union[int, List[int]]] = None, # default=1
             activation: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = torch.nn.ReLU,
             final_activation: Optional[torch.nn.Module] = torch.nn.ReLU,
             **kwargs):
@@ -37,18 +34,17 @@ class CNN(Network):
         else:
             raise ValueError('input_shape must be either 2D or 3D')
 
-        self.n_layers = len(kernel_sizes)
-
-        assert len(n_output_channels) == self.n_layers
+        self.n_layers = len(n_output_channels)
         n_channels = (self.n_input_channels, ) if self.n_input_channels > 0 else (1, )
         n_channels = n_channels + tuple(n_output_channels)
 
-        strides = self._list_of_pairs(strides, 'strides', default_value=1)
-        dilations = self._list_of_pairs(dilations, 'dilations', default_value=1)
+        kernel_sizes = self._list_of_values(kernel_sizes, 'kernel_sizes', default_value=None)
+        strides = self._list_of_values(strides, 'strides', default_value=1)
+        dilations = self._list_of_values(dilations, 'dilations', default_value=1)
         if isinstance(padding, str):
             padding = [padding] * self.n_layers
         else:
-            padding = self._list_of_pairs(padding, 'padding', default_value=0)
+            padding = self._list_of_values(padding, 'padding', default_value=0)
 
         if activation is None or isinstance(activation, (torch.nn.Module, type)):
             activations = [activation] * (self.n_layers - 1) + [final_activation]
@@ -95,41 +91,38 @@ class CNN(Network):
         print(f'Layer shapes:\n' +
               f'\n'.join([f'  {i:2d}. {shape}' for i, shape in enumerate(self.layer_shapes)]))
 
-    def _list_of_pairs(self, pair, argname: str, default_value):
+    def _list_of_values(self, value: Union[int, List[int]], argname: str, default_value: int):
         """
-        Check if pair is a valid PairListType and output a list of pairs with length self.n_layers
+        Ensure value is a list of ints, repeating it if necessary, to a length self.n_layers
         """
-        if pair is None:
-            pair_list = [default_value] * self.n_layers
-        elif len(pair) != self.n_layers:
-            assert_int_or_pair(pair, argname, message='Invalid {} value: ' + str(pair))
-            pair_list = [pair] * self.n_layers
-        elif self.n_layers == 2 and pair[0] != pair[1]:
-            alternate_pair = (pair[0], pair[0]), (pair[1], pair[1])
-            warnings.warn(
-                f'The {argname} value of {pair} is ambiguous for a CNN with 2 layers.\n'
-                f'Could mean either:\n'
-                f'  1. Both layers use {argname} value of {pair}'
-                f'  2. The different layers use {argname} {pair[0]} and {pair[1]} respectively'
-                f'Assuming option 1. To achieve option 2, use {argname}={alternate_pair}')
-            pair_list = [pair] * self.n_layers
+        if value is None:
+            value_list = [default_value] * self.n_layers
+        elif isinstance(value, int):
+            value_list = [value] * self.n_layers
+        elif len(value) != self.n_layers:
+            assert isinstance(value, int), f'Invalid {argname} value: {value}'
+            value_list = [value] * self.n_layers
         else:
-            pair_list = list(pair)
-        assert len(pair_list) == self.n_layers
-        return pair_list
+            value_list = list(value)
+            for i, val in enumerate(value_list):
+                assert isinstance(
+                    val,
+                    int), f'Expected {argname} list to be integers, but item {i} was not: {val}'
+        assert len(value_list) == self.n_layers
+        return value_list
 
     def _conv2d_size(self, input_shape: Tuple[int], layer: torch.nn.Conv2d):
         """
         Compute the output shape after applying the Conv2d layer to the input shape
         """
         _, h_in, w_in = input_shape
-        k = layer.kernel_size
-        s = layer.stride
-        d = layer.dilation
-        p = layer.padding
+        k_h, k_w = self._unpack(layer.kernel_size)
+        s_h, s_w = self._unpack(layer.stride)
+        d_h, d_w = self._unpack(layer.dilation)
+        p_h, p_w = self._unpack(layer.padding)
         c_out = layer.out_channels
-        h_out = self._conv1d_size(h_in, k[0], s[0], d[0], p[0])
-        w_out = self._conv1d_size(w_in, k[1], s[1], d[1], p[1])
+        h_out = self._conv1d_size(h_in, k_h, s_h, d_h, p_h)
+        w_out = self._conv1d_size(w_in, k_w, s_w, d_w, p_w)
         return (c_out, h_out, w_out)
 
     @staticmethod
@@ -146,3 +139,11 @@ class CNN(Network):
         numerator = v_in + 2 * padding - dilation * (kernel_size - 1) - 1
         float_out = (numerator / stride) + 1
         return int(np.floor(float_out))
+
+    @staticmethod
+    def _unpack(size):
+        try:
+            size_h, size_w = size
+        except TypeError:
+            size_h, size_w = size, size
+        return size_h, size_w
