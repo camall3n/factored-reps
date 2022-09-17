@@ -120,7 +120,9 @@ class DQNAgent():
             else:
                 return mlp
         elif cfg.architecture == 'cnn':
-            assert input_shape[-2:] == cfg.supported_2d_input_shape
+            if input_shape[-2:] != cfg.supported_2d_input_shape:
+                raise ValueError(f'Input shape does not match supported 2D input shape: '
+                                 f'{cfg.supported_2d_input_shape}')
             cnn = CNN(
                 input_shape=input_shape,
                 n_output_channels=cfg.n_output_channels,
