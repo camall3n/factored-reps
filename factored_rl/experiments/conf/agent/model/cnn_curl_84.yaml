@@ -1,6 +1,7 @@
 defaults:
   - base_cnn
 
+name: cnn_curl_84
 supported_2d_input_shape: [84, 84]
 n_output_channels: [32, 32, 32, 32]
 kernel_sizes: 3

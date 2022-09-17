@@ -1,6 +1,7 @@
 defaults:
   - base_mlp
 
+name: mlp
 n_hidden_layers: 1
 n_units_per_layer: 64
 activation:

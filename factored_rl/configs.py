@@ -14,6 +14,7 @@ def immutable(obj):
 
 @dataclass
 class ModelConfig:
+    name: Optional[str] = None
     architecture: Optional[str] = None
     device: str = MISSING
 

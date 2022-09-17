@@ -1,6 +1,7 @@
 defaults:
   - base_cnn
 
+name: cnn_10
 supported_2d_input_shape: [10, 10]
 n_output_channels: [8, 16, 32]
 kernel_sizes: [4, 3, 2]
