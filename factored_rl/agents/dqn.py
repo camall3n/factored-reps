@@ -32,6 +32,7 @@ class DQNAgent():
         self.q = self._make_qnet(input_shape, n_actions, cfg.model).to(cfg.model.device)
         self.q_target = self._make_qnet(input_shape, n_actions, cfg.model).to(cfg.model.device)
         self.q_target.hard_copy_from(self.q)
+        self.q.print_summary()
         self.replay.reset()
         params = list(self.q.parameters())
         self.optimizer = torch.optim.Adam(params, lr=cfg.learning_rate)
