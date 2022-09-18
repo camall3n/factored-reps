@@ -6,7 +6,7 @@ defaults:
 name: dqn
 batch_size: 128
 epsilon_final: 0.01
-epsilon_half_life_steps: 1000
+epsilon_half_life_steps: ${eval:"20000 if '${env.name}' == 'taxi' else 1000"}
 epsilon_initial: 1.0
 learning_rate: 0.001
 replay_buffer_size: 50000
