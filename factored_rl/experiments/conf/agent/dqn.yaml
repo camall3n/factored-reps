@@ -4,7 +4,7 @@ defaults:
   - _self_
 
 name: dqn
-batch_size: 128
+batch_size: 32
 epsilon_final: 0.01
 epsilon_half_life_steps: ${eval:"20000 if '${env.name}' == 'taxi' else 1000"}
 epsilon_initial: 1.0

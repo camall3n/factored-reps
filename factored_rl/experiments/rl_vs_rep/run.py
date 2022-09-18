@@ -55,6 +55,7 @@ def initialize_env(cfg: configs.RLvsRepConfig):
                       n_passengers=1,
                       exploring_starts=True,
                       terminate_on_goal=True,
+                      depot_dropoff_only=True,
                       should_render=False,
                       dimensions=TaxiEnv.dimensions_5x5_to_64x64)
     else:
