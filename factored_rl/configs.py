@@ -90,7 +90,7 @@ class Config:
     trial: str = 'trial' # A name for the trial
     seed: int = 0 # A seed for the random number generator
     timestamp: bool = True # Whether to add a timestamp to the experiment directory path
-    noise: bool = False
+    noise: bool = True
     test: bool = False
     verbose: bool = False
 
