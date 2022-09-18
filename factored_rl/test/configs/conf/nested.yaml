@@ -1,0 +1,6 @@
+
+name: foo
+# value: "${eval: 1 if '${name}' == 'foo' else 2}" # broken
+# value: ${eval: "1 if '${name}' == 'foo' else 2"} # broken
+# value: "${eval:1 if '${name}' == 'foo' else 2}" # broken
+value: ${eval:"1 if '${name}' == 'foo' else 2"} # works

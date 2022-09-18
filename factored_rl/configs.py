@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import datetime
+import inspect
 import logging
 import os
 import platform
@@ -11,6 +12,18 @@ import torch
 
 def immutable(obj):
     return field(default_factory=lambda: obj)
+
+# -----------------------------------------------------------------------
+# Register a resolver with OmegaConf to handle math within .yaml files
+#
+# example.yaml:
+# ```
+# one: 1
+# two: 2
+# three: "${eval: ${one} + ${two}}"  # => 3
+# ```
+OmegaConf.register_new_resolver("eval", eval, replace=True)
+# -----------------------------------------------------------------------
 
 @dataclass
 class ModelConfig:
@@ -108,7 +121,7 @@ cs.store(name='disent_vs_rep', node=DisentvsRepConfig)
 cs.store(name='disent_vs_rl', node=DisentvsRLConfig)
 
 def get_config_yaml_str(cfg):
-    return OmegaConf.to_yaml(cfg)
+    return OmegaConf.to_yaml(cfg, resolve=True)
 
 def _initialize_experiment_dir(cfg: Config) -> str:
     if cfg.timestamp:
