@@ -93,6 +93,7 @@ class Config:
     noise: bool = True
     test: bool = False
     verbose: bool = False
+    disable_gpu: bool = False
 
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
@@ -133,7 +134,7 @@ def _initialize_experiment_dir(cfg: Config) -> str:
     return cfg.dir
 
 def _initialize_device(cfg) -> torch.device:
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if (torch.cuda.is_available() and not cfg.disable_gpu) else 'cpu')
     torch.zeros(1).to(device)
     cfg.agent.model.device = device
     return device
