@@ -101,9 +101,6 @@ def merge_results(summarized_disent_data, summarized_rl_data):
     disent_data_to_merge = summarized_disent_data.drop(columns=disent_cols_to_drop)
     rl_data_to_merge = summarized_rl_data[rl_cols_to_keep]
     merged_data = rl_data_to_merge.merge(disent_data_to_merge, on='tag')
-    return melt_metrics(merged_data)
-
-def melt_metrics(merged_data):
     melted_data = pd.melt(merged_data,
                           id_vars=rl_cols_to_keep,
                           var_name='metric',
@@ -134,29 +131,33 @@ for env in ['gridworld', 'taxi']:
     text_offset = (random_rl_performance - worst_case_rl_performance) / 10
     # xlim = (worst_case_rl_performance - 3 * text_offset, expert_rl_performance + 3 * text_offset)
     ylim = (-0.03, 1.03)
-    g = sns.lmplot(
-        data=dqn,
-        y='disent_score',
-        x='reward_per_step',
-        x_jitter=text_offset,
-        y_jitter=text_offset,
-        hue='metric',
-    )
-
-    # def add_lines(**kwargs):
-    #     # yapf: disable
-    #     # plt.vlines(expert_rl_performance, 0, 1, colors='k', linestyles='dotted')
-    #     # plt.text(expert_rl_performance - text_offset, 0, 'expert', ha='right', va='bottom', rotation=90)
-    #     plt.vlines(random_rl_performance, 0, 1, colors='k', linestyles='dotted')
-    #     plt.text(random_rl_performance + text_offset, 1, 'random', ha='left', va='top', rotation=90)
-    #     # plt.vlines(worst_case_rl_performance, 0, 1, colors='k', linestyles='dotted')
-    #     # plt.text(worst_case_rl_performance - text_offset, 1, 'timeout', ha='right', va='top', rotation=90)
-    #     # yapf: enable
-    #
-    # add_lines()
-    g.set_axis_labels('Reward per step', 'Disentanglement')
-    g.set(ylim=ylim)
-    g.fig.suptitle(f'Disentanglement vs. RL Performance ({env})')
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    # for met, ls in zip(dqn['metric'].unique(),
+    #                    ['solid', 'dashed', 'dashdot', (0, (3, 1, 1, 1, 1)), 'dotted']):
+    #     sns.regplot(x="reward_per_step",
+    #                 y="disent_score",
+    #                 data=dqn.loc[dqn['metric'] == met],
+    #                 scatter=False,
+    #                 line_kws={"ls": ls},
+    #                 color='k',
+    #                 ax=ax,
+    #                 label=met,
+    #                 ci=None)
+    for tfm, mkr, hue in zip(['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
+                             ["o", "x", ".", "D", '+'], ['C0', 'C1', 'C2', 'C3', 'C4']):
+        sns.scatterplot(x="reward_per_step",
+                        y="disent_score",
+                        data=dqn.loc[dqn['transform'] == tfm],
+                        color=hue,
+                        marker=mkr,
+                        ax=ax,
+                        label=tfm,
+                        legend=False)
+    ax.legend()
+    ax.set_ylim(ylim)
+    ax.set_xlabel('Reward per step')
+    ax.set_ylabel('Disentanglement (any metric)')
+    ax.set_title(f'Disentanglement vs. RL Performance ({env})')
     plt.tight_layout()
     plt.savefig(f'images/{experiment_name}/{env}.png', facecolor='white')
     plt.show()
@@ -177,13 +178,26 @@ for env in ['gridworld', 'taxi']:
     # xlim = (worst_case_rl_performance - 3 * text_offset, expert_rl_performance + 3 * text_offset)
     ylim = (-0.03, 1.03)
     fig, axes = plt.subplots(1, 5, figsize=(25, 5))
-    for ax, met, use_legend in zip(axes, dqn["metric"].unique(), [True]+[False]*4):
+    for ax, met, use_legend in zip(axes, dqn["metric"].unique(), [True] + [False] * 4):
         met_data = dqn.query(f"metric=='{met}'")
         for tfm, mkr, hue in zip(
-                ['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
-                ["o", "x", ".", "D",'+'], ['C0', 'C1', 'C2', 'C3', 'C4']):
-            sns.scatterplot(x="reward_per_step", y="disent_score", data=met_data.loc[met_data['transform'] == tfm], color=hue, marker=mkr, ax=ax, label=tfm, legend=use_legend)
-        sns.regplot(x="reward_per_step", y="disent_score", data=met_data, scatter=False, color='k', ax=ax, label=met)
+            ['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
+            ["o", "x", ".", "D", '+'], ['C0', 'C1', 'C2', 'C3', 'C4']):
+            sns.scatterplot(x="reward_per_step",
+                            y="disent_score",
+                            data=met_data.loc[met_data['transform'] == tfm],
+                            color=hue,
+                            marker=mkr,
+                            ax=ax,
+                            label=tfm,
+                            legend=use_legend)
+        sns.regplot(x="reward_per_step",
+                    y="disent_score",
+                    data=met_data,
+                    scatter=False,
+                    color='k',
+                    ax=ax,
+                    label=met)
         ax.set_ylim(ylim)
         ax.set_xlabel('Reward per step')
         ax.set_ylabel('Disentanglement')
