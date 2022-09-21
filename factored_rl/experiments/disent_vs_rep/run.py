@@ -25,7 +25,7 @@ from disent.dataset.sampling import SingleSampler
 # Args & hyperparams
 # ----------------------------------------
 
-@hydra.main(config_path=None, config_name='rl_vs_rep', version_base=None)
+@hydra.main(config_path=None, config_name='disent_vs_rep', version_base=None)
 def main(cfg):
     configs.initialize_experiment(cfg)
     env = initialize_env(cfg)
@@ -56,7 +56,7 @@ def main(cfg):
 # ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
-def initialize_env(cfg: configs.RLvsRepConfig):
+def initialize_env(cfg: configs.DisentvsRepConfig):
     if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
@@ -79,6 +79,7 @@ def initialize_env(cfg: configs.RLvsRepConfig):
 
     env.reset(seed=cfg.seed)
     env.action_space.seed(cfg.seed)
+    disent_seed(cfg.seed)
 
     if cfg.transform.name == 'images':
         env.set_rendering(enabled=True)
