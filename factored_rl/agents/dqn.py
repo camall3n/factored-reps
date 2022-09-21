@@ -4,7 +4,7 @@ import hydra
 import numpy as np
 import torch
 
-from factored_rl import configs
+from factored_rl.experiments import configs
 from factored_rl.models.nnutils import extract, Sequential, Reshape
 from factored_rl.models import MLP, CNN
 from .replaymemory import ReplayMemory

@@ -4,7 +4,7 @@ import yaml
 
 # Args & hyperparams
 import hydra
-from factored_rl import configs
+from factored_rl.experiments import configs
 
 # Env
 import gym
