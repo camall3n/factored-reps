@@ -1,0 +1,8 @@
+defaults:
+  - full
+
+name: quick
+batch_size: 2
+max_steps: 1
+num_dataloader_workers: 0
+quick: true
