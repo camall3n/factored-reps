@@ -4,6 +4,6 @@ defaults:
   - env: base_env
   - agent/model@model: base_model
   - transform: base_transform
-  - training: base_training
+  - trainer: base_trainer
 
 debug: true

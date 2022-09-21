@@ -81,7 +81,7 @@ class TransformConfig:
     noise_std: float = 0.01
 
 @dataclass
-class TrainingConfig:
+class TrainerConfig:
     name: str = MISSING
     batch_size: int = MISSING
     learning_rate: float = MISSING
@@ -112,7 +112,7 @@ class FactorizeConfig:
     experiment: str = 'base_factorize'
     dir: str = MISSING
     env: EnvConfig = MISSING
-    training: TrainingConfig = MISSING
+    trainer: TrainerConfig = MISSING
     transform: TransformConfig = MISSING
     model: ModelConfig = MISSING
     trial: str = 'trial' # A name for the trial
@@ -127,7 +127,7 @@ cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
 cs.store(name='base_factorize', node=FactorizeConfig)
 cs.store(group='env', name='base_env', node=EnvConfig)
-cs.store(group='training', name='base_training', node=TrainingConfig)
+cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)
 cs.store(group='agent', name='base_agent', node=AgentConfig)
 cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)

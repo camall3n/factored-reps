@@ -1,8 +1,8 @@
 defaults:
-  - base_training
+  - base_trainer
 
 
-name: training
+name: trainer
 batch_size: 128
 learning_rate: 0.001
 log_every_n_steps: 50
