@@ -7,13 +7,8 @@ import hydra
 from factored_rl.experiments import configs
 
 # Env
-import gym
-from gym.wrappers import FlattenObservation, TimeLimit
-import numpy as np
-from visgrid.envs import GridworldEnv, TaxiEnv
-from factored_rl.wrappers import RotationWrapper
-from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
-from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, FloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
+from factored_rl.experiments.common import initialize_env
+from gym.wrappers import TimeLimit
 
 # Agent
 from factored_rl.agents.dqn import DQNAgent
@@ -30,59 +25,13 @@ def main(cfg):
     configs.initialize_experiment(cfg, 'rl_vs_rep')
 
     env = initialize_env(cfg)
+    env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
+
     agent = initialize_agent(env, cfg)
 
     filename = cfg.dir + 'results.json'
     with open(filename, 'w') as results_file:
         train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
-
-# ----------------------------------------
-# Environment & wrappers
-# ----------------------------------------
-
-def initialize_env(cfg: configs.RLvsRepConfig):
-    if cfg.env.name == 'gridworld':
-        env = GridworldEnv(10,
-                           10,
-                           exploring_starts=True,
-                           terminate_on_goal=True,
-                           fixed_goal=True,
-                           hidden_goal=True,
-                           should_render=False,
-                           dimensions=GridworldEnv.dimensions_onehot)
-    elif cfg.env.name == 'taxi':
-        env = TaxiEnv(size=5,
-                      n_passengers=1,
-                      exploring_starts=True,
-                      terminate_on_goal=True,
-                      depot_dropoff_only=True,
-                      should_render=False,
-                      dimensions=TaxiEnv.dimensions_5x5_to_64x64)
-    else:
-        env = gym.make(cfg.env.name)
-        # TODO: wrap env to support disent protocol
-
-    env.reset(seed=cfg.seed)
-    env.action_space.seed(cfg.seed)
-
-    if cfg.transform.name == 'images':
-        env.set_rendering(enabled=True)
-        env = InvertWrapper(GrayscaleWrapper(env))
-        if cfg.agent.model.architecture == 'mlp':
-            env = FlattenObservation(env)
-    else:
-        if cfg.transform.name == 'permute_factors':
-            env = FactorPermutationWrapper(env)
-        elif cfg.transform.name == 'permute_states':
-            env = ObservationPermutationWrapper(env)
-        env = NormalizeWrapper(FloatWrapper(env), -1, 1)
-        if cfg.transform.name == 'rotate':
-            env = RotationWrapper(env)
-    if cfg.transform.noise_std is not None:
-        env = NoiseWrapper(env, cfg.transform.noise_std)
-
-    env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
-    return env
 
 # ----------------------------------------
 # Agent
