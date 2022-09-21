@@ -26,9 +26,10 @@ def initialize_env(cfg: configs.Config):
     elif cfg.env.name == 'taxi':
         env = TaxiEnv(size=5,
                       n_passengers=1,
-                      exploring_starts=True,
+                      exploring_starts=cfg.env.exploring_starts,
                       terminate_on_goal=True,
-                      depot_dropoff_only=True,
+                      fixed_goal=cfg.env.fixed_goal,
+                      depot_dropoff_only=cfg.env.depot_dropoff_only,
                       should_render=False,
                       dimensions=TaxiEnv.dimensions_5x5_to_64x64)
     else:
