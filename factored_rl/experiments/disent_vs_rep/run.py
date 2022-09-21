@@ -26,7 +26,7 @@ def main(cfg):
     data = GymEnvData(env)
 
     metric_scores = {}
-    for metric in initialize_metrics():
+    for metric in initialize_metrics(cfg):
         dataset = DisentDataset(dataset=data, sampler=SingleSampler())
         scores = metric(dataset, lambda x: x)
         metric_scores.update(scores)
@@ -51,7 +51,8 @@ def main(cfg):
 # Disent metrics
 # ----------------------------------------
 
-def initialize_metrics():
+def initialize_metrics(cfg):
+    disent_seed(cfg.seed)
     return [
         metrics.metric_dci,
         metrics.metric_mig,
