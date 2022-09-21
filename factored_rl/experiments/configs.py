@@ -4,7 +4,7 @@ import inspect
 import logging
 import os
 import platform
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
@@ -81,6 +81,18 @@ class TransformConfig:
     noise_std: float = 0.01
 
 @dataclass
+class TrainingConfig:
+    name: str = MISSING
+    batch_size: int = MISSING
+    learning_rate: float = MISSING
+    max_steps: int = MISSING
+    num_dataloader_workers: int = MISSING
+    optimizer: Optional[Dict[str, str]] = None
+    overfit_batches: Union[int, float] = MISSING
+    persistent_workers: bool = MISSING
+    quick: bool = MISSING
+
+@dataclass
 class Config:
     experiment: str = MISSING
     dir: str = MISSING
@@ -95,9 +107,27 @@ class Config:
     verbose: bool = False
     disable_gpu: bool = False
 
+@dataclass
+class FactorizeConfig:
+    experiment: str = 'base_factorize'
+    dir: str = MISSING
+    env: EnvConfig = MISSING
+    training: TrainingConfig = MISSING
+    transform: TransformConfig = MISSING
+    model: ModelConfig = MISSING
+    trial: str = 'trial' # A name for the trial
+    seed: int = 0 # A seed for the random number generator
+    timestamp: bool = True # Whether to add a timestamp to the experiment directory path
+    noise: bool = True
+    test: bool = False
+    verbose: bool = False
+    disable_gpu: bool = False
+
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
+cs.store(name='base_factorize', node=FactorizeConfig)
 cs.store(group='env', name='base_env', node=EnvConfig)
+cs.store(group='training', name='base_training', node=TrainingConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)
 cs.store(group='agent', name='base_agent', node=AgentConfig)
 cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)
