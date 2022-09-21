@@ -88,7 +88,7 @@ def initialize_env(cfg: configs.RLvsRepConfig):
 # Agent
 # ----------------------------------------
 
-def initialize_agent(env, cfg: configs.RLvsRepConfig):
+def initialize_agent(env, cfg: configs.Config):
     if cfg.agent.name == 'expert':
         if cfg.env.name == 'gridworld':
             agent = GridworldExpert(env.unwrapped)

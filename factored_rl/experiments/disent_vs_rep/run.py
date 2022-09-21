@@ -56,7 +56,7 @@ def main(cfg):
 # ----------------------------------------
 # Environment & wrappers
 # ----------------------------------------
-def initialize_env(cfg: configs.DisentvsRepConfig):
+def initialize_env(cfg: configs.Config):
     if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,

@@ -105,22 +105,6 @@ cs.store(group='agent/model', name='base_model', node=ModelConfig)
 cs.store(group='agent/model', name='base_mlp', node=MLPModelConfig)
 cs.store(group='agent/model', name='base_cnn', node=CNNModelConfig)
 
-@dataclass
-class RLvsRepConfig(Config):
-    experiment: str = 'rl_vs_rep'
-
-@dataclass
-class DisentvsRepConfig(Config):
-    experiment: str = 'disent_vs_rep'
-
-@dataclass
-class DisentvsRLConfig(Config):
-    experiment: str = 'disent_vs_rl'
-
-cs.store(name='rl_vs_rep', node=RLvsRepConfig)
-cs.store(name='disent_vs_rep', node=DisentvsRepConfig)
-cs.store(name='disent_vs_rl', node=DisentvsRLConfig)
-
 def get_config_yaml_str(cfg):
     return OmegaConf.to_yaml(cfg, resolve=True)
 
