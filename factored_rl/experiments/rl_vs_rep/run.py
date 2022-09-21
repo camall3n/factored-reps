@@ -24,7 +24,7 @@ from tqdm import tqdm
 def main(cfg):
     configs.initialize_experiment(cfg, 'rl_vs_rep')
 
-    env = initialize_env(cfg)
+    env = initialize_env(cfg, cfg.seed)
     env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
 
     agent = initialize_agent(env, cfg)

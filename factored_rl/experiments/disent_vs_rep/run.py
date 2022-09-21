@@ -22,7 +22,7 @@ from disent.dataset.sampling import SingleSampler
 @hydra.main(config_path=None, config_name='disent_vs_rep', version_base=None)
 def main(cfg):
     configs.initialize_experiment(cfg)
-    env = initialize_env(cfg)
+    env = initialize_env(cfg, cfg.seed)
     data = GymEnvData(env)
 
     metric_scores = {}

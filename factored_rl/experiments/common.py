@@ -13,7 +13,7 @@ from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, FloatWrapper, Norm
 # Environment & wrappers
 # ----------------------------------------
 
-def initialize_env(cfg: configs.Config):
+def initialize_env(cfg: configs.Config, seed: int = None):
     if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
@@ -36,8 +36,8 @@ def initialize_env(cfg: configs.Config):
         env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
 
-    env.reset(seed=cfg.seed)
-    env.action_space.seed(cfg.seed)
+    env.reset(seed=seed)
+    env.action_space.seed(seed)
 
     if cfg.transform.name == 'images':
         env.set_rendering(enabled=True)
