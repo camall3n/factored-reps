@@ -1,3 +1,5 @@
+import os
+
 from factored_rl.experiments import configs
 
 # Env
@@ -56,3 +58,16 @@ def initialize_env(cfg: configs.Config, seed: int = None):
         env = NoiseWrapper(env, cfg.transform.noise_std)
     env = ToFloatWrapper(env)
     return env
+
+def cpu_count():
+    # os.cpu_count()
+    #     returns number of cores on machine
+    # os.sched_getaffinity(pid)
+    #     returns set of cores on which process is allowed to run
+    #     if pid=0, results are for current process
+    #
+    # if os.sched_getaffinity doesn't exist, just return cpu_count and hope for the best
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return os.cpu_count()
