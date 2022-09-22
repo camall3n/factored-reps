@@ -51,7 +51,7 @@ def load_results(experiment_name) -> pd.DataFrame:
             'arch': cfg.agent.model.architecture,
             'model': cfg.agent.model.get('name', cfg.agent.model.architecture),
             'seed': cfg.seed,
-            'noise': cfg.noise,
+            'noise': cfg.transform.noise,
             'max_steps': cfg.env.n_steps_per_episode,
         }
         for arg, value in args.items():

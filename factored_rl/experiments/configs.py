@@ -54,7 +54,6 @@ class CNNModelConfig(MLPModelConfig):
 class AgentConfig:
     name: str = MISSING
     discount_factor: float = 0.99
-    model: ModelConfig = ModelConfig()
 
 @dataclass
 class DQNAgentConfig(AgentConfig):
@@ -74,10 +73,17 @@ class EnvConfig:
     name: str = MISSING
     n_training_episodes: int = MISSING
     n_steps_per_episode: int = MISSING
+    exploring_starts: bool = MISSING
+    fixed_goal: bool = MISSING
+
+@dataclass
+class TaxiEnvConfig(EnvConfig):
+    depot_dropoff_only: bool = MISSING
 
 @dataclass
 class TransformConfig:
     name: str = MISSING
+    noise: bool = True
     noise_std: float = 0.01
 
 @dataclass
@@ -85,55 +91,41 @@ class TrainerConfig:
     name: str = MISSING
     batch_size: int = MISSING
     learning_rate: float = MISSING
+    log_every_n_steps: int = MISSING
     max_steps: int = MISSING
     num_dataloader_workers: int = MISSING
     optimizer: Optional[Dict[str, str]] = None
-    overfit_batches: Union[int, float] = MISSING
+    overfit_batches: int = MISSING
     persistent_workers: bool = MISSING
     quick: bool = MISSING
 
 @dataclass
 class Config:
     experiment: str = MISSING
-    dir: str = MISSING
-    env: EnvConfig = MISSING
-    transform: TransformConfig = MISSING
-    agent: AgentConfig = MISSING
     trial: str = 'trial' # A name for the trial
     seed: int = 0 # A seed for the random number generator
     timestamp: bool = True # Whether to add a timestamp to the experiment directory path
-    noise: bool = True
-    test: bool = False
-    verbose: bool = False
-    disable_gpu: bool = False
-
-@dataclass
-class FactorizeConfig:
-    experiment: str = 'base_factorize'
     dir: str = MISSING
+    agent: AgentConfig = MISSING
     env: EnvConfig = MISSING
+    model: ModelConfig = MISSING
     trainer: TrainerConfig = MISSING
     transform: TransformConfig = MISSING
-    model: ModelConfig = MISSING
-    trial: str = 'trial' # A name for the trial
-    seed: int = 0 # A seed for the random number generator
-    timestamp: bool = True # Whether to add a timestamp to the experiment directory path
-    noise: bool = True
     test: bool = False
     verbose: bool = False
     disable_gpu: bool = False
 
 cs = ConfigStore.instance()
 cs.store(name='base_config', node=Config)
-cs.store(name='base_factorize', node=FactorizeConfig)
-cs.store(group='env', name='base_env', node=EnvConfig)
-cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
-cs.store(group='transform', name='base_transform', node=TransformConfig)
 cs.store(group='agent', name='base_agent', node=AgentConfig)
 cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)
-cs.store(group='agent/model', name='base_model', node=ModelConfig)
-cs.store(group='agent/model', name='base_mlp', node=MLPModelConfig)
-cs.store(group='agent/model', name='base_cnn', node=CNNModelConfig)
+cs.store(group='env', name='base_env', node=EnvConfig)
+cs.store(group='env', name='taxi_env', node=TaxiEnvConfig)
+cs.store(group='model', name='base_model', node=ModelConfig)
+cs.store(group='model', name='base_mlp', node=MLPModelConfig)
+cs.store(group='model', name='base_cnn', node=CNNModelConfig)
+cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
+cs.store(group='transform', name='base_transform', node=TransformConfig)
 
 def get_config_yaml_str(cfg):
     return OmegaConf.to_yaml(cfg, resolve=True)
@@ -150,7 +142,7 @@ def _initialize_experiment_dir(cfg: Config) -> str:
 def _initialize_device(cfg) -> torch.device:
     device = torch.device('cuda' if (torch.cuda.is_available() and not cfg.disable_gpu) else 'cpu')
     torch.zeros(1).to(device)
-    cfg.agent.model.device = device
+    cfg.model.device = device
     return device
 
 def _initialize_logger(cfg: Config) -> logging.Logger:
@@ -166,7 +158,7 @@ def initialize_experiment(cfg, experiment_name):
     _initialize_logger(cfg)
     log = logging.getLogger()
     log.info('\n' + get_config_yaml_str(cfg))
-    log.info(f'Training on device: {cfg.agent.model.device}\n')
+    log.info(f'Training on device: {cfg.model.device}\n')
 
     filename = cfg.dir + 'config.yaml'
     with open(filename, 'w') as args_file:

@@ -4,3 +4,5 @@ defaults:
 name: gridworld
 n_training_episodes: 500
 n_steps_per_episode: 50
+exploring_starts: true
+fixed_goal: true

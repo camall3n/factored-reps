@@ -20,8 +20,8 @@ from disent.model.ae import EncoderConv64
 # Args & hyperparams
 # ----------------------------------------
 
-@hydra.main(config_path="../conf", config_name='factorize', version_base=None)
-def main(cfg: configs.FactorizeConfig):
+@hydra.main(config_path="../conf", config_name='config', version_base=None)
+def main(cfg: configs.Config):
     configs.initialize_experiment(cfg, 'factorize')
 
     env, train_dl = initialize_dataloader(cfg, cfg.seed)
@@ -33,17 +33,17 @@ def main(cfg: configs.FactorizeConfig):
                          gpus=(1 if cfg.model.device.type == 'cuda' else 0))
     trainer.fit(model, train_dl, val_dl)
 
-def initialize_dataloader(env, cfg: configs.TrainingConfig, seed: int = None):
+def initialize_dataloader(cfg: configs.TrainerConfig, seed: int = None):
     env = initialize_env(cfg, seed)
     dataset = GymEnvData(env, seed)
     dataloader = DataLoader(dataset=dataset,
-                            batch_size=cfg.training.batch_size,
+                            batch_size=cfg.trainer.batch_size,
                             num_workers=2,
                             persistent_workers=True)
     return env, dataloader
 
 def initialize_model(env, cfg):
-    if cfg.model == 'betavae':
+    if cfg.model.name == 'cnn_beta_vae_64':
         # create the BetaVAE model
         # - adjusting the beta, learning rate, and representation size.
         shape = env.observation_space.shape

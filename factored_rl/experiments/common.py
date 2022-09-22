@@ -17,9 +17,9 @@ def initialize_env(cfg: configs.Config, seed: int = None):
     if cfg.env.name == 'gridworld':
         env = GridworldEnv(10,
                            10,
-                           exploring_starts=True,
+                           exploring_starts=cfg.env.exploring_starts,
                            terminate_on_goal=True,
-                           fixed_goal=True,
+                           fixed_goal=cfg.env.fixed_goal,
                            hidden_goal=True,
                            should_render=False,
                            dimensions=GridworldEnv.dimensions_onehot)
@@ -42,7 +42,7 @@ def initialize_env(cfg: configs.Config, seed: int = None):
     if cfg.transform.name == 'images':
         env.set_rendering(enabled=True)
         env = InvertWrapper(GrayscaleWrapper(env))
-        if cfg.agent.model.architecture == 'mlp':
+        if cfg.model.architecture == 'mlp':
             env = FlattenObservation(env)
     else:
         if cfg.transform.name == 'permute_factors':
@@ -52,7 +52,7 @@ def initialize_env(cfg: configs.Config, seed: int = None):
         env = NormalizeWrapper(FloatWrapper(env), -1, 1)
         if cfg.transform.name == 'rotate':
             env = RotationWrapper(env)
-    if cfg.noise:
+    if cfg.transform.noise:
         env = NoiseWrapper(env, cfg.transform.noise_std)
 
     return env

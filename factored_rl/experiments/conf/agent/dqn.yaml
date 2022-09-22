@@ -1,6 +1,5 @@
 defaults:
   - base_dqn_agent
-  - model: mlp
   - _self_
 
 name: dqn

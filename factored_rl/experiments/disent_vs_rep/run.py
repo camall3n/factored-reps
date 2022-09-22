@@ -37,7 +37,7 @@ def main(cfg):
         'trial': cfg.trial,
         'seed': cfg.seed,
         'env': cfg.env.name,
-        'noise': cfg.noise,
+        'noise': cfg.transform.noise,
         'transform': cfg.transform.name,
     })
 

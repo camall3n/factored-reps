@@ -21,7 +21,7 @@ from tqdm import tqdm
 # ----------------------------------------
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
-def main(cfg):
+def main(cfg: configs.Config):
     configs.initialize_experiment(cfg, 'rl_vs_rep')
 
     env = initialize_env(cfg, cfg.seed)

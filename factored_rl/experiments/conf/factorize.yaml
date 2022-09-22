@@ -1,9 +1,0 @@
-defaults:
-  - _self_
-  - base_factorize
-  - env: base_env
-  - agent/model@model: base_model
-  - transform: base_transform
-  - trainer: base_trainer
-
-debug: true
