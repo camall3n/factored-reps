@@ -14,7 +14,7 @@ from disent.metrics import metric_dci, metric_mig
 from gym.wrappers.flatten_observation import FlattenObservation
 from visgrid.envs.components import Grid
 from visgrid.envs import GridworldEnv
-from visgrid.wrappers import FloatWrapper, NormalizeWrapper, NoiseWrapper, wrap_gridworld
+from visgrid.wrappers import ToFloatWrapper, NormalizeWrapper, NoiseWrapper, wrap_gridworld
 
 #%%
 @pytest.fixture

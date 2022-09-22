@@ -7,7 +7,7 @@ import numpy as np
 from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper
 from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
-from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, FloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
+from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
 
 # ----------------------------------------
 # Environment & wrappers
@@ -49,10 +49,10 @@ def initialize_env(cfg: configs.Config, seed: int = None):
             env = FactorPermutationWrapper(env)
         elif cfg.transform.name == 'permute_states':
             env = ObservationPermutationWrapper(env)
-        env = NormalizeWrapper(FloatWrapper(env), -1, 1)
+        env = NormalizeWrapper(ToFloatWrapper(env), -1, 1)
         if cfg.transform.name == 'rotate':
             env = RotationWrapper(env)
     if cfg.transform.noise:
         env = NoiseWrapper(env, cfg.transform.noise_std)
-
+    env = ToFloatWrapper(env)
     return env

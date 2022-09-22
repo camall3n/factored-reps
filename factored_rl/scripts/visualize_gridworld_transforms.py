@@ -39,7 +39,7 @@ for transform, ax in zip(['identity', 'rotate', 'permute_factors', 'permute_stat
         env = ObservationPermutationWrapper(env)
     elif transform == 'permute_factors':
         env = FactorPermutationWrapper(env)
-    env = NormalizeWrapper(FloatWrapper(env), -1, 1)
+    env = NormalizeWrapper(ToFloatWrapper(env), -1, 1)
     if transform == 'rotate':
         env = RotationWrapper(env)
     env = ClipWrapper(NoiseWrapper(env, sigma=0.01), -1, 1)
