@@ -4,7 +4,6 @@ import warnings
 import numpy as np
 import torch
 import torch.nn
-from torch.nn.functional import assert_int_or_pair
 
 from .nnutils import Network
 
