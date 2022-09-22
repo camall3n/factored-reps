@@ -43,7 +43,8 @@ def initialize_env(cfg: configs.Config, seed: int = None):
 
     if cfg.transform.name == 'images':
         env.set_rendering(enabled=True)
-        env = GrayscaleWrapper(env, keep_dim=True)
+        if cfg.env.grayscale:
+            env = GrayscaleWrapper(env, keep_dim=True)
         env = InvertWrapper(env)
         if cfg.model.architecture == 'mlp':
             env = FlattenObservation(env)

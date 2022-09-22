@@ -88,6 +88,7 @@ class EnvConfig:
     n_steps_per_episode: int = MISSING
     exploring_starts: bool = MISSING
     fixed_goal: bool = MISSING
+    grayscale: bool = MISSING
 
 @dataclass
 class TaxiEnvConfig(EnvConfig):
