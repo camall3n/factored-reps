@@ -1,15 +1,15 @@
 defaults:
-  - base_cnn
+  - cnn_relu
 
 name: cnn_curl_84
-supported_2d_input_shape: [84, 84]
-n_output_channels: [32, 32, 32, 32]
-kernel_sizes: 3
-strides: [2, 1, 1, 1]
-n_hidden_layers: 1
-n_units_per_layer: 50
-activation:
-  _target_: torch.nn.ReLU
-final_activation:
-  - {_target_: torch.nn.LayerNorm}
-  - {_target_: torch.nn.Tanh}
+cnn:
+  supported_2d_input_shape: [84, 84]
+  n_output_channels: [32, 32, 32, 32]
+  kernel_sizes: 3
+  strides: [2, 1, 1, 1]
+mlp:
+  n_hidden_layers: 1
+  n_units_per_layer: 1024
+  final_activation:
+    - {_target_: torch.nn.LayerNorm}
+    - {_target_: torch.nn.Tanh}

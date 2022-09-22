@@ -26,29 +26,42 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 # -----------------------------------------------------------------------
 
 @dataclass
-class ModelConfig:
-    name: Optional[str] = None
-    architecture: Optional[str] = None
-    device: str = MISSING
-
-@dataclass
-class MLPModelConfig(ModelConfig):
-    architecture: str = 'mlp'
-    flatten_input: bool = True
+class MLPConfig:
     n_hidden_layers: int = MISSING
     n_units_per_layer: int = MISSING
     activation: Optional[Dict[str, str]] = None
+    final_activation: Optional[Dict[str, str]] = None
 
 @dataclass
-class CNNModelConfig(MLPModelConfig):
-    architecture: str = 'cnn'
-    flatten_input: bool = False
+class CNNConfig:
     supported_2d_input_shape: Tuple[int, int] = MISSING # (H, W)
     n_output_channels: List[int] = MISSING
     kernel_sizes: Any = MISSING
     strides: Any = MISSING
     padding: Any = None
     dilations: Any = None
+    activation: Optional[Dict[str, str]] = None
+    final_activation: Optional[Dict[str, str]] = None
+
+@dataclass
+class AEConfig:
+    n_latent_dims: int = MISSING
+
+@dataclass
+class VAEConfig:
+    beta: float = MISSING
+    loss_reduction: str = MISSING
+
+@dataclass
+class ModelConfig:
+    name: Optional[str] = None
+    architecture: Optional[str] = None
+    device: str = MISSING
+    flatten_input: bool = False
+    mlp: MLPConfig = MLPConfig()
+    cnn: CNNConfig = CNNConfig()
+    ae: AEConfig = AEConfig()
+    vae: VAEConfig = VAEConfig()
 
 @dataclass
 class AgentConfig:
@@ -122,8 +135,6 @@ cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)
 cs.store(group='env', name='base_env', node=EnvConfig)
 cs.store(group='env', name='taxi_env', node=TaxiEnvConfig)
 cs.store(group='model', name='base_model', node=ModelConfig)
-cs.store(group='model', name='base_mlp', node=MLPModelConfig)
-cs.store(group='model', name='base_cnn', node=CNNModelConfig)
 cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)
 

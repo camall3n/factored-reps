@@ -1,0 +1,17 @@
+defaults:
+  - cnn_relu
+
+name: vae_64
+cnn:
+  supported_2d_input_shape: [64, 64]
+  n_output_channels: [32, 32, 64, 64]
+  kernel_sizes: 4
+  strides: 2
+mlp:
+  n_hidden_layers: 1
+  n_units_per_layer: 256
+ae:
+  n_latent_dims: 32
+vae:
+  beta: 4.0
+  loss_reduction: mean_sum

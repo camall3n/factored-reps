@@ -1,12 +1,12 @@
 defaults:
-  - base_cnn
+  - cnn_relu
 
 name: cnn_rainbow_de_84
-supported_2d_input_shape: [84, 84]
-n_output_channels: [32, 64]
-kernel_sizes: 5
-strides: 5
-n_hidden_layers: 1
-n_units_per_layer: 256
-activation:
-  _target_: torch.nn.ReLU
+cnn:
+  supported_2d_input_shape: [84, 84]
+  n_output_channels: [32, 64]
+  kernel_sizes: 5
+  strides: 5
+mlp:
+  n_hidden_layers: 1
+  n_units_per_layer: 256
