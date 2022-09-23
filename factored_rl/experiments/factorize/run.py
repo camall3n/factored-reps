@@ -40,8 +40,8 @@ def main(cfg: configs.Config):
 
 def initialize_dataloader(cfg: configs.TrainerConfig, seed: int = None):
     env = initialize_env(cfg, seed)
-    data = GymEnvData(env, seed)
-    dataset = DisentIterDataset(data, transform=ToImgTensorF32())
+    data = GymEnvData(env, seed, transform=ToImgTensorF32())
+    dataset = DisentIterDataset(data)
     dataloader = DataLoader(dataset=dataset,
                             batch_size=cfg.trainer.batch_size,
                             num_workers=0 if cfg.trainer.quick else cpu_count(),

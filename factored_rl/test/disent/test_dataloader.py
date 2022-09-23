@@ -1,36 +1,12 @@
 import pytest
-from multiprocessing import freeze_support
 
-# Args & hyperparams
-import hydra
 from omegaconf import OmegaConf
-
-# Data
-from factored_rl.experiments.common import initialize_env
-from disent.dataset.data import GymEnvData
-from disent.dataset import DisentIterDataset
-from disent.dataset.sampling import SingleSampler
-from disent.dataset.transform import ToImgTensorF32
-from torch.utils.data import DataLoader
-import pytorch_lightning as pl
-
-# Training
-from factored_rl.experiments.common import cpu_count
-
-from multiprocessing import freeze_support
-
-import pytorch_lightning as pl
-import torch
 from torch.utils.data import DataLoader
 
-from disent.dataset import DisentDataset
-from disent.dataset.data import TaxiData64x64
-from disent.dataset.sampling import SingleSampler
+from disent.dataset import DisentDataset, DisentIterDataset
+from disent.dataset.data import GymEnvData, TaxiData64x64
 from disent.dataset.transform import ToImgTensorF32
-from disent.frameworks.vae import BetaVae
-from disent.model import AutoEncoder
-from disent.model.ae import DecoderConv64
-from disent.model.ae import EncoderConv64
+from factored_rl.experiments.common import cpu_count, initialize_env
 
 #%%
 
@@ -48,8 +24,7 @@ def map_dataloader(map_dataset):
 
 @pytest.fixture
 def cfg():
-    return OmegaConf.create(
-    """
+    return OmegaConf.create("""
     seed: 0
     model:
       architecture: 'cnn'
@@ -63,7 +38,7 @@ def cfg():
     trainer:
       batch_size: 128
       quick: false
-      num_dataloader_workers: 0
+      n_workers: 0
     transform:
       name: images
       noise: true
@@ -73,11 +48,11 @@ def cfg():
 @pytest.fixture
 def iter_data(cfg):
     env = initialize_env(cfg, cfg.seed)
-    return GymEnvData(env, cfg.seed)
+    return GymEnvData(env, cfg.seed, transform=ToImgTensorF32())
 
 @pytest.fixture
 def iter_dataset(iter_data):
-    return DisentIterDataset(iter_data, transform=ToImgTensorF32())
+    return DisentIterDataset(dataset=iter_data, transform=None)
 
 @pytest.fixture
 def iter_dataloader(iter_dataset, cfg):
@@ -94,8 +69,8 @@ def test_env_observation_shapes(map_data, iter_data):
 def test_data_shapes(map_data, iter_data):
     map_item = next(iter(map_data))
     iter_item = next(iter(iter_data))
-    assert type(map_item) == type(iter_item)
-    assert map_item.shape == iter_item.shape
+    assert type(map_item) != type(iter_item)
+    assert map_item.shape != iter_item.shape
 
 def test_dataset_shapes(map_dataset, iter_dataset):
     map_dict = next(iter(map_dataset))
