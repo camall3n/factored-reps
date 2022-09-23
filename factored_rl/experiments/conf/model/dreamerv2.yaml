@@ -1,0 +1,24 @@
+defaults:
+  - cnn_relu
+
+name: dreamerv2
+cnn:
+  supported_2d_input_shape: [64, 64]
+  n_output_channels: [48, 96, 192, 384]
+  kernel_sizes: 4
+  strides: 2
+  activation:
+    - _target_: torch.nn.ELU
+    - {_target_: torch.nn.LayerNorm, _partial_: true}
+  final_activation:
+    - _target_: torch.nn.ELU
+    - {_target_: torch.nn.LayerNorm, _partial_: true}
+mlp:
+  n_hidden_layers: 4
+  n_units_per_layer: 400
+  activation:
+    - _target_: torch.nn.ELU
+    - {_target_: torch.nn.LayerNorm, _partial_: true}
+  final_activation:
+    - _target_: torch.nn.ELU
+    - {_target_: torch.nn.LayerNorm, _partial_: true}

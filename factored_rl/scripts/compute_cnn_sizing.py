@@ -1,5 +1,16 @@
-from factored_rl.models import CNN, MLP, nnutils
+from factored_rl.models import Network, CNN, MLP, nnutils
 import numpy as np
+import hydra
+
+from factored_rl.experiments import configs
+
+with hydra.initialize(version_base=None, config_path='factored_rl/experiments/conf'):
+    cfg = hydra.compose(config_name='config', overrides=['model=dreamerv2'])
+
+cfg = cfg.model
+model = Network((3, ) + cfg.cnn.supported_2d_input_shape, 5, cfg)
+model.print_summary()
+model[0].print_layers()
 
 #%%
 cnn = CNN(
