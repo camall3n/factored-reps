@@ -2,14 +2,14 @@ import numpy as np
 import torch
 import torch.nn
 
-from ..nnutils import Network
+from ..nnutils import Module
 from .phinet import PhiNet
 from .invnet import InvNet
 from .fwdnet import FwdNet
 from .contrastivenet import ContrastiveNet, ActionContrastiveNet
 from .invdiscriminator import InvDiscriminator
 
-class FeatureNet(Network):
+class FeatureNet(Module):
     def __init__(self, args, n_actions, input_shape=2, latent_dims=2, device='cpu'):
         super().__init__()
         self.n_actions = n_actions
@@ -61,7 +61,7 @@ class FeatureNet(Network):
             return torch.tensor(0.0).to(self.device)
         N = len(z0)
         # shuffle next states
-        idx = torch.randperm(N)  #BUG: why is this never being used?
+        idx = torch.randperm(N) #BUG: why is this never being used?
 
         a_neg = torch.randint_like(a, low=0, high=self.n_actions)
 
@@ -116,11 +116,11 @@ class FeatureNet(Network):
         shuffled_idx = np.random.permutation(idx)
         # replace all samples with one specific type of negative example
         if mode == 'random':
-            negatives = buffer.retrieve(shuffled_idx, 'next_ob')  # x' -> \tilde x'
+            negatives = buffer.retrieve(shuffled_idx, 'next_ob') # x' -> \tilde x'
         # elif mode == 'same':
         #     negatives = buffer.retrieve(idx, 'ob')  # x' -> x
         elif mode == 'following':
-            negatives = buffer.retrieve((idx + 1) % len(buffer), 'next_ob')  # x' -> x''
+            negatives = buffer.retrieve((idx + 1) % len(buffer), 'next_ob') # x' -> x''
         elif mode == 'all':
             # replace samples with equal amounts of all types of negative example
 

@@ -4,11 +4,11 @@ import torch.nn
 
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.models.factored.parents_net import ParentsNet
-from factored_rl.models.nnutils import Network
+from factored_rl.models.nnutils import Module
 from factored_rl.models.markov.fwdnet import FwdNet
 from factored_rl.models.mlp import MLP
 
-class FactoredFwdModel(Network):
+class FactoredFwdModel(Module):
     def __init__(self, args, n_actions, input_shape=2, device='cpu'):
         super().__init__()
 

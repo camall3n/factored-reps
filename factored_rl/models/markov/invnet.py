@@ -2,9 +2,9 @@ import numpy as np
 import torch
 import torch.nn
 
-from ..nnutils import Network
+from ..nnutils import Module
 
-class InvNet(Network):
+class InvNet(Module):
     def __init__(self,
                  n_actions,
                  n_latent_dims=4,

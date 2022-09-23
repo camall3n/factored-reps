@@ -36,7 +36,7 @@ class Reshape(torch.nn.Module):
         except RuntimeError:
             return input.reshape(*self.shape)
 
-class Network(torch.nn.Module):
+class Module(torch.nn.Module):
     """Module that, when printed, shows its total number of parameters
     """
     def __init__(self):
@@ -100,10 +100,10 @@ class Network(torch.nn.Module):
         for theta_dest, theta_src in zip(self.parameters(), other.parameters()):
             theta_dest.data.copy_(alpha * theta_src.data + (1.0 - alpha) * theta_dest.data)
 
-class Sequential(torch.nn.Sequential, Network):
+class Sequential(torch.nn.Sequential, Module):
     pass
 
-class Identity(Network):
+class Identity(Module):
     def __init__(self):
         super().__init__()
         self.dummy = torch.nn.parameter.Parameter(torch.tensor(0.0))

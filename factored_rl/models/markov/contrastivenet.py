@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import torch.nn
 
-from ..nnutils import Network, one_hot
+from ..nnutils import Module, one_hot
 from ..mlp import MLP
 
-class ContrastiveNet(Network):
+class ContrastiveNet(Module):
     def __init__(self, n_latent_dims=4, n_hidden_layers=1, n_units_per_layer=32):
         super().__init__()
         self.frozen = False
@@ -29,7 +29,7 @@ class ContrastiveNet(Network):
         fakes = self.model(context).squeeze()
         return fakes
 
-class ActionContrastiveNet(Network):
+class ActionContrastiveNet(Module):
     def __init__(self, n_actions, n_latent_dims, n_hidden_layers=1, n_units_per_layer=32):
         super().__init__()
         self.frozen = False

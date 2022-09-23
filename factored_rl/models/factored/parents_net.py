@@ -2,10 +2,10 @@ import torch
 from torch import nn
 from torch.nn import functional
 
-from factored_rl.models.nnutils import Network, one_hot
+from factored_rl.models.nnutils import Module, one_hot
 from factored_rl.models.mlp import MLP
 
-class ParentsNet(Network):
+class ParentsNet(Module):
     def __init__(self,
                  n_actions,
                  n_latent_dims,

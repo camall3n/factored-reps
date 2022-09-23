@@ -3,13 +3,13 @@ import torch
 import torch.nn
 
 from factored_rl.models.factored.parents_net import ParentsNet
-from factored_rl.models.nnutils import Network
+from factored_rl.models.nnutils import Module
 from factored_rl.models.markov.phinet import PhiNet
 from factored_rl.models.markov.invnet import InvNet
 from factored_rl.models.markov.fwdnet import FwdNet
 from factored_rl.models.markov.contrastivenet import ContrastiveNet
 
-class FactorNet(Network):
+class FactorNet(Module):
     def __init__(self, args, n_actions, input_shape=2, device='cpu'):
         super().__init__()
         self.n_actions = n_actions

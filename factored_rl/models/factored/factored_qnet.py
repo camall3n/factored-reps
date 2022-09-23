@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import torch.nn
 
-from factored_rl.models.nnutils import Network, one_hot, extract
+from factored_rl.models.nnutils import Module, one_hot, extract
 from factored_rl.models.mlp import MLP
 
-class FactoredQNet(Network):
+class FactoredQNet(Module):
     def __init__(self, n_features, n_actions, n_hidden_layers=1, n_units_per_layer=32):
         super().__init__()
         self.n_features = n_features

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn
 
-from factored_rl.models.nnutils import Network, Identity
+from factored_rl.models.nnutils import Module, Identity
 from factored_rl.models.mlp import MLP
 
 class GANLoss(torch.nn.Module):
@@ -69,7 +69,7 @@ class GANLoss(torch.nn.Module):
                 loss = prediction.mean()
         return loss
 
-class CALFNet(Network):
+class CALFNet(Module):
     """Counterfactual Adversarial Latent Factorization"""
     def __init__(self,
                  args,

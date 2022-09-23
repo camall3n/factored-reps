@@ -3,10 +3,10 @@ from collections import Sequence
 import torch
 import torch.nn.functional as F
 
-from factored_rl.models.nnutils import Network, one_hot
+from factored_rl.models.nnutils import Module, one_hot
 from factored_rl.models.mlp import MLP
 
-class CategoricalPredictor(Network):
+class CategoricalPredictor(Module):
     def __init__(self, n_inputs, n_values, learning_rate=1e-3):
         """
         Output categorical distributions over multiple variables

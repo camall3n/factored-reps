@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import torch.nn
 
-from ..nnutils import Network, one_hot, extract
+from ..nnutils import Module, one_hot, extract
 from ..mlp import MLP
 
-class FwdNet(Network):
+class FwdNet(Module):
     def __init__(self,
                  n_actions,
                  n_latent_dims=4,

@@ -5,9 +5,9 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network
+from .nnutils import Module
 
-class CNN(Network):
+class CNN(Module):
     def __init__(
             self,
             input_shape: Tuple[int],

@@ -3,10 +3,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from ..nnutils import Network, Reshape
+from ..nnutils import Module, Reshape
 from .phinet import PhiNet
 
-class AutoEncoder(Network):
+class AutoEncoder(Module):
     def __init__(self, args, n_actions, input_shape=2):
         super().__init__()
         self.n_actions = n_actions

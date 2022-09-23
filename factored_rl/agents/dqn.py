@@ -1,6 +1,5 @@
 import math
 
-import hydra
 import numpy as np
 import torch
 

@@ -2,10 +2,10 @@ import numpy as np
 import torch
 import torch.nn
 
-from ..nnutils import Network, Reshape, conv2d_size_out
+from ..nnutils import Module, Reshape, conv2d_size_out
 from factored_rl.models.mlp import MLP
 
-class PhiNet(Network):
+class PhiNet(Module):
     def __init__(self,
                  input_shape=2,
                  n_latent_dims=4,

@@ -4,10 +4,10 @@ import numpy as np
 import torch
 import torch.nn
 
-from factored_rl.models.nnutils import Network
+from factored_rl.models.nnutils import Module
 from factored_rl.models.mlp import MLP
 
-class CAENet(Network):
+class CAENet(Module):
     """Counterfactual Autoencoder"""
     def __init__(self, args, n_actions, n_input_dims, n_latent_dims, device='cpu'):
         super().__init__()

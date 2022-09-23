@@ -4,9 +4,9 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Network
+from .nnutils import Module
 
-class MLP(Network):
+class MLP(Module):
     def __init__(self,
                  n_inputs,
                  n_outputs,
