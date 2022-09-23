@@ -4,8 +4,8 @@ import numpy as np
 import torch
 
 from factored_rl.experiments import configs
-from factored_rl.models.nnutils import extract, Sequential, Reshape
-from factored_rl.models import MLP, CNN
+from factored_rl.models.nnutils import extract
+from factored_rl.models import Network
 from .replaymemory import ReplayMemory
 
 class DQNAgent():
@@ -28,8 +28,8 @@ class DQNAgent():
         self.n_training_steps = 0
         input_shape = self.observation_space.shape
         n_actions = self.action_space.n
-        self.q = self._make_qnet(input_shape, n_actions, cfg.model).to(cfg.model.device)
-        self.q_target = self._make_qnet(input_shape, n_actions, cfg.model).to(cfg.model.device)
+        self.q = Network(input_shape, n_actions, cfg.model).to(cfg.model.device)
+        self.q_target = Network(input_shape, n_actions, cfg.model).to(cfg.model.device)
         self.q_target.hard_copy_from(self.q)
         self.q.print_summary()
         self.replay.reset()
@@ -106,39 +106,3 @@ class DQNAgent():
 
     def _get_q_values_for_observation(self, obs):
         return self.q(torch.as_tensor(obs).float().to(self.cfg.model.device))
-
-    def _make_qnet(self, input_shape, n_actions, cfg: configs.ModelConfig):
-        if cfg.architecture == 'mlp':
-            n_features = np.prod(input_shape) if len(input_shape) > 1 else input_shape[0]
-            mlp = MLP(n_inputs=n_features,
-                      n_outputs=n_actions,
-                      n_hidden_layers=cfg.n_hidden_layers,
-                      n_units_per_layer=cfg.n_units_per_layer,
-                      activation=hydra.utils.instantiate(cfg.activation))
-            if len(input_shape) > 1:
-                return Sequential(*[Reshape(-1, n_features), mlp])
-            else:
-                return mlp
-        elif cfg.architecture == 'cnn':
-            if input_shape[-2:] != cfg.supported_2d_input_shape:
-                raise ValueError(f'Input shape does not match supported 2D input shape: '
-                                 f'{cfg.supported_2d_input_shape}')
-            cnn = CNN(
-                input_shape=input_shape,
-                n_output_channels=cfg.n_output_channels,
-                kernel_sizes=cfg.kernel_sizes,
-                strides=cfg.strides,
-                activation=hydra.utils.instantiate(cfg.activation),
-            )
-            n_features = np.prod(cnn.output_shape)
-            mlp = MLP(
-                n_inputs=n_features,
-                n_outputs=n_actions,
-                n_hidden_layers=cfg.n_hidden_layers,
-                n_units_per_layer=cfg.n_units_per_layer,
-                activation=hydra.utils.instantiate(cfg.activation),
-            )
-            return Sequential(*[cnn, Reshape(-1, n_features), mlp])
-        else:
-            raise NotImplementedError('"{}" is not a known network architecture'.format(
-                cfg.architecture))
