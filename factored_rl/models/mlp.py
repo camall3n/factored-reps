@@ -1,42 +1,55 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Module
+from .nnutils import Module, ActivationType, build_activation
+
+def coerce_to_int(x):
+    try:
+        return int(x)
+    except TypeError:
+        pass
+
+    if hasattr(x, '__len__'):
+        assert len(x) == 1
+        x = x[0]
+
+    return x
 
 class MLP(Module):
-    def __init__(self,
-                 n_inputs,
-                 n_outputs,
-                 n_hidden_layers=1,
-                 n_units_per_layer=32,
-                 activation: Optional[Union[torch.nn.Module, type]] = torch.nn.Tanh,
-                 final_activation=None):
+    def __init__(
+        self,
+        n_inputs,
+        n_outputs,
+        n_hidden_layers=1,
+        n_units_per_layer=32,
+        activation: Optional[ActivationType] = torch.nn.Tanh, # activation or list thereof for internal layers
+        final_activation: Optional[ActivationType] = None, # activation or list thereof for final layer
+    ):# yapf: disable
         super().__init__()
-        self.n_outputs = n_outputs
+        self.n_outputs = coerce_to_int(n_outputs)
         self.frozen = False
 
-        self.layers = []
-        if n_hidden_layers == 0:
-            self.layers.extend([torch.nn.Linear(n_inputs, n_outputs)])
-        else:
-            try:
-                activation = activation()
-            except TypeError:
-                pass
-            self.layers.extend([torch.nn.Linear(n_inputs, n_units_per_layer), activation])
-            self.layers.extend(
-                [torch.nn.Linear(n_units_per_layer, n_units_per_layer), activation] *
-                (n_hidden_layers - 1))
-            self.layers.extend([torch.nn.Linear(n_units_per_layer, n_outputs)])
+        self.n_layers = n_hidden_layers + 1
+        layer_sizes = [n_inputs] + [n_units_per_layer] * n_hidden_layers + [n_outputs]
+        assert len(layer_sizes) == self.n_layers + 1
 
-        if final_activation is not None:
-            try:
-                self.layers.extend([final_activation()])
-            except TypeError:
-                self.layers.extend([final_activation])
+        # build list of lists of activations
+        if not isinstance(activation, List):
+            activation = [activation]
+        if not isinstance(final_activation, List):
+            final_activation = [final_activation]
+        activations = [activation] * n_hidden_layers + [final_activation]
+        assert len(activations) == self.n_layers
+
+        self.layers = []
+        for i in range(self.n_layers):
+            self.layers.append(torch.nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
+            for ac in activations[i]:
+                if ac is not None:
+                    self.layers.append(build_activation(ac, layer_sizes[i + 1]))
 
         self.model = torch.nn.Sequential(*self.layers)
 

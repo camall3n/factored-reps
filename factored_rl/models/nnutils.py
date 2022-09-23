@@ -1,3 +1,5 @@
+from functools import partial
+from typing import Union, List
 import logging
 import shutil
 
@@ -6,12 +8,22 @@ import os
 import torch
 import torch.nn
 
+Activation = Union[torch.nn.Module, type]
+ActivationType = Union[Activation, List[Activation]]
+
 def conv2d_size_out(size, kernel_size, stride):
     ''' Adapted from pytorch tutorials:
         https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
     '''
     return ((size[-2] - (kernel_size[-2] - 1) - 1) // stride + 1,
             (size[-1] - (kernel_size[-1] - 1) - 1) // stride + 1)
+
+def build_activation(ac, layer_shape):
+    if isinstance(ac, partial):
+        ac = ac(layer_shape)
+    elif isinstance(ac, type):
+        ac = ac()
+    return ac
 
 class Reshape(torch.nn.Module):
     """Module that returns a view of the input which has a different size

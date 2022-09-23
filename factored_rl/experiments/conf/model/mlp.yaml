@@ -8,5 +8,5 @@ mlp:
   n_hidden_layers: 1
   n_units_per_layer: 64
   activation:
-    _target_: torch.nn.Tanh
+    - _target_: torch.nn.Tanh
   final_activation: null

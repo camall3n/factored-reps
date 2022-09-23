@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn
 
-from .nnutils import Module
+from .nnutils import Module, ActivationType, build_activation
 
 class CNN(Module):
     def __init__(
@@ -16,10 +16,11 @@ class CNN(Module):
             strides: Optional[Union[int, List[int]]] = None, # default=1
             padding: Optional[Union[int, List[int]]] = None, # default=0
             dilations: Optional[Union[int, List[int]]] = None, # default=1
-            activation: Optional[Union[torch.nn.Module, List[torch.nn.Module]]] = torch.nn.ReLU,
-            final_activation: Optional[torch.nn.Module] = torch.nn.ReLU,
-            **kwargs):
+            activation: Optional[ActivationType] = torch.nn.ReLU, # activation or list thereof for internal layers
+            final_activation: Optional[ActivationType] = torch.nn.ReLU, # activation or list thereof for final layer
+        **kwargs): # yapf: disable
         super().__init__()
+        input_shape = tuple(input_shape)
         self.input_shape = input_shape
 
         if len(input_shape) == 2:
@@ -45,10 +46,12 @@ class CNN(Module):
         else:
             padding = self._list_of_values(padding, 'padding', default_value=0)
 
-        if activation is None or isinstance(activation, (torch.nn.Module, type)):
-            activations = [activation] * (self.n_layers - 1) + [final_activation]
-        else:
-            activations = activation + [final_activation]
+        # build list of lists of activations
+        if not isinstance(activation, List):
+            activation = [activation]
+        if not isinstance(final_activation, List):
+            final_activation = [final_activation]
+        activations = [activation] * (self.n_layers - 1) + [final_activation]
 
         self.layers = []
         self.layer_shapes = [(1, ) + input_shape if self.n_input_channels == 0 else input_shape]
@@ -65,11 +68,9 @@ class CNN(Module):
             self.layers.append(conv)
             out_shape = self._conv2d_size(input_shape=self.layer_shapes[-1], layer=conv)
             self.layer_shapes.append(out_shape)
-            if activations[i] is not None:
-                try:
-                    self.layers.append(activations[i]())
-                except TypeError:
-                    self.layers.append(activations[i])
+            for ac in activations[i]:
+                if ac is not None:
+                    self.layers.append(build_activation(ac, out_shape))
 
         self.output_shape = self.layer_shapes[-1]
         if not all(np.array(self.output_shape) >= 1):

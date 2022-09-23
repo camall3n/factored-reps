@@ -6,6 +6,7 @@ import os
 import platform
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf, MISSING
 import torch
@@ -25,12 +26,23 @@ def immutable(obj):
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 # -----------------------------------------------------------------------
 
+ActivationType = List[Dict[str, Any]]
+OptimizerType = Dict[str, Any]
+
+def instantiate(obj):
+    if isinstance(OmegaConf.to_object(obj), Dict) and '_target_' in obj.keys():
+        return hydra.utils.instantiate(obj)
+    elif isinstance(OmegaConf.to_object(obj), List):
+        return [instantiate(o) for o in obj]
+    else:
+        raise RuntimeError(f'Cannot instantiate object {obj} with type: {type(obj)}')
+
 @dataclass
 class MLPConfig:
     n_hidden_layers: int = MISSING
     n_units_per_layer: int = MISSING
-    activation: Optional[Dict[str, str]] = None
-    final_activation: Optional[Dict[str, str]] = None
+    activation: Optional[ActivationType] = None
+    final_activation: Optional[ActivationType] = None
 
 @dataclass
 class CNNConfig:
@@ -40,8 +52,8 @@ class CNNConfig:
     strides: Any = MISSING
     padding: Any = None
     dilations: Any = None
-    activation: Optional[Dict[str, str]] = None
-    final_activation: Optional[Dict[str, str]] = None
+    activation: Optional[ActivationType] = None
+    final_activation: Optional[ActivationType] = None
 
 @dataclass
 class AEConfig:
@@ -108,7 +120,7 @@ class TrainerConfig:
     log_every_n_steps: int = MISSING
     max_steps: int = MISSING
     num_dataloader_workers: int = MISSING
-    optimizer: Optional[Dict[str, str]] = None
+    optimizer: Optional[OptimizerType] = None
     overfit_batches: int = MISSING
     persistent_workers: bool = MISSING
     quick: bool = MISSING

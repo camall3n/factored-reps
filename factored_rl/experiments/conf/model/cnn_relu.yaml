@@ -5,10 +5,10 @@ architecture: cnn
 flatten_input: false
 cnn:
   activation:
-    _target_: torch.nn.ReLU
+    - _target_: torch.nn.ReLU
   final_activation:
-    _target_: torch.nn.ReLU
+    - _target_: torch.nn.ReLU
 mlp:
   activation:
-    _target_: torch.nn.ReLU
+    - _target_: torch.nn.ReLU
   final_activation: null

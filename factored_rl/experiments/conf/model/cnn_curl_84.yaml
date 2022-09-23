@@ -11,5 +11,5 @@ mlp:
   n_hidden_layers: 1
   n_units_per_layer: 1024
   final_activation:
-    - {_target_: torch.nn.LayerNorm}
-    - {_target_: torch.nn.Tanh}
+    - {_target_: torch.nn.LayerNorm, _partial_: true}
+    - _target_: torch.nn.Tanh
