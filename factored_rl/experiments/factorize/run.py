@@ -5,18 +5,15 @@ import hydra
 from factored_rl.experiments import configs
 
 # Data
-from factored_rl.experiments.common import initialize_env
+from factored_rl.experiments.common import initialize_env, initialize_model
 from disent.dataset.data import GymEnvData
 from disent.dataset import DisentIterDataset
 from disent.dataset.transform import ToImgTensorF32
 from torch.utils.data import DataLoader
-import pytorch_lightning as pl
-
-# Model
-from factored_rl.models.ae import Autoencoder
-from factored_rl.models.disent import build_disent_model
 
 # Training
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
 from factored_rl.experiments.common import cpu_count
 
 # ----------------------------------------
@@ -31,10 +28,14 @@ def main(cfg: configs.Config):
     val_dl, _ = initialize_dataloader(cfg, cfg.seed + 1000000)
 
     model = initialize_model(input_shape, cfg)
-    trainer = pl.Trainer(max_steps=cfg.trainer.max_steps,
-                         overfit_batches=cfg.trainer.overfit_batches,
-                         gpus=(1 if cfg.model.device == 'cuda' else 0),
-                         default_root_dir=cfg.dir)
+    # ckpt_callback = ModelCheckpoint(save_last=True)
+    trainer = pl.Trainer(
+        max_steps=cfg.trainer.max_steps,
+        overfit_batches=cfg.trainer.overfit_batches,
+        gpus=(1 if cfg.model.device == 'cuda' else 0),
+        default_root_dir=cfg.dir,
+        # checkpoint_callback=ckpt_callback,
+    )
     trainer.fit(model, train_dl, val_dl)
 
 def initialize_dataloader(cfg: configs.Config, seed: int = None):
@@ -51,13 +52,6 @@ def initialize_dataloader(cfg: configs.Config, seed: int = None):
         worker_init_fn=dataset.worker_init_fn,
     )
     return dataloader, input_shape
-
-def initialize_model(input_shape, cfg: configs.Config):
-    if cfg.model.lib == 'disent':
-        model = build_disent_model(input_shape, cfg)
-    elif cfg.model.name == 'ae_cnn_64':
-        model = Autoencoder(input_shape, cfg)
-    return model
 
 if __name__ == '__main__':
     freeze_support() # do this to make sure multiprocessing works correctly

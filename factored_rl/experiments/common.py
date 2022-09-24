@@ -1,4 +1,7 @@
 import os
+import glob
+
+import pytorch_lightning as pl
 
 from factored_rl.experiments import configs
 
@@ -10,6 +13,10 @@ from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper
 from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
+
+# Model
+from factored_rl.models.ae import Autoencoder
+from factored_rl.models.disent import build_disent_model
 
 # ----------------------------------------
 # Environment & wrappers
@@ -60,6 +67,37 @@ def initialize_env(cfg: configs.Config, seed: int = None):
         env = NoiseWrapper(env, cfg.transform.noise_std)
     env = ToFloatWrapper(env)
     return env
+
+def initialize_model(input_shape, cfg: configs.Config):
+    if cfg.model.lib == 'disent':
+        return build_disent_model(input_shape, cfg)
+    elif cfg.model.name is not None:
+        if cfg.model.name == 'ae_cnn_64':
+            model = Autoencoder
+        else:
+            raise RuntimeError(f'Tried to initialize unknown model: {cfg.model.name}')
+        if cfg.loader.should_load:
+            if cfg.loader.checkpoint_path is None:
+                experiment = cfg.experiment if cfg.loader.experiment is None else cfg.loader.experiment
+                trial = cfg.trial if cfg.loader.trial is None else cfg.loader.trial
+                seed = f'{cfg.seed if cfg.loader.seed is None else cfg.loader.seed:04d}'
+                load_dir = os.path.join('/', *cfg.dir.split('/')[:-4], experiment, trial, seed)
+                if cfg.loader.version is None:
+                    version = pl.Trainer(max_epochs=1,
+                                         default_root_dir=load_dir).logger.version - 1
+                else:
+                    version = cfg.loader.version
+                checkpoint_dir = os.path.join(load_dir,
+                                              f'lightning_logs/version_{version}/checkpoints/')
+                checkpoints = glob.glob(os.path.join(checkpoint_dir, '*.ckpt'))
+                if len(checkpoints) > 1:
+                    raise RuntimeError(f'Multiple checkpoints detected in {checkpoint_dir}\n'
+                                       f'Please specify model.checkpoint_path')
+                checkpoint_path = checkpoints[0]
+            model = model.load_from_checkpoint(checkpoint_path, input_shape=input_shape, cfg=cfg)
+        else:
+            model = model(input_shape, cfg)
+    return model
 
 def cpu_count():
     # os.cpu_count()

@@ -67,6 +67,15 @@ class VAEConfig:
     loss_reduction: str = MISSING
 
 @dataclass
+class LoaderConfig:
+    should_load: bool = False # whether to load model from checkpoint
+    experiment: Optional[str] = None # which experiment to load
+    trial: Optional[str] = None # which trial to load
+    seed: Optional[int] = None # which seed to load
+    version: Optional[int] = None # which version to load (default is latest)
+    checkpoint_path: Optional[str] = None # path to .ckpt file for loading
+
+@dataclass
 class ModelConfig:
     name: Optional[str] = None
     architecture: Optional[str] = None
@@ -140,6 +149,7 @@ class Config:
     model: ModelConfig = MISSING
     trainer: TrainerConfig = MISSING
     transform: TransformConfig = MISSING
+    loader: LoaderConfig = LoaderConfig()
     test: bool = False
     verbose: bool = False
     disable_gpu: bool = False
