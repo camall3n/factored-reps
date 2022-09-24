@@ -2,6 +2,7 @@ defaults:
   - cnn_relu
 
 name: betavae
+lib: disent
 architecture: cnn
 cnn:
   supported_2d_input_shape: [64, 64]

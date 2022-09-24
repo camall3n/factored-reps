@@ -1,0 +1,7 @@
+defaults:
+  - cnn_64
+
+name: ae_cnn_64
+architecture: cnn
+ae:
+  n_latent_dims: 10

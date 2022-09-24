@@ -2,6 +2,7 @@ defaults:
   - base_model
 
 architecture: cnn
+lib: factored_rl
 flatten_input: false
 cnn:
   activation:

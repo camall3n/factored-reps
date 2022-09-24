@@ -70,6 +70,7 @@ class VAEConfig:
 class ModelConfig:
     name: Optional[str] = None
     architecture: Optional[str] = None
+    lib: Optional[str] = None
     device: str = MISSING
     flatten_input: bool = False
     mlp: MLPConfig = MLPConfig()

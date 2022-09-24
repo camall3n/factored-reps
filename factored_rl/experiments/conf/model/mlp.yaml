@@ -2,6 +2,7 @@ defaults:
   - base_model
 
 name: mlp
+lib: factored_rl
 architecture: mlp
 flatten_input: true
 mlp:

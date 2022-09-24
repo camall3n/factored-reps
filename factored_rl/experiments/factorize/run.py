@@ -37,10 +37,11 @@ def main(cfg: configs.Config):
     model = initialize_model(input_shape, cfg)
     trainer = pl.Trainer(max_steps=cfg.trainer.max_steps,
                          overfit_batches=cfg.trainer.overfit_batches,
-                         gpus=(1 if cfg.model.device == 'cuda' else 0))
+                         gpus=(1 if cfg.model.device == 'cuda' else 0),
+                         default_root_dir=cfg.dir)
     trainer.fit(model, train_dl, val_dl)
 
-def initialize_dataloader(cfg: configs.TrainerConfig, seed: int = None):
+def initialize_dataloader(cfg: configs.Config, seed: int = None):
     env = initialize_env(cfg, seed)
     data = GymEnvData(env, seed, transform=ToImgTensorF32())
     dataset = DisentIterDataset(data)
@@ -68,8 +69,8 @@ def initialize_model(input_shape, cfg: configs.Config):
                 loss_reduction=cfg.model.vae.loss_reduction,
                 beta=cfg.model.vae.beta,
             ))
-    elif cfg.model.name == 'ae_64':
-        model = Autoencoder(input_shape, cfg.model)
+    elif cfg.model.name == 'ae_cnn_64':
+        model = Autoencoder(input_shape, cfg)
     return model
 
 if __name__ == '__main__':

@@ -8,13 +8,27 @@ from factored_rl.models.nnutils import Sequential, Reshape
 from factored_rl.models import Network, MLP, CNN
 
 class Autoencoder(pl.LightningModule):
-    def __init__(self, input_shape: Tuple, cfg: configs.ModelConfig):
+    def __init__(self, input_shape: Tuple, cfg: configs.Config):
         super().__init__()
         self.input_shape = tuple(input_shape)
-        self.n_latent_dims = cfg.ae.n_latent_dims
+        self.n_latent_dims = cfg.model.ae.n_latent_dims
         self.output_shape = self.input_shape
-        self.encoder = Encoder(input_shape, self.n_latent_dims, cfg)
-        self.decoder = Decoder(self.encoder, input_shape, cfg)
+        self.cfg = cfg
+        self.encoder = Encoder(input_shape, self.n_latent_dims, cfg.model)
+        self.decoder = Decoder(self.encoder, input_shape, cfg.model)
+
+    def training_step(self, batch, batch_idx):
+        x = batch
+        z = self.encoder(x)
+        x_hat = self.decoder(z)
+        loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
+        self.log('train/loss_recon', loss)
+        return loss
+
+    def configure_optimizers(self):
+        partial_optimizer = configs.instantiate(self.cfg.trainer.optimizer)
+        optimizer = partial_optimizer(self.parameters(), lr=self.cfg.trainer.learning_rate)
+        return optimizer
 
 class Encoder(Network):
     def forward(self, x):
