@@ -13,12 +13,8 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 
 # Model
-from disent.frameworks.vae import BetaVae
-from disent.model import AutoEncoder as DisentAutoencoder
-from disent.model.ae import DecoderConv64
-from disent.model.ae import EncoderConv64
-
 from factored_rl.models.ae import Autoencoder
+from factored_rl.models.disent import build_disent_model
 
 # Training
 from factored_rl.experiments.common import cpu_count
@@ -43,32 +39,22 @@ def main(cfg: configs.Config):
 
 def initialize_dataloader(cfg: configs.Config, seed: int = None):
     env = initialize_env(cfg, seed)
-    data = GymEnvData(env, seed, transform=ToImgTensorF32())
-    dataset = DisentIterDataset(data)
-    dataloader = DataLoader(dataset=dataset,
-                            batch_size=cfg.trainer.batch_size,
-                            num_workers=0 if cfg.trainer.quick else cpu_count(),
-                            persistent_workers=False if cfg.trainer.quick else True)
-    return dataloader, data.x_shape
+    dataset = GymEnvData(env, seed, transform=ToImgTensorF32())
+    input_shape = dataset.x_shape
+    if cfg.model.lib == 'disent':
+        dataset = DisentIterDataset(dataset)
+    dataloader = DataLoader(
+        dataset=dataset,
+        batch_size=cfg.trainer.batch_size,
+        num_workers=0 if cfg.trainer.quick else cpu_count(),
+        persistent_workers=False if cfg.trainer.quick else True,
+        worker_init_fn=dataset.worker_init_fn,
+    )
+    return dataloader, input_shape
 
 def initialize_model(input_shape, cfg: configs.Config):
-    if cfg.model.name == 'betavae':
-        # create the BetaVAE model
-        # - adjusting the beta, learning rate, and representation size.
-        model = BetaVae(
-            model=DisentAutoencoder(
-                # z_multiplier is needed to output mu & logvar when parameterising normal distribution
-                encoder=EncoderConv64(x_shape=input_shape,
-                                      z_size=cfg.model.ae.n_latent_dims,
-                                      z_multiplier=2),
-                decoder=DecoderConv64(x_shape=input_shape, z_size=cfg.model.ae.n_latent_dims),
-            ),
-            cfg=BetaVae.cfg(
-                optimizer=cfg.trainer.optimizer._target_.split('.')[-1].lower(),
-                optimizer_kwargs=dict(lr=cfg.trainer.learning_rate),
-                loss_reduction=cfg.model.vae.loss_reduction,
-                beta=cfg.model.vae.beta,
-            ))
+    if cfg.model.lib == 'disent':
+        model = build_disent_model(input_shape, cfg)
     elif cfg.model.name == 'ae_cnn_64':
         model = Autoencoder(input_shape, cfg)
     return model
