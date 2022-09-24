@@ -14,9 +14,11 @@ import pytorch_lightning as pl
 
 # Model
 from disent.frameworks.vae import BetaVae
-from disent.model import AutoEncoder
+from disent.model import AutoEncoder as DisentAutoencoder
 from disent.model.ae import DecoderConv64
 from disent.model.ae import EncoderConv64
+
+from factored_rl.models.ae import Autoencoder
 
 # Training
 from factored_rl.experiments.common import cpu_count
@@ -48,12 +50,12 @@ def initialize_dataloader(cfg: configs.TrainerConfig, seed: int = None):
                             persistent_workers=False if cfg.trainer.quick else True)
     return dataloader, data.x_shape
 
-def initialize_model(input_shape, cfg):
+def initialize_model(input_shape, cfg: configs.Config):
     if cfg.model.name == 'betavae':
         # create the BetaVAE model
         # - adjusting the beta, learning rate, and representation size.
-        module = BetaVae(
-            model=AutoEncoder(
+        model = BetaVae(
+            model=DisentAutoencoder(
                 # z_multiplier is needed to output mu & logvar when parameterising normal distribution
                 encoder=EncoderConv64(x_shape=input_shape,
                                       z_size=cfg.model.ae.n_latent_dims,
@@ -66,7 +68,9 @@ def initialize_model(input_shape, cfg):
                 loss_reduction=cfg.model.vae.loss_reduction,
                 beta=cfg.model.vae.beta,
             ))
-    return module
+    elif cfg.model.name == 'ae_64':
+        model = Autoencoder(input_shape, cfg.model)
+    return model
 
 if __name__ == '__main__':
     freeze_support() # do this to make sure multiprocessing works correctly
