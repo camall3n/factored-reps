@@ -18,17 +18,18 @@ class CNN(Module):
             dilations: Optional[Union[int, List[int]]] = None, # default=1
             activation: Optional[ActivationType] = torch.nn.ReLU, # activation or list thereof for internal layers
             final_activation: Optional[ActivationType] = torch.nn.ReLU, # activation or list thereof for final layer
+            transpose: bool = False,
+            layer_shapes: Optional[List[Tuple[int]]] = None,
         **kwargs): # yapf: disable
         super().__init__()
         input_shape = tuple(input_shape)
         self.input_shape = input_shape
+        self.transposed = transpose
 
         if len(input_shape) == 2:
             self.n_input_channels = 0
-            self.output_shape = (1, ) + input_shape # will be adjusted as network gets built
         elif len(input_shape) == 3:
             self.n_input_channels = input_shape[0]
-            self.output_shape = input_shape # will be adjusted as network gets built
             if input_shape[0] == input_shape[1] and input_shape[1] > input_shape[2]:
                 warnings.warn('Input shape {input_shape} might be backwards. Should be (C, H, W).')
         else:
@@ -37,6 +38,7 @@ class CNN(Module):
         self.n_layers = len(n_output_channels)
         n_channels = (self.n_input_channels, ) if self.n_input_channels > 0 else (1, )
         n_channels = n_channels + tuple(n_output_channels)
+        self.n_output_channels = n_channels[-1]
 
         kernel_sizes = self._list_of_values(kernel_sizes, 'kernel_sizes', default_value=None)
         strides = self._list_of_values(strides, 'strides', default_value=1)
@@ -53,10 +55,21 @@ class CNN(Module):
             final_activation = [final_activation]
         activations = [activation] * (self.n_layers - 1) + [final_activation]
 
+        if transpose:
+            Conv = torch.nn.ConvTranspose2d
+            if self.n_output_channels == 0:
+                n_channels[-1] = 1
+        else:
+            Conv = torch.nn.Conv2d
+
         self.layers = []
-        self.layer_shapes = [(1, ) + input_shape if self.n_input_channels == 0 else input_shape]
+        conv_layers = []
+        if layer_shapes is None:
+            self.layer_shapes = [(1, ) + input_shape if self.n_input_channels == 0 else input_shape] # yapf:disable
+        else:
+            self.layer_shapes = layer_shapes
         for i in range(self.n_layers):
-            conv = torch.nn.Conv2d(
+            conv = Conv(
                 in_channels=n_channels[i],
                 out_channels=n_channels[i + 1],
                 kernel_size=kernel_sizes[i],
@@ -66,13 +79,18 @@ class CNN(Module):
                 **kwargs,
             )
             self.layers.append(conv)
-            out_shape = self._conv2d_size(input_shape=self.layer_shapes[-1], layer=conv)
-            self.layer_shapes.append(out_shape)
+            conv_layers.append(conv)
+            if transpose and layer_shapes is not None:
+                out_shape = self.layer_shapes[i + 1]
+            else:
+                out_shape = self._conv2d_size(self.layer_shapes[i], conv, transpose)
+                self.layer_shapes.append(out_shape)
             for ac in activations[i]:
                 if ac is not None:
                     self.layers.append(build_activation(ac, out_shape))
 
         self.output_shape = self.layer_shapes[-1]
+        assert self.output_shape[0] == self.n_output_channels
         if not all(np.array(self.output_shape) >= 1):
             raise ValueError(
                 f'The specified CNN has invalid output shape: {self.output_shape}\n'
@@ -85,7 +103,16 @@ class CNN(Module):
     def forward(self, x):
         if self.n_input_channels == 0:
             x = torch.unsqueeze(x, -3)
-        return self.model(x)
+        desired_layer_shapes = iter([shape[1:] for shape in self.layer_shapes[1:]])
+        for layer in self.model:
+            if type(layer) == torch.nn.ConvTranspose2d:
+                desired_shape = next(desired_layer_shapes)
+                x = layer(x, output_size=desired_shape)
+            else:
+                x = layer(x)
+        if self.n_output_channels == 0:
+            x = torch.squeeze(x, -3)
+        return x
 
     def print_layers(self):
         print(f'Layer shapes:\n' +
@@ -111,34 +138,43 @@ class CNN(Module):
         assert len(value_list) == self.n_layers
         return value_list
 
-    def _conv2d_size(self, input_shape: Tuple[int], layer: torch.nn.Conv2d):
+    def _conv2d_size(self, input_shape: Tuple[int], layer: torch.nn.Conv2d, transpose=False):
         """
         Compute the output shape after applying the Conv2d layer to the input shape
         """
+        if transpose:
+            sizer = self._conv1d_size_T
+        else:
+            sizer = self._conv1d_size
         _, h_in, w_in = input_shape
         k_h, k_w = self._unpack(layer.kernel_size)
         s_h, s_w = self._unpack(layer.stride)
         d_h, d_w = self._unpack(layer.dilation)
         p_h, p_w = self._unpack(layer.padding)
         c_out = layer.out_channels
-        h_out = self._conv1d_size(h_in, k_h, s_h, d_h, p_h)
-        w_out = self._conv1d_size(w_in, k_w, s_w, d_w, p_w)
+        h_out = sizer(h_in, k_h, s_h, d_h, p_h)
+        w_out = sizer(w_in, k_w, s_w, d_w, p_w)
         return (c_out, h_out, w_out)
 
     @staticmethod
-    def _conv1d_size(v_in: int,
-                     kernel_size: int,
-                     stride: int = 1,
-                     dilation: int = 1,
-                     padding: int = 0):
+    def _conv1d_size(v_in: int, kernel: int, stride: int = 1, dilation: int = 1, pad: int = 0):
         """
         Compute the linear size associated with a 1D convolution operation
 
         Code shared by David Tao
         """
-        numerator = v_in + 2 * padding - dilation * (kernel_size - 1) - 1
+        numerator = v_in + 2 * pad - dilation * (kernel - 1) - 1
         float_out = (numerator / stride) + 1
         return int(np.floor(float_out))
+
+    @staticmethod
+    def _conv1d_size_T(v_out: int, kernel: int, stride: int = 1, dilation: int = 1, pad: int = 0):
+        """
+        Compute the linear size associated with a 1D transposed convolution operation
+        """
+        numerator = (v_out - 1) * stride
+        v_in = numerator - (2 * pad - dilation * (kernel - 1) - 1)
+        return v_in
 
     @staticmethod
     def _unpack(size):
