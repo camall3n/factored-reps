@@ -15,7 +15,7 @@ class Network(Module):
         self.input_shape = input_shape
         self.output_shape = output_shape
         layers = []
-        if cfg.architecture in ['cnn', 'ae']:
+        if cfg.architecture == 'cnn':
             if input_shape[-2:] != cfg.cnn.supported_2d_input_shape:
                 raise ValueError(f'Input shape does not match supported 2D input shape: '
                                  f'{cfg.cnn.supported_2d_input_shape}')
@@ -35,18 +35,17 @@ class Network(Module):
             n_features = None
             raise NotImplementedError(f'Unknown architecture: {cfg.architecture}')
 
-        if cfg.architecture in ['ae', 'cnn', 'mlp']:
-            mlp = MLP(
-                n_inputs=n_features,
-                n_outputs=output_shape,
-                n_hidden_layers=cfg.mlp.n_hidden_layers,
-                n_units_per_layer=cfg.mlp.n_units_per_layer,
-                activation=configs.instantiate(cfg.mlp.activation),
-                final_activation=configs.instantiate(cfg.mlp.final_activation),
-            )
-            if len(input_shape) > 1:
-                layers.append(Reshape(-1, n_features))
-            layers.append(mlp)
+        mlp = MLP(
+            n_inputs=n_features,
+            n_outputs=output_shape,
+            n_hidden_layers=cfg.mlp.n_hidden_layers,
+            n_units_per_layer=cfg.mlp.n_units_per_layer,
+            activation=configs.instantiate(cfg.mlp.activation),
+            final_activation=configs.instantiate(cfg.mlp.final_activation),
+        )
+        if len(input_shape) > 1:
+            layers.append(Reshape(-1, n_features))
+        layers.append(mlp)
 
         self.model = Sequential(*layers)
 

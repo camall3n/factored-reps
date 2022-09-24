@@ -49,7 +49,7 @@ def initialize_dataloader(cfg: configs.TrainerConfig, seed: int = None):
     return dataloader, data.x_shape
 
 def initialize_model(input_shape, cfg):
-    if cfg.model.name == 'vae_64':
+    if cfg.model.name == 'betavae':
         # create the BetaVAE model
         # - adjusting the beta, learning rate, and representation size.
         module = BetaVae(

@@ -2,7 +2,7 @@ defaults:
   - cnn_relu
 
 name: ae_64
-architecture: ae
+architecture: cnn
 cnn:
   supported_2d_input_shape: [64, 64]
   n_output_channels: [16, 16, 16, 16]
