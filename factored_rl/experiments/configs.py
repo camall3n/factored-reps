@@ -30,7 +30,9 @@ ActivationType = List[Dict[str, Any]]
 OptimizerType = Dict[str, Any]
 
 def instantiate(obj):
-    if isinstance(OmegaConf.to_object(obj), Dict) and '_target_' in obj.keys():
+    if obj is None:
+        return obj
+    elif isinstance(OmegaConf.to_object(obj), Dict) and '_target_' in obj.keys():
         return hydra.utils.instantiate(obj)
     elif isinstance(OmegaConf.to_object(obj), List):
         return [instantiate(o) for o in obj]
