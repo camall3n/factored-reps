@@ -1,0 +1,15 @@
+defaults:
+  - cnn_relu
+
+name: ae_64
+architecture: ae
+cnn:
+  supported_2d_input_shape: [64, 64]
+  n_output_channels: [16, 16, 16, 16]
+  kernel_sizes: 4
+  strides: 2
+mlp:
+  n_hidden_layers: 1
+  n_units_per_layer: 64
+ae:
+  n_latent_dims: 10
