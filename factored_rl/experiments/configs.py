@@ -181,8 +181,8 @@ def initialize_experiment(cfg, experiment_name):
     if cfg.get('experiment', None) is None:
         cfg.experiment = experiment_name
     _initialize_experiment_dir(cfg)
-    _initialize_device(cfg)
     _initialize_logger(cfg)
+    _initialize_device(cfg)
     log = logging.getLogger()
     log.info('\n' + get_config_yaml_str(cfg))
     log.info(f'Training on device: {cfg.model.device}\n')

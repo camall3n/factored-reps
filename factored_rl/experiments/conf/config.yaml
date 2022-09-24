@@ -8,3 +8,9 @@ defaults:
   - transform: base_transform
 
 debug: true
+hydra:
+  job:
+    chdir: false
+  output_subdir: null
+  run:
+    dir: /tmp
