@@ -1,0 +1,7 @@
+defaults:
+  - rl
+  - _self_
+
+name: rl.quick
+batch_size: 2
+quick: true

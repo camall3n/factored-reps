@@ -94,11 +94,9 @@ class AgentConfig:
 
 @dataclass
 class DQNAgentConfig(AgentConfig):
-    batch_size: int = MISSING
     epsilon_final: float = MISSING # final / eval exploration probability
     epsilon_half_life_steps: int = MISSING # number of steps for epsilon to decrease by half
     epsilon_initial: float = MISSING # initial exploration probability
-    learning_rate: float = MISSING
     replay_buffer_size: int = MISSING
     replay_warmup_steps: int = MISSING
     target_copy_alpha: float = MISSING # per-step EMA contribution from online network
@@ -129,13 +127,16 @@ class TrainerConfig:
     name: str = MISSING
     batch_size: int = MISSING
     learning_rate: float = MISSING
+    optimizer: Optional[OptimizerType] = None
+    quick: bool = MISSING
+
+@dataclass
+class LightningTrainerConfig(TrainerConfig):
     log_every_n_steps: int = MISSING
     max_steps: int = MISSING
     num_dataloader_workers: int = MISSING
-    optimizer: Optional[OptimizerType] = None
     overfit_batches: int = MISSING
     persistent_workers: bool = MISSING
-    quick: bool = MISSING
 
 @dataclass
 class Config:
@@ -162,6 +163,7 @@ cs.store(group='env', name='base_env', node=EnvConfig)
 cs.store(group='env', name='taxi_env', node=TaxiEnvConfig)
 cs.store(group='model', name='base_model', node=ModelConfig)
 cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
+cs.store(group='trainer', name='lightning_trainer', node=LightningTrainerConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)
 
 def get_config_yaml_str(cfg):

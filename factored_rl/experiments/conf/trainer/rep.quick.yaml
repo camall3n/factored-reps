@@ -1,7 +1,7 @@
 defaults:
-  - full
+  - rep
 
-name: quick
+name: rep.quick
 batch_size: 2
 max_steps: 1
 num_dataloader_workers: 0
