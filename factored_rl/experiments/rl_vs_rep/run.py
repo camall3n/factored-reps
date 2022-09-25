@@ -8,6 +8,7 @@ from factored_rl.experiments import configs
 
 # Env
 from factored_rl.experiments.common import initialize_env
+from factored_rl.wrappers.move_axis import MoveAxisToCHW
 from gym.wrappers import TimeLimit
 
 # Agent
@@ -25,6 +26,11 @@ def main(cfg: configs.Config):
     configs.initialize_experiment(cfg, 'rl_vs_rep')
 
     env = initialize_env(cfg, cfg.seed)
+    env = MoveAxisToCHW(env)
+    if cfg.trainer.quick:
+        cfg.env.n_steps_per_episode = 5
+        cfg.env.n_training_episodes = 2
+        cfg.agent.replay_warmup_steps = cfg.trainer.batch_size
     env = TimeLimit(env, max_episode_steps=cfg.env.n_steps_per_episode)
 
     agent = initialize_agent(env, cfg)
