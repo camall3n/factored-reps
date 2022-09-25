@@ -40,7 +40,7 @@ def main(cfg: configs.Config):
 
 def initialize_dataloader(cfg: configs.Config, seed: int = None):
     env = initialize_env(cfg, seed)
-    dataset = GymEnvData(env, seed)
+    dataset = GymEnvData(env, seed, sample_mode=cfg.model.sample_mode)
     if cfg.model.lib == 'disent':
         dataset = DisentIterDataset(dataset)
     dataloader = DataLoader(

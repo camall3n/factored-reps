@@ -79,6 +79,7 @@ class LoaderConfig:
 class ModelConfig:
     name: Optional[str] = None
     architecture: Optional[str] = None
+    sample_mode: Optional[str] = None # 'states' or 'transitions'
     lib: Optional[str] = None
     device: str = MISSING
     flatten_input: bool = False

@@ -51,7 +51,8 @@ def initialize_env(cfg: configs.Config, seed: int = None):
         env.set_rendering(enabled=True)
         if cfg.env.grayscale:
             env = GrayscaleWrapper(env, keep_dim=True)
-        env = InvertWrapper(env)
+        if cfg.env.name == 'gridworld':
+            env = InvertWrapper(env)
         if cfg.model.architecture == 'mlp':
             env = FlattenObservation(env)
         elif cfg.model.architecture == 'cnn':

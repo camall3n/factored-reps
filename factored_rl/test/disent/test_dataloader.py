@@ -22,14 +22,14 @@ def map_dataset(map_data):
 
 @pytest.fixture
 def map_dataloader(map_dataset):
-    return DataLoader(dataset=map_dataset, batch_size=128, shuffle=True, num_workers=0)
+    return DataLoader(dataset=map_dataset, batch_size=4, shuffle=True, num_workers=0)
 
 @pytest.fixture
 def cfg():
     return OmegaConf.create("""
     seed: 0
     model:
-      architecture: 'cnn'
+      architecture: cnn
     env:
       name: taxi
       n_steps_per_episode: 50
@@ -38,7 +38,7 @@ def cfg():
       grayscale: false
       depot_dropoff_only: true
     trainer:
-      batch_size: 128
+      batch_size: 4
       quick: false
       n_workers: 0
     transform:
@@ -92,3 +92,20 @@ def test_dataloader_batch_shapes(map_dataloader, iter_dataloader):
     assert len(map_batch['x_targ']) == len(iter_batch['x_targ'])
     assert type(map_batch['x_targ'][0]) == type(iter_batch['x_targ'][0])
     assert map_batch['x_targ'][0].shape == iter_batch['x_targ'][0].shape
+
+@pytest.fixture
+def obs_data(cfg):
+    env = initialize_env(cfg, cfg.seed)
+    return GymEnvData(env, cfg.seed, sample_mode='observations')
+
+@pytest.fixture
+def transition_data(cfg):
+    env = initialize_env(cfg, cfg.seed)
+    return GymEnvData(env, cfg.seed, sample_mode='transitions')
+
+def test_obs_vs_transitions(obs_data, transition_data):
+    obs_item = next(obs_data)
+    transition_item = next(transition_data)
+    assert type(obs_item) == type(transition_item['ob'])
+    assert obs_item.shape == transition_item['ob'].shape
+    assert (obs_item == transition_item['ob']).all()
