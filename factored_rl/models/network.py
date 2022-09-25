@@ -17,8 +17,9 @@ class Network(Module):
         layers = []
         if cfg.architecture == 'cnn':
             if input_shape[-2:] != cfg.cnn.supported_2d_input_shape:
-                raise ValueError(f'Input shape does not match supported 2D input shape: '
-                                 f'{cfg.cnn.supported_2d_input_shape}')
+                raise ValueError(
+                    f'Input shape {input_shape} does not match supported 2D input shape: '
+                    f'{cfg.cnn.supported_2d_input_shape}')
             cnn = CNN(
                 input_shape=(3, ) + cfg.cnn.supported_2d_input_shape,
                 n_output_channels=cfg.cnn.n_output_channels,
