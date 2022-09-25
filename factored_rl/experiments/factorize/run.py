@@ -40,8 +40,7 @@ def main(cfg: configs.Config):
 
 def initialize_dataloader(cfg: configs.Config, seed: int = None):
     env = initialize_env(cfg, seed)
-    dataset = GymEnvData(env, seed, transform=ToImgTensorF32())
-    input_shape = dataset.x_shape
+    dataset = GymEnvData(env, seed)
     if cfg.model.lib == 'disent':
         dataset = DisentIterDataset(dataset)
     dataloader = DataLoader(
@@ -49,9 +48,9 @@ def initialize_dataloader(cfg: configs.Config, seed: int = None):
         batch_size=cfg.trainer.batch_size,
         num_workers=0 if cfg.trainer.quick else cpu_count(),
         persistent_workers=False if cfg.trainer.quick else True,
-        worker_init_fn=dataset.worker_init_fn,
+        worker_init_fn=dataset.get_worker_init_fn(),
     )
-    return dataloader, input_shape
+    return dataloader, env.observation_space.shape
 
 if __name__ == '__main__':
     freeze_support() # do this to make sure multiprocessing works correctly

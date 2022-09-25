@@ -1,6 +1,8 @@
 import pytest
 
+import numpy as np
 from omegaconf import OmegaConf
+import torch
 from torch.utils.data import DataLoader
 
 from disent.dataset import DisentDataset, DisentIterDataset
@@ -48,7 +50,7 @@ def cfg():
 @pytest.fixture
 def iter_data(cfg):
     env = initialize_env(cfg, cfg.seed)
-    return GymEnvData(env, cfg.seed, transform=ToImgTensorF32())
+    return GymEnvData(env, cfg.seed)
 
 @pytest.fixture
 def iter_dataset(iter_data):
@@ -64,13 +66,13 @@ def iter_dataloader(iter_dataset, cfg):
 def test_env_observation_shapes(map_data, iter_data):
     map_ob = map_data.env.reset()[0]
     iter_ob = iter_data.env.reset()[0]
-    assert map_ob.shape == iter_ob.shape
+    assert np.moveaxis(map_ob, -1, -3).shape == iter_ob.shape
 
 def test_data_shapes(map_data, iter_data):
     map_item = next(iter(map_data))
     iter_item = next(iter(iter_data))
-    assert type(map_item) != type(iter_item)
-    assert map_item.shape != iter_item.shape
+    assert type(map_item) == type(iter_item)
+    assert np.moveaxis(map_item, -1, -3).shape == iter_item.shape
 
 def test_dataset_shapes(map_dataset, iter_dataset):
     map_dict = next(iter(map_dataset))
@@ -78,7 +80,8 @@ def test_dataset_shapes(map_dataset, iter_dataset):
     assert type(map_dict) == type(iter_dict)
     assert type(map_dict['x_targ']) == type(iter_dict['x_targ'])
     assert len(map_dict['x_targ']) == len(iter_dict['x_targ'])
-    assert type(map_dict['x_targ'][0]) == type(iter_dict['x_targ'][0])
+    assert isinstance(map_dict['x_targ'][0], torch.Tensor)
+    assert isinstance(iter_dict['x_targ'][0], np.ndarray)
     assert map_dict['x_targ'][0].shape == iter_dict['x_targ'][0].shape
 
 def test_dataloader_batch_shapes(map_dataloader, iter_dataloader):

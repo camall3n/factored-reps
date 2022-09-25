@@ -10,8 +10,7 @@ import gym
 from gym.wrappers import FlattenObservation, TimeLimit
 import numpy as np
 from visgrid.envs import GridworldEnv, TaxiEnv
-from factored_rl.wrappers import RotationWrapper
-from factored_rl.wrappers import FactorPermutationWrapper, ObservationPermutationWrapper
+from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, ObservationPermutationWrapper, MoveAxisToCHW
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
 
 # Model
@@ -55,6 +54,8 @@ def initialize_env(cfg: configs.Config, seed: int = None):
         env = InvertWrapper(env)
         if cfg.model.architecture == 'mlp':
             env = FlattenObservation(env)
+        elif cfg.model.architecture == 'cnn':
+            env = MoveAxisToCHW(env)
     else:
         if cfg.transform.name == 'permute_factors':
             env = FactorPermutationWrapper(env)

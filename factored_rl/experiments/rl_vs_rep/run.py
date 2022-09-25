@@ -26,7 +26,6 @@ def main(cfg: configs.Config):
     configs.initialize_experiment(cfg, 'rl_vs_rep')
 
     env = initialize_env(cfg, cfg.seed)
-    env = MoveAxisToCHW(env)
     if cfg.trainer.quick:
         cfg.env.n_steps_per_episode = 5
         cfg.env.n_training_episodes = 2

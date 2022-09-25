@@ -8,7 +8,7 @@ from disent.model.ae import EncoderConv64
 from factored_rl.experiments import configs
 
 def build_disent_model(input_shape: Tuple, cfg: configs.Config):
-    if cfg.model.name == 'ae_cnn_64':
+    if cfg.model.name == 'betavae':
         # create the BetaVAE model
         # - adjusting the beta, learning rate, and representation size.
         return BetaVae(

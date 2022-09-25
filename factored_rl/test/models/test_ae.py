@@ -8,9 +8,9 @@ from factored_rl.models.ae import Autoencoder
 @pytest.fixture
 def model():
     with hydra.initialize(version_base=None, config_path='../../experiments/conf'):
-        cfg = hydra.compose(config_name='config', overrides=['model=ae_64'])
-    cfg = cfg.model
-    input_shape = tuple((3, ) + cfg.cnn.supported_2d_input_shape)
+        cfg = hydra.compose(config_name='config', overrides=['model=ae/ae_cnn_64'])
+    cfg = cfg
+    input_shape = tuple((3, ) + cfg.model.cnn.supported_2d_input_shape)
     model = Autoencoder(input_shape, cfg)
     return model
 

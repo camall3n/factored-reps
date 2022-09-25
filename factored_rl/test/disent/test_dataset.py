@@ -107,7 +107,7 @@ def test_multiple_dataloader_workers(ring_env_data):
         DataLoader(ring_env_data,
                    batch_size=20,
                    num_workers=2,
-                   worker_init_fn=ring_env_data.worker_init_fn))
+                   worker_init_fn=ring_env_data.get_worker_init_fn()))
     worker1_samples = next(dl_iter)
     worker2_samples = next(dl_iter)
     assert not (worker1_samples == worker2_samples).all()
