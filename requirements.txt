@@ -1,7 +1,7 @@
 absl-py==1.2.0
 aiohttp==3.8.1
 aiosignal==1.2.0
-antlr4-python3-runtime==4.8
+antlr4-python3-runtime==4.9.3
 appnope==0.1.0
 argon2-cffi==20.1.0
 async-generator==1.10
@@ -50,7 +50,7 @@ grpcio==1.43.0
 gym==0.26.0
 h5py==3.7.0
 hydra-colorlog==1.1.0
-hydra-core==1.1.1
+hydra-core==1.2.0
 hydra-submitit-launcher==1.1.6
 idna==3.3
 imageio==2.21.0
@@ -90,7 +90,7 @@ notebook==6.1.4
 numba==0.56.0
 numpy==1.22.4
 oauthlib==3.2.0
-omegaconf==2.1.2
+omegaconf==2.2.3
 onager==0.1.3
 opencv-python==4.4.0.46
 packaging==21.3
