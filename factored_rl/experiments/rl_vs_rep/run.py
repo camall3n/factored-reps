@@ -44,7 +44,7 @@ def initialize_agent(env, cfg: configs.Config):
         elif cfg.env.name == 'taxi':
             agent = TaxiExpert(env.unwrapped)
     elif cfg.agent.name == 'dqn':
-        agent = DQNAgent(env.observation_space, env.action_space, cfg.agent)
+        agent = DQNAgent(env.observation_space, env.action_space, cfg)
     elif cfg.agent.name == 'random':
         agent = RandomAgent(env.action_space)
     else:

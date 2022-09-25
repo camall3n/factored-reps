@@ -9,7 +9,7 @@ from factored_rl.models import Network
 from .replaymemory import ReplayMemory
 
 class DQNAgent():
-    def __init__(self, observation_space, action_space, cfg: configs.AgentConfig):
+    def __init__(self, observation_space, action_space, cfg: configs.Config):
         self.observation_space = observation_space
         self.action_space = action_space
         self.cfg = cfg
@@ -23,7 +23,7 @@ class DQNAgent():
             'next_ob': lambda x: x.float(),
             'action': lambda x: x.long()
         }
-        self.replay = ReplayMemory(cfg.replay_buffer_size, on_retrieve=on_retrieve)
+        self.replay = ReplayMemory(cfg.agent.replay_buffer_size, on_retrieve=on_retrieve)
 
         self.n_training_steps = 0
         input_shape = self.observation_space.shape
@@ -34,13 +34,13 @@ class DQNAgent():
         self.q.print_summary()
         self.replay.reset()
         params = list(self.q.parameters())
-        self.optimizer = torch.optim.Adam(params, lr=cfg.learning_rate)
+        self.optimizer = torch.optim.Adam(params, lr=cfg.trainer.learning_rate)
 
     def save(self, fname, dir, is_best):
         self.q.save(fname, dir, is_best)
 
     def act(self, observation, testing=False):
-        if ((len(self.replay) < self.cfg.replay_warmup_steps
+        if ((len(self.replay) < self.cfg.agent.replay_warmup_steps
              or np.random.uniform() < self._get_epsilon(testing=testing))):
             action = self.action_space.sample()
         else:
@@ -53,12 +53,12 @@ class DQNAgent():
         self.replay.push(experience)
 
     def update(self):
-        if len(self.replay) < self.cfg.replay_warmup_steps:
+        if len(self.replay) < self.cfg.agent.replay_warmup_steps:
             return 0.0
 
-        if len(self.replay) >= self.cfg.batch_size:
+        if len(self.replay) >= self.cfg.trainer.batch_size:
             fields = ['ob', 'action', 'reward', 'terminal', 'next_ob']
-            batch = self.replay.sample(self.cfg.batch_size, fields)
+            batch = self.replay.sample(self.cfg.trainer.batch_size, fields)
             obs, actions, rewards, terminals, next_obs = batch
         else:
             return 0.0
@@ -72,21 +72,21 @@ class DQNAgent():
         self.optimizer.step()
         self.n_training_steps += 1
 
-        if self.cfg.target_copy_mode == 'soft':
-            self.q_target.soft_copy_from(self.q, self.cfg.target_copy_alpha)
+        if self.cfg.agent.target_copy_mode == 'soft':
+            self.q_target.soft_copy_from(self.q, self.cfg.agent.target_copy_alpha)
         else:
-            if self.n_training_steps % self.cfg.target_copy_period == 0:
+            if self.n_training_steps % self.cfg.agent.target_copy_period == 0:
                 self.q_target.hard_copy_from(self.q)
 
         return loss.detach().item()
 
     def _get_epsilon(self, testing=False):
         if testing:
-            epsilon = self.cfg.epsilon_final
+            epsilon = self.cfg.agent.epsilon_final
         else:
-            n_fractional_half_lives = self.n_training_steps / self.cfg.epsilon_half_life_steps
-            scale = self.cfg.epsilon_initial - self.cfg.epsilon_final
-            epsilon = self.cfg.epsilon_final + scale * math.pow(0.5, n_fractional_half_lives)
+            n_fractional_half_lives = self.n_training_steps / self.cfg.agent.epsilon_half_life_steps
+            scale = self.cfg.agent.epsilon_initial - self.cfg.agent.epsilon_final
+            epsilon = self.cfg.agent.epsilon_final + scale * math.pow(0.5, n_fractional_half_lives)
         return epsilon
 
     def _get_q_targets(self, rewards, terminals, next_obs):
@@ -96,7 +96,7 @@ class DQNAgent():
             next_q = self.q_target(next_obs) # (-1, A)
             next_v = next_q.gather(-1, next_action.unsqueeze(-1)).squeeze(-1) # (-1, )
             non_terminal_idx = ~terminals # (-1, )
-            q_targets = rewards + non_terminal_idx * self.cfg.discount_factor * next_v # (-1, )
+            q_targets = rewards + non_terminal_idx * self.cfg.agent.discount_factor * next_v # (-1, )
         return q_targets
 
     def _get_q_predictions(self, obs, action):
