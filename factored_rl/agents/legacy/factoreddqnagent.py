@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from factored_rl.models.factored.factored_qnet import FactoredQNet
+from factored_rl.models.factored.legacy.factored_qnet import FactoredQNet
 from factored_rl.models.nnutils import one_hot, extract
 from factored_rl.agents.legacy.dqnagent import DQNAgent, tch
 

@@ -7,8 +7,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from visgrid.envs import GridworldEnv
-from visgrid.wrappers.sensors import *
-from factored_rl.models.factored.factored_qnet import FactoredQNet
+from factored_rl.models.factored.legacy.factored_qnet import FactoredQNet
 
 seeding.seed(0, np, torch)
 

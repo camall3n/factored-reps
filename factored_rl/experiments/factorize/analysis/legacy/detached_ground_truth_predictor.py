@@ -17,9 +17,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from visgrid.envs import GridworldEnv
-from visgrid.wrappers.sensors import *
-from factored_rl.models.factored.factornet import FactorNet
-from factored_rl.models.debug.categorical_predictor import CategoricalPredictor
+from factored_rl.models.factored.legacy.factornet import FactorNet
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.utils import get_parser, load_hyperparams_and_inject_args
 from factored_rl.models.mlp import MLP
@@ -28,7 +26,6 @@ parser = get_parser()
 parser.add_argument('-s', '--seed', type=int, default=1)
 parser.add_argument('-e', '--experiment', type=int, default=56)
 parser.add_argument("-f", "--fool_ipython", help="Dummy arg to fool ipython", default="1")
-parser.add_argument("--n_updates", type=int, default=20000)
 args = parser.parse_args()
 del args.fool_ipython
 
@@ -36,18 +33,12 @@ seeding.seed(args.seed, np, random)
 torch.manual_seed(args.seed)
 torch.backends.cudnn.benchmark = False
 
-n_updates = args.n_updates
 filepaths = glob.glob('results/taxi/logs/exp{}*/args-{}.txt'.format(args.experiment, args.seed))
 for filepath in filepaths:
     with open(filepath, 'r') as argsfile:
         line = argsfile.readline()
         args = eval(line)
     break
-args.n_passengers = int(
-    args.taxi_experiences.split('passengers-')[-1].replace('_plus',
-                                                           '').replace('_gray',
-                                                                       '').replace('_rgb', ''))
-args.n_updates = n_updates
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: {}'.format(device))
@@ -58,7 +49,7 @@ os.makedirs(output_dir, exist_ok=True)
 
 model_file = 'results/taxi/models/{}/fnet-{}_latest.pytorch'.format(args.tag, args.seed)
 
-#%% ------------------ Load experiences ------------------
+#%% ------------------ Load environment ------------------
 prefix = os.path.expanduser('~/scratch/') if platform.system() == 'Linux' else ''
 experiences_dir = os.path.join(prefix + 'results', 'taxi-experiences', args.taxi_experiences)
 filename_pattern = os.path.join(experiences_dir, 'seed-*.pkl')
@@ -112,6 +103,16 @@ fnet.to(device)
 fnet.load(model_file, to=device)
 fnet.freeze()
 
+predictor = MLP(
+    n_inputs=args.latent_dims,
+    n_outputs=len(states[0]),
+    n_hidden_layers=2,
+    n_units_per_layer=32,
+    activation=torch.nn.ReLU,
+    final_activation=None,
+).to(device)
+predictor.optimizer = torch.optim.Adam(predictor.parameters(), lr=args.learning_rate)
+
 #%% ------------------ Encode observations to latent states ------------------
 n_training = len(states) // 2
 n_test = 2000
@@ -120,7 +121,6 @@ if device.type == 'cpu':
     n_training = n_training // 10
     n_test = n_test // 10
     args.batch_size = 10
-    args.n_updates = 40
 
 with torch.no_grad():
     latent_batches = []
@@ -146,8 +146,25 @@ def get_batch(mode='train'):
             batch_s = states[idx]
         else:
             raise RuntimeError('Invalid mode for get_batch: ' + str(mode))
-        batch_s = torch.as_tensor(batch_s).long().to(device)
+        batch_s = torch.as_tensor(batch_s).float().to(device)
     return batch_z, batch_s
+
+def compute_loss(z, s):
+    s_hat = predictor(z)
+    loss = F.mse_loss(input=s_hat, target=s)
+    return loss
+
+def process_batch(z, s, test=False):
+    if not test:
+        predictor.train()
+        predictor.optimizer.zero_grad()
+    else:
+        predictor.eval()
+    loss = compute_loss(z, s)
+    if not test:
+        loss.backward()
+        predictor.optimizer.step()
+    return loss
 
 def convert_and_log_loss_info(log_file, loss_info, step):
     for loss_type, loss_value in loss_info.items():
@@ -165,19 +182,12 @@ model_dir = os.path.join(output_dir, 'models')
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(model_dir, exist_ok=True)
 
-n_values_per_variable = [5, 5] + ([5, 5, 2] * args.n_passengers)
-predictor = CategoricalPredictor(
-    n_inputs=args.latent_dims,
-    n_values=n_values_per_variable,
-    learning_rate=0.0001,
-).to(device)
-
 loss_infos = []
 with open(log_dir + '/train-{}.txt'.format(args.seed), 'w') as logfile:
     for step in tqdm(range(args.n_updates)):
         loss_info = dict()
-        loss_info['test'] = predictor.process_batch(*get_batch(mode='test'), test=True)
-        loss_info['train'] = predictor.process_batch(*get_batch(mode='train'), test=False)
+        loss_info['test'] = process_batch(*get_batch(mode='test'), test=True)
+        loss_info['train'] = process_batch(*get_batch(mode='train'), test=False)
         convert_and_log_loss_info(logfile, loss_info, step)
         loss_infos.append(loss_info)
 
@@ -189,14 +199,14 @@ data = pd.DataFrame(loss_infos).melt(id_vars=['step'],
                                      var_name='mode',
                                      value_name='loss')
 sns.lineplot(data=data, x='step', y='loss', hue='mode')
-plt.savefig(os.path.join(output_dir, 'detached_categorical_predictor_loss.png'),
+plt.savefig(os.path.join(output_dir, 'detached_mse_predictor_loss.png'),
             facecolor='white',
             edgecolor='white')
 
 #%% ------------------ Predict ground-truth states ------------------
 with torch.no_grad():
-    state_reconstructions_train = predictor.predict(latent_states_train).detach().cpu().numpy()
-    state_reconstructions_test = predictor.predict(latent_states_test).detach().cpu().numpy()
+    state_reconstructions_train = predictor(latent_states_train).detach().cpu().numpy()
+    state_reconstructions_test = predictor(latent_states_test).detach().cpu().numpy()
 
 #%% ------------------ Analyze state predictions ------------------
 s_actual = states[-n_test:].astype(np.float32)
@@ -204,17 +214,20 @@ s_predicted = state_reconstructions_test
 
 state_vars = ['taxi_row', 'taxi_col', 'passenger_row', 'passenger_col', 'in_taxi'][:len(states[0])]
 
-fig, axes = plt.subplots(len(state_vars), 1, figsize=(3, 2 * len(state_vars)))
+fig, axes = plt.subplots(len(state_vars), 1, figsize=(6, 2 * len(state_vars)))
 
 for (state_var_idx, state_var), ax in zip(enumerate(state_vars), axes):
-    bins = len(np.unique(s_actual[:, state_var_idx]))
-    h = ax.hist2d(x=s_predicted[:, state_var_idx], y=s_actual[:, state_var_idx], bins=bins)
+    actual_bins = len(np.unique(s_actual[:, state_var_idx]))
+    predicted_bins = int(4 * actual_bins)
+    h = ax.hist2d(x=s_predicted[:, state_var_idx],
+                  y=s_actual[:, state_var_idx],
+                  bins=(predicted_bins, actual_bins))
     fig.colorbar(h[3], ax=ax)
     ax.set_title(state_var)
     ax.set_xlabel('predicted')
     ax.set_ylabel('actual')
 plt.tight_layout()
-plt.savefig(os.path.join(output_dir, 'detached_categorical_confusion_plots.png'),
+plt.savefig(os.path.join(output_dir, 'detached_mse_confusion_hist.png'),
             facecolor='white',
             edgecolor='white')
 plt.show()

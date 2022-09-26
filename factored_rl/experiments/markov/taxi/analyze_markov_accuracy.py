@@ -14,8 +14,7 @@ import torch
 from tqdm import tqdm
 
 from visgrid.envs import GridworldEnv
-from visgrid.wrappers.sensors import *
-from factored_rl.models.factored.factornet import FactorNet
+from factored_rl.models.factored.legacy.factornet import FactorNet
 from factored_rl.models.markov.featurenet import FeatureNet
 from factored_rl.utils import get_parser, load_hyperparams_and_inject_args
 

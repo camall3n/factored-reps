@@ -12,7 +12,7 @@ import numpy as np
 import seeding
 import torch
 
-from factored_rl.models.factored.factornet import FactorNet
+from factored_rl.models.factored.legacy.factornet import FactorNet
 from factored_rl.models.factored.factored_fwd_model import FactoredFwdModel
 from factored_rl.models.factored.focused_autoenc import FocusedAutoencoder
 from factored_rl import utils
