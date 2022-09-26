@@ -84,13 +84,13 @@ class LossConfig:
 
 @dataclass
 class LossesConfig:
-    sparsity: LossConfig = MISSING
-    accuracy: str = 'l2' # for predictions/reconstructions
-    effects: float = MISSING # sparse effects
     actions: float = MISSING # consistent semantics
-    reconst: float = MISSING # current observation
-    predict: float = MISSING # next observation
+    effects: float = MISSING # sparse effects
     parents: float = MISSING # sparse dependencies
+    predict: float = MISSING # next observation
+    reconst: float = MISSING # current observation
+    distance: str = 'mse' # for predictions/reconstructions
+    sparsity: LossConfig = MISSING
     vae: LossConfig = MISSING
 
 @dataclass

@@ -17,9 +17,9 @@ hydra:
   run:
     dir: /tmp
 loss:
-  accuracy: l2
   effects: 0.0
   actions: 0.0
   reconst: 1.0
   predict: 0.0
   parents: 0.0
+  distance: mse
