@@ -4,6 +4,8 @@ defaults:
   - agent: base_agent
   - env: base_env
   - model: base_model
+  - loss@losses.sparsity: base_loss
+  - loss@losses.vae: base_loss
   - trainer: base_trainer
   - transform: base_transform
 
@@ -14,3 +16,10 @@ hydra:
   output_subdir: null
   run:
     dir: /tmp
+loss:
+  accuracy: l2
+  effects: 0.0
+  actions: 0.0
+  reconst: 1.0
+  predict: 0.0
+  parents: 0.0

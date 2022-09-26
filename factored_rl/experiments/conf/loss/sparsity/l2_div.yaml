@@ -1,0 +1,5 @@
+defaults:
+  - base_loss
+
+name: l2_div
+sigma: 0.01

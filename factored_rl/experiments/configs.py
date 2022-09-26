@@ -62,18 +62,9 @@ class AEConfig:
     n_latent_dims: int = MISSING
 
 @dataclass
-class VAEConfig:
-    beta: float = MISSING
-    loss_reduction: str = MISSING
-
-@dataclass
-class LossConfig:
-    vae: VAEConfig = VAEConfig()
-
-@dataclass
 class ModelConfig:
     name: Optional[str] = None
-    architecture: Optional[str] = None
+    architecture: Optional[str] = None # 'mlp', 'cnn'
     action_sampling: Optional[str] = MISSING # None, 'random' or 'valid'
     lib: Optional[str] = None # external library name (e.g. 'disent', 'dreamerv2')
     device: str = MISSING
@@ -81,7 +72,26 @@ class ModelConfig:
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     ae: AEConfig = AEConfig()
-    loss: LossConfig = LossConfig()
+
+@dataclass
+class LossConfig:
+    name: Optional[str] = None
+    epsilon: Optional[float] = MISSING
+    p_norm: Optional[float] = MISSING
+    sigma: Optional[float] = MISSING
+    beta: Optional[float] = MISSING
+    loss_reduction: Optional[str] = MISSING
+
+@dataclass
+class LossesConfig:
+    sparsity: LossConfig = MISSING
+    accuracy: str = 'l2' # for predictions/reconstructions
+    effects: float = MISSING # sparse effects
+    actions: float = MISSING # consistent semantics
+    reconst: float = MISSING # current observation
+    predict: float = MISSING # next observation
+    parents: float = MISSING # sparse dependencies
+    vae: LossConfig = MISSING
 
 @dataclass
 class LoaderConfig:
@@ -153,6 +163,7 @@ class Config:
     agent: AgentConfig = MISSING
     env: EnvConfig = MISSING
     model: ModelConfig = MISSING
+    losses: LossesConfig = LossesConfig()
     trainer: TrainerConfig = MISSING
     transform: TransformConfig = MISSING
     loader: LoaderConfig = LoaderConfig()
@@ -167,6 +178,7 @@ cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)
 cs.store(group='env', name='base_env', node=EnvConfig)
 cs.store(group='env', name='taxi_env', node=TaxiEnvConfig)
 cs.store(group='model', name='base_model', node=ModelConfig)
+cs.store(group='loss', name='base_loss', node=LossConfig)
 cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
 cs.store(group='trainer', name='lightning_trainer', node=LightningTrainerConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)

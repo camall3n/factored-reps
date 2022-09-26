@@ -4,6 +4,7 @@ defaults:
 name: betavae
 lib: disent
 architecture: cnn
+action_sampling: null
 cnn:
   supported_2d_input_shape: [64, 64]
   n_output_channels: [32, 32, 64, 64]
@@ -14,7 +15,3 @@ mlp:
   n_units_per_layer: 256
 ae:
   n_latent_dims: 32
-loss:
-  vae:
-    beta: 4.0
-    loss_reduction: mean_sum

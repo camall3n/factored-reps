@@ -37,7 +37,8 @@ def test_rl_vs_rep():
 def test_factorize():
     configurations = [
         ["model=ae/ae_cnn_64"],
-        ["model=ae/betavae"],
+        ["model=ae/betavae", "loss@losses.vae=betavae"],
+        ["model=ae/ae_cnn_64", "loss@losses.sparsity=sparsity/sum_div_max"],
     ]
     for overrides in configurations:
         overrides.extend([

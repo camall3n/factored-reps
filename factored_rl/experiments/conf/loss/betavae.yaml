@@ -1,0 +1,6 @@
+defaults:
+  - base_loss
+
+name: betavae
+beta: 4.0
+loss_reduction: mean_sum
