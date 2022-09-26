@@ -3,7 +3,7 @@ import math
 import numpy as np
 import torch
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 from factored_rl.models.nnutils import extract
 from factored_rl.models import Network
 from .replaymemory import ReplayMemory

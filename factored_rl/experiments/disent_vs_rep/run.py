@@ -3,7 +3,7 @@ import logging
 
 # Args & hyperparams
 import hydra
-from factored_rl.experiments import configs
+from factored_rl import configs
 
 # Env
 from factored_rl.experiments.common import initialize_env, initialize_model

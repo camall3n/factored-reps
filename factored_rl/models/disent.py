@@ -5,7 +5,7 @@ from disent.model import AutoEncoder as DisentAutoencoder
 from disent.model.ae import DecoderConv64
 from disent.model.ae import EncoderConv64
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 
 def build_disent_model(input_shape: Tuple, cfg: configs.Config):
     if cfg.model.name == 'betavae':

@@ -1,6 +1,6 @@
 import torch
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 
 # ---------------------------------------------
 # sparsity losses

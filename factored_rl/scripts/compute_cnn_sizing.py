@@ -2,7 +2,7 @@ from factored_rl.models import Network, CNN, MLP, nnutils
 import numpy as np
 import hydra
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 
 with hydra.initialize(version_base=None, config_path='factored_rl/experiments/conf'):
     cfg = hydra.compose(config_name='config', overrides=['model=dreamerv2'])

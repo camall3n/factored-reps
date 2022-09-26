@@ -2,7 +2,7 @@ from multiprocessing import freeze_support
 
 # Args & hyperparams
 import hydra
-from factored_rl.experiments import configs
+from factored_rl import configs
 
 # Data
 from factored_rl.experiments.common import initialize_env, initialize_model

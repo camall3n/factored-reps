@@ -3,7 +3,7 @@ import glob
 
 import pytorch_lightning as pl
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 
 # Env
 import gym

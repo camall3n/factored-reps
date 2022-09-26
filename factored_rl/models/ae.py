@@ -3,7 +3,7 @@ from typing import Tuple
 import pytorch_lightning as pl
 import torch
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 from factored_rl.models.nnutils import Sequential, Reshape
 from factored_rl.models import Network, MLP, CNN, losses
 

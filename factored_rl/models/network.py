@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 import numpy as np
 import torch
 
-from factored_rl.experiments import configs
+from factored_rl import configs
 from .nnutils import Module, Sequential, Reshape
 from .cnn import CNN
 from .mlp import MLP
