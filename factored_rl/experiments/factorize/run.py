@@ -8,7 +8,6 @@ from factored_rl.experiments import configs
 from factored_rl.experiments.common import initialize_env, initialize_model
 from disent.dataset.data import GymEnvData
 from disent.dataset import DisentIterDataset
-from disent.dataset.transform import ToImgTensorF32
 from torch.utils.data import DataLoader
 
 # Training

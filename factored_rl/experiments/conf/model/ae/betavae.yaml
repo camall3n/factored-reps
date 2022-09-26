@@ -14,6 +14,7 @@ mlp:
   n_units_per_layer: 256
 ae:
   n_latent_dims: 32
-vae:
-  beta: 4.0
-  loss_reduction: mean_sum
+loss:
+  vae:
+    beta: 4.0
+    loss_reduction: mean_sum

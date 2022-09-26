@@ -67,13 +67,8 @@ class VAEConfig:
     loss_reduction: str = MISSING
 
 @dataclass
-class LoaderConfig:
-    should_load: bool = False # whether to load model from checkpoint
-    experiment: Optional[str] = None # which experiment to load
-    trial: Optional[str] = None # which trial to load
-    seed: Optional[int] = None # which seed to load
-    version: Optional[int] = None # which version to load (default is latest)
-    checkpoint_path: Optional[str] = None # path to .ckpt file for loading
+class LossConfig:
+    vae: VAEConfig = VAEConfig()
 
 @dataclass
 class ModelConfig:
@@ -86,7 +81,16 @@ class ModelConfig:
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     ae: AEConfig = AEConfig()
-    vae: VAEConfig = VAEConfig()
+    loss: LossConfig = LossConfig()
+
+@dataclass
+class LoaderConfig:
+    should_load: bool = False # whether to load model from checkpoint
+    experiment: Optional[str] = None # which experiment to load
+    trial: Optional[str] = None # which trial to load
+    seed: Optional[int] = None # which seed to load
+    version: Optional[int] = None # which version to load (default is latest)
+    checkpoint_path: Optional[str] = None # path to .ckpt file for loading
 
 @dataclass
 class AgentConfig:
