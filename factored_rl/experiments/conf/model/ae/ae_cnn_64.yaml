@@ -3,6 +3,6 @@ defaults:
 
 name: ae_cnn_64
 architecture: cnn
-sample_mode: observations
+action_sampling: null
 ae:
   n_latent_dims: 10

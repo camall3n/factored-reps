@@ -96,12 +96,12 @@ def test_dataloader_batch_shapes(map_dataloader, iter_dataloader):
 @pytest.fixture
 def obs_data(cfg):
     env = initialize_env(cfg, cfg.seed)
-    return GymEnvData(env, cfg.seed, sample_mode='observations')
+    return GymEnvData(env, cfg.seed, action_sampling=None)
 
 @pytest.fixture
 def transition_data(cfg):
     env = initialize_env(cfg, cfg.seed)
-    return GymEnvData(env, cfg.seed, sample_mode='transitions')
+    return GymEnvData(env, cfg.seed, action_sampling='all')
 
 def test_obs_vs_transitions(obs_data, transition_data):
     obs_item = next(obs_data)

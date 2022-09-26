@@ -74,8 +74,8 @@ class LossConfig:
 class ModelConfig:
     name: Optional[str] = None
     architecture: Optional[str] = None
-    sample_mode: Optional[str] = None # 'states' or 'transitions'
-    lib: Optional[str] = None
+    action_sampling: Optional[str] = MISSING # None, 'random' or 'valid'
+    lib: Optional[str] = None # external library name (e.g. 'disent', 'dreamerv2')
     device: str = MISSING
     flatten_input: bool = False
     mlp: MLPConfig = MLPConfig()
