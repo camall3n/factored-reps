@@ -14,11 +14,7 @@ cnn:
     - _target_: torch.nn.ELU
     - {_target_: torch.nn.LayerNorm, _partial_: true}
 mlp:
-  n_hidden_layers: 4
-  n_units_per_layer: 400
-  activation:
-    - _target_: torch.nn.ELU
-    - {_target_: torch.nn.LayerNorm, _partial_: true}
-  final_activation:
-    - _target_: torch.nn.ELU
-    - {_target_: torch.nn.LayerNorm, _partial_: true}
+  n_hidden_layers: 0
+  n_units_per_layer: 0
+  activation: null
+  final_activation: null

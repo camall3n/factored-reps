@@ -36,17 +36,19 @@ class Network(Module):
             n_features = None
             raise NotImplementedError(f'Unknown architecture: {cfg.architecture}')
 
-        mlp = MLP(
-            n_inputs=n_features,
-            n_outputs=output_shape,
-            n_hidden_layers=cfg.mlp.n_hidden_layers,
-            n_units_per_layer=cfg.mlp.n_units_per_layer,
-            activation=configs.instantiate(cfg.mlp.activation),
-            final_activation=configs.instantiate(cfg.mlp.final_activation),
-        )
         if len(input_shape) > 1:
             layers.append(Reshape(-1, n_features))
-        layers.append(mlp)
+
+        if cfg.mlp.n_units_per_layer > 0:
+            mlp = MLP(
+                n_inputs=n_features,
+                n_outputs=output_shape,
+                n_hidden_layers=cfg.mlp.n_hidden_layers,
+                n_units_per_layer=cfg.mlp.n_units_per_layer,
+                activation=configs.instantiate(cfg.mlp.activation),
+                final_activation=configs.instantiate(cfg.mlp.final_activation),
+            )
+            layers.append(mlp)
 
         self.model = Sequential(*layers)
 

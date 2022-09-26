@@ -47,9 +47,11 @@ class Decoder(Network):
             _, mlp = encoder
             cnn = None
             flattened_activation = None
-        else:
+        elif cfg.architecture == 'cnn':
             cnn, _, mlp = encoder.model
             flattened_activation = configs.instantiate(cfg.cnn.final_activation)
+        else:
+            raise NotImplementedError(f'Unsupported architecture: {cfg.architecture}')
         for layer in reversed(mlp.model):
             if hasattr(layer, 'out_features'):
                 in_shape = layer.out_features
