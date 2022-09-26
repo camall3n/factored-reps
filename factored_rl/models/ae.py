@@ -5,7 +5,7 @@ import torch
 
 from factored_rl.experiments import configs
 from factored_rl.models.nnutils import Sequential, Reshape
-from factored_rl.models import Network, MLP, CNN
+from factored_rl.models import Network, MLP, CNN, losses
 
 class Autoencoder(pl.LightningModule):
     def __init__(self, input_shape: Tuple, cfg: configs.Config):
@@ -22,13 +22,52 @@ class Autoencoder(pl.LightningModule):
         z = self.encoder(x)
         x_hat = self.decoder(z)
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
-        self.log('train/loss_recon', loss)
+        self.log('train/loss/recon', loss)
         return loss
 
     def configure_optimizers(self):
         partial_optimizer = configs.instantiate(self.cfg.trainer.optimizer)
         optimizer = partial_optimizer(self.parameters(), lr=self.cfg.trainer.learning_rate)
         return optimizer
+
+class PairedAutoencoder(Autoencoder):
+    def __init__(self, input_shape: Tuple, cfg: configs.Config):
+        super().__init__(input_shape, cfg)
+        distance_modes = {
+            'mse': torch.nn.functional.mse_loss,
+        }
+        if self.cfg.losses.distance not in distance_modes:
+            raise RuntimeError(
+                f"Distance mode {self.cfg.losses.distance} not in {list(distance_modes.keys())}")
+        self.distance = distance_modes[self.cfg.losses.distance]
+
+    def training_step(self, batch, batch_idx):
+        ob = batch['ob']
+        next_ob = batch['next_ob']
+        z = self.encoder(ob)
+        next_z = self.encoder(next_ob)
+        losses = {
+            'effects': self.effects_loss(z, next_z),
+            'reconst': self.reconstruction_loss(ob, next_ob, z, next_z),
+        }
+        loss = sum([losses[key] * self.cfgs.losses[key] for key in losses.keys()])
+        return loss
+
+    def effects_loss(self, z, next_z):
+        if self.cfg.losses.effects == 0:
+            return 0.0
+        effects = next_z - z
+        effects_loss = losses.compute_sparsity(effects, self.cfg.losses.effects)
+        return effects_loss
+
+    def reconstruction_loss(self, ob, next_ob, z, next_z):
+        if self.cfg.losses.reconst == 0:
+            return 0.0
+        ob_hat = self.decoder(z)
+        next_ob_hat = self.decoder(next_z)
+        reconst_loss = (self.distance(input=ob_hat, target=ob) +
+                        self.distance(input=next_ob_hat, target=next_ob)) / 2
+        return reconst_loss
 
 class Encoder(Network):
     def forward(self, x):
