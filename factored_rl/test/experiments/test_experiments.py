@@ -36,16 +36,15 @@ def test_rl_vs_rep():
 
 def test_factorize():
     configurations = [
-        ["model=ae/ae_cnn_64"],
-        ["model=ae/betavae", "loss@losses.vae=betavae"],
-        ["model=ae/ae_cnn_64", "loss@losses.sparsity=sparsity/sum_div_max"],
-    ]
+        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
+        ["env=taxi", "transform=images", "model=ae/betavae", "loss@losses.vae=betavae"],
+        ["env=taxi", "transform=images", "model=ae/ae_cnn_64", "loss@losses.sparsity=sparsity/sum_div_max"],
+        ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss@losses.sparsity=sparsity/unit_pnorm"],
+    ] # yapf: disable
     for overrides in configurations:
         overrides.extend([
             "experiment=pytest",
-            "env=taxi",
             "timestamp=false",
-            "transform=images",
             "trainer=rep.quick",
         ])
         cfg = get_config(overrides)

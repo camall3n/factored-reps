@@ -25,7 +25,7 @@ class Network(Module):
             n_features = None
             raise NotImplementedError(f'Unknown architecture: {cfg.architecture}')
 
-        if len(input_shape) > 1:
+        if cfg.architecture == 'mlp' or len(input_shape) > 1:
             layers.append(Reshape(-1, n_features))
 
         if cfg.mlp.n_units_per_layer > 0:

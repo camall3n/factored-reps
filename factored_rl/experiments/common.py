@@ -74,10 +74,6 @@ def initialize_model(input_shape, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
-        if cfg.model.name == 'ae_cnn_64':
-            model = Autoencoder
-        else:
-            raise RuntimeError(f'Tried to initialize unknown model: {cfg.model.name}')
         if cfg.loader.should_load:
             if cfg.loader.checkpoint_path is None:
                 experiment = cfg.experiment if cfg.loader.experiment is None else cfg.loader.experiment
@@ -95,10 +91,10 @@ def initialize_model(input_shape, cfg: configs.Config):
                 if len(checkpoints) > 1:
                     raise RuntimeError(f'Multiple checkpoints detected in {checkpoint_dir}\n'
                                        f'Please specify model.checkpoint_path')
-                checkpoint_path = checkpoints[0]
-            model = model.load_from_checkpoint(checkpoint_path, input_shape=input_shape, cfg=cfg)
+                ckpt_path = checkpoints[0]
+            model = Autoencoder.load_from_checkpoint(ckpt_path, input_shape=input_shape, cfg=cfg)
         else:
-            model = model(input_shape, cfg)
+            model = Autoencoder(input_shape, cfg)
     return model
 
 def cpu_count():

@@ -33,6 +33,7 @@ class Autoencoder(pl.LightningModule):
 class PairedAutoencoder(Autoencoder):
     def __init__(self, input_shape: Tuple, cfg: configs.Config):
         super().__init__(input_shape, cfg)
+        assert cfg.model.action_sampling is not None
         distance_modes = {
             'mse': torch.nn.functional.mse_loss,
         }
@@ -46,17 +47,20 @@ class PairedAutoencoder(Autoencoder):
         next_ob = batch['next_ob']
         z = self.encoder(ob)
         next_z = self.encoder(next_ob)
+        effects = next_z - z
         losses = {
-            'effects': self.effects_loss(z, next_z),
+            'effects': self.effects_loss(effects),
             'reconst': self.reconstruction_loss(ob, next_ob, z, next_z),
         }
         loss = sum([losses[key] * self.cfgs.losses[key] for key in losses.keys()])
+        losses = {('loss/' + key): value for key, value in losses.items()}
+        losses['loss/train_loss'] = loss
+        self.log_dict(losses)
         return loss
 
-    def effects_loss(self, z, next_z):
+    def effects_loss(self, effects):
         if self.cfg.losses.effects == 0:
             return 0.0
-        effects = next_z - z
         effects_loss = losses.compute_sparsity(effects, self.cfg.losses.effects)
         return effects_loss
 
@@ -83,7 +87,7 @@ class Decoder(Network):
         self.input_shape = encoder.output_shape
         self.output_shape = output_shape
         if cfg.architecture == 'mlp':
-            _, mlp = encoder
+            _, mlp = encoder.model
             cnn = None
             flattened_activation = None
         elif cfg.architecture == 'cnn':
@@ -109,6 +113,7 @@ class Decoder(Network):
         else:
             unflattened_shape = cnn.layer_shapes[-1]
         transposed_reshape = Reshape(-1, *unflattened_shape)
+        layers = [transposed_mlp, transposed_reshape]
         if cfg.architecture != 'mlp':
             transposed_conv = CNN(
                 input_shape=unflattened_shape,
@@ -121,7 +126,8 @@ class Decoder(Network):
                 transpose=True,
                 layer_shapes=self.make_reversed(cnn.layer_shapes),
             )
-        self.model = Sequential(*[transposed_mlp, transposed_reshape, transposed_conv])
+            layers.append(transposed_conv)
+        self.model = Sequential(*layers)
 
     @staticmethod
     def make_reversed(x):

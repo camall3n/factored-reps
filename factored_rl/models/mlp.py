@@ -59,10 +59,10 @@ class MLP(Module):
         return cls(
             n_inputs=n_inputs,
             n_outputs=n_outputs,
-            n_hidden_layers=cfg.mlp.n_hidden_layers,
-            n_units_per_layer=cfg.mlp.n_units_per_layer,
-            activation=configs.instantiate(cfg.mlp.activation),
-            final_activation=configs.instantiate(cfg.mlp.final_activation),
+            n_hidden_layers=cfg.n_hidden_layers,
+            n_units_per_layer=cfg.n_units_per_layer,
+            activation=configs.instantiate(cfg.activation),
+            final_activation=configs.instantiate(cfg.final_activation),
         )
 
     def forward(self, x):
