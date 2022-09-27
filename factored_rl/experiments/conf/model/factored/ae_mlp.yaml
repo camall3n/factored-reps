@@ -1,0 +1,10 @@
+defaults:
+  - mlp
+
+name: ae_mlp
+arch:
+  encoder: mlp
+  decoder: mlp
+action_sampling: all
+ae:
+  n_latent_dims: 10

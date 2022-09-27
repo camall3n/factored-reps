@@ -1,0 +1,10 @@
+defaults:
+  - cnn_64
+
+name: ae_cnn_64
+arch:
+  encoder: cnn
+  decoder: cnn
+action_sampling: null
+ae:
+  n_latent_dims: 10

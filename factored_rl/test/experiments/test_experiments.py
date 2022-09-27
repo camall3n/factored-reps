@@ -38,8 +38,9 @@ def test_factorize():
     configurations = [
         ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
         ["env=taxi", "transform=images", "model=ae/betavae", "loss@losses.vae=betavae"],
-        ["env=taxi", "transform=images", "model=ae/ae_cnn_64", "loss@losses.sparsity=sparsity/sum_div_max"],
+        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
         ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss@losses.sparsity=sparsity/unit_pnorm"],
+        ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp", "losses.effects=0.003", "losses.reconst=1.0", "loss@losses.sparsity=sparsity/sum_div_max"],
     ] # yapf: disable
     for overrides in configurations:
         overrides.extend([
