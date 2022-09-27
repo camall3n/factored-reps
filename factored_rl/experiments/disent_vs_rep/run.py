@@ -48,6 +48,7 @@ def main(cfg):
     filename = cfg.dir + 'results.json'
     with open(filename, 'w') as file:
         json.dump(results, file)
+        file.write('\n')
     logging.getLogger().info(f'Results logged to: {filename}')
 
 def get_encode_fn(input_shape, cfg):
