@@ -22,7 +22,7 @@ class Autoencoder(pl.LightningModule):
         z = self.encoder(x)
         x_hat = self.decoder(z)
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
-        self.log('train/loss/recon', loss)
+        self.log('loss/reconst', loss)
         return loss
 
     def configure_optimizers(self):
