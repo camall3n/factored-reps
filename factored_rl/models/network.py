@@ -16,18 +16,7 @@ class Network(Module):
         self.output_shape = output_shape
         layers = []
         if cfg.architecture == 'cnn':
-            if input_shape[-2:] != cfg.cnn.supported_2d_input_shape:
-                raise ValueError(
-                    f'Input shape {input_shape} does not match supported 2D input shape: '
-                    f'{cfg.cnn.supported_2d_input_shape}')
-            cnn = CNN(
-                input_shape=(3, ) + cfg.cnn.supported_2d_input_shape,
-                n_output_channels=cfg.cnn.n_output_channels,
-                kernel_sizes=cfg.cnn.kernel_sizes,
-                strides=cfg.cnn.strides,
-                activation=configs.instantiate(cfg.cnn.activation),
-                final_activation=configs.instantiate(cfg.cnn.final_activation),
-            )
+            cnn = CNN.from_config(input_shape, cfg)
             layers.append(cnn)
             n_features = np.prod(cnn.output_shape)
         elif cfg.architecture == 'mlp':
@@ -40,14 +29,7 @@ class Network(Module):
             layers.append(Reshape(-1, n_features))
 
         if cfg.mlp.n_units_per_layer > 0:
-            mlp = MLP(
-                n_inputs=n_features,
-                n_outputs=output_shape,
-                n_hidden_layers=cfg.mlp.n_hidden_layers,
-                n_units_per_layer=cfg.mlp.n_units_per_layer,
-                activation=configs.instantiate(cfg.mlp.activation),
-                final_activation=configs.instantiate(cfg.mlp.final_activation),
-            )
+            mlp = MLP.from_config(n_inputs=n_features, n_outputs=output_shape, cfg=cfg.mlp)
             layers.append(mlp)
 
         self.model = Sequential(*layers)

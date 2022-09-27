@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn
 
+from factored_rl import configs
 from .nnutils import Module, ActivationType, build_activation
 
 class CNN(Module):
@@ -99,6 +100,21 @@ class CNN(Module):
                 f'\n'.join([f'  {i:2d}. {shape}' for i, shape in enumerate(self.layer_shapes)]))
 
         self.model = torch.nn.Sequential(*self.layers)
+
+    @classmethod
+    def from_config(cls, input_shape, cfg: configs.CNNConfig):
+        assert len(input_shape) in [2, 3], 'CNN input_shape must be 2D or 3D'
+        if input_shape[-2:] != cfg.cnn.supported_2d_input_shape:
+            raise ValueError(f'Input shape {input_shape} does not match supported 2D input shape: '
+                             f'{cfg.cnn.supported_2d_input_shape}')
+        return cls(
+            input_shape=input_shape,
+            n_output_channels=cfg.cnn.n_output_channels,
+            kernel_sizes=cfg.cnn.kernel_sizes,
+            strides=cfg.cnn.strides,
+            activation=configs.instantiate(cfg.cnn.activation),
+            final_activation=configs.instantiate(cfg.cnn.final_activation),
+        )
 
     def forward(self, x):
         if self.n_input_channels == 0:
