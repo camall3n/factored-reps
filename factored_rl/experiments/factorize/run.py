@@ -27,6 +27,7 @@ def main(cfg: configs.Config):
     val_dl, _ = initialize_dataloader(cfg, cfg.seed + 1000000)
 
     model = initialize_model(input_shape, cfg)
+    print(model)
     # ckpt_callback = ModelCheckpoint(save_last=True)
     trainer = pl.Trainer(
         max_steps=cfg.trainer.max_steps,
