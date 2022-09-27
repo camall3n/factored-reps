@@ -40,6 +40,12 @@ def instantiate(obj):
         raise RuntimeError(f'Cannot instantiate object {obj} with type: {type(obj)}')
 
 @dataclass
+class ArchitectureConfig:
+    encoder: Optional[str] = None
+    decoder: Optional[str] = None
+    predictor: Optional[str] = None
+
+@dataclass
 class MLPConfig:
     n_hidden_layers: int = MISSING
     n_units_per_layer: int = MISSING
@@ -62,9 +68,21 @@ class AEConfig:
     n_latent_dims: int = MISSING
 
 @dataclass
+class AttnConfig:
+    action_embed_dim: int = MISSING
+    factor_embed_dim: int = MISSING
+    projection_dims: int = MISSING
+    dropout: float = 0.0
+
+@dataclass
+class WMConfig:
+    mlp: MLPConfig = MLPConfig()
+    attn: AttnConfig = AttnConfig()
+
+@dataclass
 class ModelConfig:
     name: Optional[str] = None
-    architecture: Optional[str] = None # 'mlp', 'cnn'
+    arch: ArchitectureConfig = ArchitectureConfig()
     action_sampling: Optional[str] = MISSING # None, 'random' or 'valid'
     lib: Optional[str] = None # external library name (e.g. 'disent', 'dreamerv2')
     device: str = MISSING

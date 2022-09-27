@@ -15,17 +15,17 @@ class Network(Module):
         self.input_shape = input_shape
         self.output_shape = output_shape
         layers = []
-        if cfg.architecture == 'cnn':
+        if cfg.arch.encoder == 'cnn':
             cnn = CNN.from_config(input_shape, cfg)
             layers.append(cnn)
             n_features = np.prod(cnn.output_shape)
-        elif cfg.architecture == 'mlp':
+        elif cfg.arch.encoder == 'mlp':
             n_features = np.prod(input_shape) if len(input_shape) > 1 else input_shape[0]
         else:
             n_features = None
-            raise NotImplementedError(f'Unknown architecture: {cfg.architecture}')
+            raise NotImplementedError(f'Unknown architecture: {cfg.arch.encoder}')
 
-        if cfg.architecture == 'mlp' or len(input_shape) > 1:
+        if cfg.arch.encoder == 'mlp' or len(input_shape) > 1:
             layers.append(Reshape(-1, n_features))
 
         if cfg.mlp.n_units_per_layer > 0:

@@ -1,10 +1,10 @@
 defaults:
-  - cnn_64
+  - mlp
 
-name: ae_cnn_64
+name: ae_mlp
 arch:
-  encoder: cnn
-  decoder: cnn
+  encoder: mlp
+  decoder: mlp
 action_sampling: null
 ae:
   n_latent_dims: 10

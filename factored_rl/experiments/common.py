@@ -14,7 +14,7 @@ from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, Obse
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
 
 # Model
-from factored_rl.models.ae import Autoencoder
+from factored_rl.models.ae import Autoencoder, PairedAutoencoder
 from factored_rl.models.disent import build_disent_model
 
 # ----------------------------------------
@@ -53,9 +53,9 @@ def initialize_env(cfg: configs.Config, seed: int = None):
             env = GrayscaleWrapper(env, keep_dim=True)
         if cfg.env.name == 'gridworld':
             env = InvertWrapper(env)
-        if cfg.model.architecture == 'mlp':
+        if cfg.model.arch == 'mlp':
             env = FlattenObservation(env)
-        elif cfg.model.architecture == 'cnn':
+        elif cfg.model.arch == 'cnn':
             env = MoveAxisToCHW(env)
     else:
         if cfg.transform.name == 'permute_factors':
@@ -74,35 +74,40 @@ def initialize_model(input_shape, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
+        if cfg.model.action_sampling is None:
+            module = Autoencoder
+        elif getattr(cfg.model.ae, 'n_latent_dims', 0) > 0:
+            module = PairedAutoencoder
+
         if cfg.loader.should_load:
-            if cfg.loader.checkpoint_path is None:
-                experiment = cfg.experiment if cfg.loader.experiment is None else cfg.loader.experiment
-                trial = cfg.trial if cfg.loader.trial is None else cfg.loader.trial
-                seed = f'{cfg.seed if cfg.loader.seed is None else cfg.loader.seed:04d}'
-                load_dir = os.path.join('/', *cfg.dir.split('/')[:-4], experiment, trial, seed)
-                if cfg.loader.version is None:
-                    version = pl.Trainer(max_epochs=1,
-                                         default_root_dir=load_dir).logger.version - 1
-                else:
-                    version = cfg.loader.version
-                checkpoint_dir = os.path.join(load_dir,
-                                              f'lightning_logs/version_{version}/checkpoints/')
-                checkpoints = glob.glob(os.path.join(checkpoint_dir, '*.ckpt'))
-                if len(checkpoints) > 1:
-                    raise RuntimeError(f'Multiple checkpoints detected in {checkpoint_dir}\n'
-                                       f'Please specify model.checkpoint_path')
-                ckpt_path = checkpoints[0]
-            model = Autoencoder.load_from_checkpoint(ckpt_path, input_shape=input_shape, cfg=cfg)
+            ckpt_path = get_checkpoint_path(cfg)
+            model = module.load_from_checkpoint(ckpt_path, input_shape=input_shape, cfg=cfg)
         else:
-            model = Autoencoder(input_shape, cfg)
+            model = module(input_shape, cfg)
     return model
 
+def get_checkpoint_path(cfg):
+    if cfg.loader.checkpoint_path is None:
+        experiment = cfg.experiment if cfg.loader.experiment is None else cfg.loader.experiment
+        trial = cfg.trial if cfg.loader.trial is None else cfg.loader.trial
+        seed = f'{cfg.seed if cfg.loader.seed is None else cfg.loader.seed:04d}'
+        load_dir = os.path.join('/', *cfg.dir.split('/')[:-4], experiment, trial, seed)
+        if cfg.loader.version is None:
+            version = pl.Trainer(max_epochs=1, default_root_dir=load_dir).logger.version - 1
+        else:
+            version = cfg.loader.version
+        checkpoint_dir = os.path.join(load_dir, f'lightning_logs/version_{version}/checkpoints/')
+        checkpoints = glob.glob(os.path.join(checkpoint_dir, '*.ckpt'))
+        if len(checkpoints) > 1:
+            raise RuntimeError(f'Multiple checkpoints detected in {checkpoint_dir}\n'
+                               f'Please specify model.checkpoint_path')
+        ckpt_path = checkpoints[0]
+        return ckpt_path
+
 def cpu_count():
-    # os.cpu_count()
-    #     returns number of cores on machine
-    # os.sched_getaffinity(pid)
-    #     returns set of cores on which process is allowed to run
-    #     if pid=0, results are for current process
+    # os.cpu_count(): returns number of cores on machine
+    # os.sched_getaffinity(pid): returns set of cores on which process is allowed to run
+    #                            if pid=0, results are for current process
     #
     # if os.sched_getaffinity doesn't exist, just return cpu_count and hope for the best
     try:

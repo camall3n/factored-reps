@@ -1,7 +1,8 @@
 defaults:
   - base_model
 
-architecture: cnn
+arch:
+  encoder: cnn
 lib: factored_rl
 flatten_input: false
 cnn:

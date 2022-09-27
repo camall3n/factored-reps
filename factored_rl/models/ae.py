@@ -86,15 +86,15 @@ class Decoder(Network):
         super(Network, self).__init__() # skip over the Network init function
         self.input_shape = encoder.output_shape
         self.output_shape = output_shape
-        if cfg.architecture == 'mlp':
+        if cfg.arch.decoder == 'mlp':
             _, mlp = encoder.model
             cnn = None
             flattened_activation = None
-        elif cfg.architecture == 'cnn':
+        elif cfg.arch.decoder == 'cnn':
             cnn, _, mlp = encoder.model
             flattened_activation = configs.instantiate(cfg.cnn.final_activation)
         else:
-            raise NotImplementedError(f'Unsupported architecture: {cfg.architecture}')
+            raise NotImplementedError(f'Unsupported architecture: {cfg.arch.decoder}')
         for layer in reversed(mlp.model):
             if hasattr(layer, 'out_features'):
                 in_shape = layer.out_features
@@ -108,13 +108,13 @@ class Decoder(Network):
             activation=configs.instantiate(cfg.mlp.activation),
             final_activation=flattened_activation,
         )
-        if cfg.architecture == 'mlp':
+        if cfg.arch.decoder == 'mlp':
             unflattened_shape = output_shape
         else:
             unflattened_shape = cnn.layer_shapes[-1]
         transposed_reshape = Reshape(-1, *unflattened_shape)
         layers = [transposed_mlp, transposed_reshape]
-        if cfg.architecture != 'mlp':
+        if cfg.arch.decoder != 'mlp':
             transposed_conv = CNN(
                 input_shape=unflattened_shape,
                 n_output_channels=self.make_reversed(cfg.cnn.n_output_channels)[1:] +

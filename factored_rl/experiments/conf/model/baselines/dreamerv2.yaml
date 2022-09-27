@@ -2,6 +2,10 @@ defaults:
   - cnn_relu
 
 name: dreamerv2
+arch:
+  encoder: cnn
+  decoder: cnn
+  predictor: mlp
 cnn:
   supported_2d_input_shape: [64, 64]
   n_output_channels: [48, 96, 192, 384]

@@ -3,7 +3,9 @@ defaults:
 
 name: betavae
 lib: disent
-architecture: cnn
+arch:
+  encoder: cnn
+  decoder: cnn
 action_sampling: null
 cnn:
   supported_2d_input_shape: [64, 64]
