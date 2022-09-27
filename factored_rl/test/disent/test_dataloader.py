@@ -29,7 +29,8 @@ def cfg():
     return OmegaConf.create("""
     seed: 0
     model:
-      arch: cnn
+      arch:
+        encoder: cnn
     env:
       name: taxi
       n_steps_per_episode: 50

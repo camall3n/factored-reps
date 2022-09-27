@@ -161,7 +161,7 @@ class TrainerConfig:
     batch_size: int = MISSING
     learning_rate: float = MISSING
     optimizer: Optional[OptimizerType] = None
-    quick: bool = MISSING
+    quick: bool = False
 
 @dataclass
 class LightningTrainerConfig(TrainerConfig):
@@ -196,7 +196,7 @@ cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)
 cs.store(group='env', name='base_env', node=EnvConfig)
 cs.store(group='env', name='taxi_env', node=TaxiEnvConfig)
 cs.store(group='model', name='base_model', node=ModelConfig)
-cs.store(group='loss', name='base_loss', node=LossConfig)
+cs.store(group='loss', name='base_loss', node=LossConfig) # TODO: is this being duplicated?
 cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
 cs.store(group='trainer', name='lightning_trainer', node=LightningTrainerConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)

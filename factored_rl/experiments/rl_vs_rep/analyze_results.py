@@ -42,14 +42,15 @@ def load_results(experiment_name) -> pd.DataFrame:
         if len(results) == 0:
             print(f'Results empty: {results_filename}')
             continue
+        arch = cfg.agent.model.get('architecture', cfg.agent.model.arch.encoder)
         args = {
             'experiment': cfg.experiment,
             'env': cfg.env.name,
             'trial': cfg.trial,
             'transform': cfg.transform.name,
             'agent': cfg.agent.name,
-            'arch': cfg.agent.model.architecture,
-            'model': cfg.agent.model.get('name', cfg.agent.model.architecture),
+            'arch': arch,
+            'model': cfg.agent.model.get('name', arch),
             'seed': cfg.seed,
             'noise': cfg.transform.noise,
             'max_steps': cfg.env.n_steps_per_episode,

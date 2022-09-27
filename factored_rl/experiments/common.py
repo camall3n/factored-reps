@@ -53,9 +53,9 @@ def initialize_env(cfg: configs.Config, seed: int = None):
             env = GrayscaleWrapper(env, keep_dim=True)
         if cfg.env.name == 'gridworld':
             env = InvertWrapper(env)
-        if cfg.model.arch == 'mlp':
+        if cfg.model.arch.encoder == 'mlp':
             env = FlattenObservation(env)
-        elif cfg.model.arch == 'cnn':
+        elif cfg.model.arch.encoder == 'cnn':
             env = MoveAxisToCHW(env)
     else:
         if cfg.transform.name == 'permute_factors':
@@ -76,8 +76,10 @@ def initialize_model(input_shape, cfg: configs.Config):
     elif cfg.model.name is not None:
         if cfg.model.action_sampling is None:
             module = Autoencoder
-        elif getattr(cfg.model.ae, 'n_latent_dims', 0) > 0:
+        elif cfg.model.arch.predictor is None:
             module = PairedAutoencoder
+        else:
+            raise NotImplementedError(f'Predictor has not been added to initialize_model()')
 
         if cfg.loader.should_load:
             ckpt_path = get_checkpoint_path(cfg)

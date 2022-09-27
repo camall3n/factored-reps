@@ -52,7 +52,7 @@ class PairedAutoencoder(Autoencoder):
             'effects': self.effects_loss(effects),
             'reconst': self.reconstruction_loss(ob, next_ob, z, next_z),
         }
-        loss = sum([losses[key] * self.cfgs.losses[key] for key in losses.keys()])
+        loss = sum([losses[key] * self.cfg.losses[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
@@ -61,7 +61,7 @@ class PairedAutoencoder(Autoencoder):
     def effects_loss(self, effects):
         if self.cfg.losses.effects == 0:
             return 0.0
-        effects_loss = losses.compute_sparsity(effects, self.cfg.losses.effects)
+        effects_loss = losses.compute_sparsity(effects, self.cfg.losses.sparsity)
         return effects_loss
 
     def reconstruction_loss(self, ob, next_ob, z, next_z):
