@@ -10,8 +10,10 @@ def get_config(overrides):
     return cfg
 
 def test_disent_vs_rep():
-    configurations = [["env=gridworld", "transform=rotate"],
-                      ["env=taxi", "transform=images", "model=ae/ae_cnn_64"]]
+    configurations = [
+        ["env=gridworld", "transform=rotate"],
+        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
+    ] # yapf: disable
     for overrides in configurations:
         overrides.extend([
             "experiment=pytest",
@@ -36,9 +38,7 @@ def test_rl_vs_rep():
 
 def test_factorize():
     configurations = [
-        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
         ["env=taxi", "transform=images", "model=ae/betavae", "loss@losses.vae=betavae"],
-        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
         ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss@losses.sparsity=sparsity/unit_pnorm"],
         ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp", "losses.effects=0.003", "losses.reconst=1.0", "loss@losses.sparsity=sparsity/sum_div_max"],
     ] # yapf: disable
@@ -50,3 +50,15 @@ def test_factorize():
         ])
         cfg = get_config(overrides)
         factorize(cfg)
+
+def test_save_and_load():
+    common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
+    train_and_save = ["env=taxi", "transform=images", "model=ae/ae_cnn_64"]
+    load_and_check = [
+        "env=taxi", "transform=images", "model=ae/ae_cnn_64", "loader.should_load=true",
+        "loader.experiment=pytest"
+    ]
+    train_and_save.extend(common)
+    load_and_check.extend(common)
+    factorize(get_config(train_and_save))
+    disent_vs_rep(get_config(load_and_check))
