@@ -69,9 +69,9 @@ class AEConfig:
 
 @dataclass
 class AttnConfig:
+    key_embed_dim: Optional[int] = None
     action_embed_dim: int = MISSING
     factor_embed_dim: int = MISSING
-    projection_dims: int = MISSING
     dropout: float = 0.0
 
 @dataclass
@@ -90,6 +90,7 @@ class ModelConfig:
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     ae: AEConfig = AEConfig()
+    wm: WMConfig = WMConfig()
 
 @dataclass
 class LossConfig:
@@ -105,7 +106,6 @@ class LossesConfig:
     actions: float = MISSING # consistent semantics
     effects: float = MISSING # sparse effects
     parents: float = MISSING # sparse dependencies
-    predict: float = MISSING # next observation
     reconst: float = MISSING # current observation
     distance: str = 'mse' # for predictions/reconstructions
     sparsity: LossConfig = MISSING
