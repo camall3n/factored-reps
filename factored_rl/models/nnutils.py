@@ -1,12 +1,14 @@
 from functools import partial
-from typing import Union, List
 import logging
+import math
+import os
 import shutil
+from typing import Union, List
 
 import numpy as np
-import os
 import torch
 import torch.nn
+from torch.nn.functional import dropout
 
 Activation = Union[torch.nn.Module, type]
 ActivationType = Union[Activation, List[Activation]]
@@ -122,6 +124,30 @@ class Identity(Module):
 
     def forward(self, args):
         return args
+
+def attention(query: torch.Tensor,
+              key: torch.Tensor,
+              value: torch.Tensor,
+              attn_mask: torch.Tensor = None,
+              dropout_p: float = 0.0):
+    """
+    Computes scaled dot product attention on query, key and value tensors, using
+    an optional attention mask if passed, and applying dropout if a probability
+    greater than 0.0 is specified.
+    Returns a tensor pair containing attended values and attention weights.
+
+    Code adapted from:
+        - "The Annotated Transformer" by Sasha Rush
+        - torch.nn.functional._scaled_dot_product_attention
+    """
+    d_k = query.size(-1)
+    scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
+    if attn_mask is not None:
+        scores = scores.masked_fill(attn_mask == 0, -1e9)
+    attn = scores.softmax(dim=-1)
+    if dropout_p > 0.0:
+        attn = dropout(attn, p=dropout_p)
+    return torch.matmul(attn, value), attn
 
 def one_hot(x: torch.Tensor, depth: int, dtype=torch.float32):
     """Convert a tensor of indices to a tensor of one-hot vectors, adding a dimension at the end
