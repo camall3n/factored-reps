@@ -123,16 +123,22 @@ class Identity(Module):
     def forward(self, args):
         return args
 
-def one_hot(x, depth, dtype=torch.float32):
-    """Convert a batch of indices to a batch of one-hot vectors
+def one_hot(x: torch.Tensor, depth: int, dtype=torch.float32):
+    """Convert a tensor of indices to a tensor of one-hot vectors, adding a dimension at the end
 
     Parameters
     ----------
     depth : int
         The length of each output vector
     """
-    i = x.unsqueeze(-1).expand(-1, depth)
-    return torch.zeros_like(i, dtype=dtype).scatter_(-1, i, 1)
+    is_batch = (x.dim() > 0)
+    if not is_batch:
+        x = x.unsqueeze(0)
+    i = x.unsqueeze(-1).expand(*x.shape, depth)
+    result = torch.zeros_like(i, dtype=dtype).scatter_(-1, i, 1)
+    if not is_batch:
+        result = result.squeeze(0)
+    return result
 
 def extract(input, idx, idx_dim, batch_dim=0):
     '''
