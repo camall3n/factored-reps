@@ -75,20 +75,20 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
-        args = {'input_shape': input_shape, 'cfg': cfg}
+        module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
         if cfg.model.action_sampling is None:
             module = Autoencoder
+            del module_args['n_actions']
         elif cfg.model.arch.predictor is None:
             module = PairedAutoencoder
         else:
             module = WorldModel
-            args['n_actions'] = n_actions
 
         if cfg.loader.should_load:
             ckpt_path = get_checkpoint_path(cfg)
-            model = module.load_from_checkpoint(ckpt_path, **args)
+            model = module.load_from_checkpoint(ckpt_path, **module_args)
         else:
-            model = module(**args)
+            model = module(**module_args)
     return model
 
 def get_checkpoint_path(cfg):

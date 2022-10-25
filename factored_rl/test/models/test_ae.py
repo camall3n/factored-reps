@@ -1,9 +1,11 @@
 import pytest
 
 import hydra
+from omegaconf import OmegaConf
 import torch
 
-from factored_rl.models.ae import Autoencoder
+from factored_rl.models.nnutils import one_hot
+from factored_rl.models.ae import Autoencoder, PairedAutoencoder
 
 @pytest.fixture
 def model():
@@ -35,3 +37,36 @@ def test_shapes_batch(model):
 
     x_hat = model.decoder(z)
     assert x_hat.shape == x.shape
+
+
+def test_action_residuals():
+    dummy_ae = OmegaConf.create("""
+        n_actions: 5
+        cfg:
+          losses:
+            actions: 1.0
+        """)
+
+    actions = torch.tensor([2, 3, 1, 2, 0, 0, 3])
+    # actions = one_hot(actions, 5)
+    effects = torch.tensor([
+        [ 0.4,  0.3],
+        [ 0.2, -0.1],
+        [-0.7,  0.6],
+        [-0.2, -0.4],
+        [-0.1,  0.1],
+        [ 0.3,  0.5],
+        [ 0.9, -0.4],
+    ])
+
+    action_residuals = PairedAutoencoder._get_action_residuals(dummy_ae, actions, effects)
+    expected_result = torch.tensor([
+        [ 0.3000,  0.3500],
+        [-0.3500,  0.1500],
+        [ 0.0000,  0.0000],
+        [-0.3000, -0.3500],
+        [-0.2000, -0.2000],
+        [ 0.2000,  0.2000],
+        [ 0.3500, -0.1500]
+    ])
+    assert torch.allclose(action_residuals, expected_result)

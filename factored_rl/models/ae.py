@@ -2,9 +2,10 @@ from typing import Tuple
 
 import pytorch_lightning as pl
 import torch
+from torch import Tensor
 
 from factored_rl import configs
-from factored_rl.models.nnutils import Sequential, Reshape
+from factored_rl.models.nnutils import Sequential, Reshape, one_hot
 from factored_rl.models import Network, MLP, CNN, losses
 
 class Autoencoder(pl.LightningModule):
@@ -31,8 +32,9 @@ class Autoencoder(pl.LightningModule):
         return optimizer
 
 class PairedAutoencoder(Autoencoder):
-    def __init__(self, input_shape: Tuple, cfg: configs.Config):
+    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__(input_shape, cfg)
+        self.n_actions = n_actions
         assert cfg.model.action_sampling is not None
         distance_modes = {
             'mse': torch.nn.functional.mse_loss,
@@ -44,11 +46,13 @@ class PairedAutoencoder(Autoencoder):
 
     def training_step(self, batch, batch_idx):
         ob = batch['ob']
+        actions = batch['action']
         next_ob = batch['next_ob']
         z = self.encoder(ob)
         next_z = self.encoder(next_ob)
         effects = next_z - z
         losses = {
+            'actions': self.action_semantics_loss(actions, effects),
             'effects': self.effects_loss(effects),
             'reconst': self.reconstruction_loss(ob, next_ob, z, next_z),
         }
@@ -58,13 +62,36 @@ class PairedAutoencoder(Autoencoder):
         self.log_dict(losses)
         return loss
 
-    def effects_loss(self, effects):
+    def effects_loss(self, effects: Tensor):
         if self.cfg.losses.effects == 0:
             return 0.0
         effects_loss = losses.compute_sparsity(effects, self.cfg.losses.sparsity)
         return effects_loss
 
-    def reconstruction_loss(self, ob, next_ob, z, next_z):
+    def _get_action_residuals(self, actions: Tensor, effects: Tensor):
+        if self.cfg.losses.actions == 0:
+            return 0.0
+
+        if actions.dim() != 1:
+            raise ValueError(f'actions must be a vector; got dim = {actions.dim()}')
+        if effects.dim() != 2:
+            raise ValueError(f'effects must be a 2-D tensor; got dim = {effects.dim()}')
+
+        actions = one_hot(actions, self.n_actions)
+
+        action_mask = actions.unsqueeze(-1)
+        action_effects = action_mask * effects.unsqueeze(dim=1)
+        mean_action_effects = (action_effects.sum(dim=0, keepdim=True) /
+                               (action_mask.sum(dim=0, keepdim=True) + 1e-9))
+        action_residuals = ((action_effects - mean_action_effects) * action_mask).sum(dim=1)
+        return action_residuals
+
+    def action_semantics_loss(self, actions: Tensor, effects: Tensor):
+        action_residuals = self._get_action_residuals(actions, effects)
+        actions_loss = losses.compute_sparsity(action_residuals, self.cfg.losses.sparsity)
+        return actions_loss
+
+    def reconstruction_loss(self, ob: Tensor, next_ob: Tensor, z: Tensor, next_z: Tensor):
         if self.cfg.losses.reconst == 0:
             return 0.0
         ob_hat = self.decoder(z)

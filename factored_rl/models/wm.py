@@ -11,8 +11,7 @@ from factored_rl.models.ae import PairedAutoencoder
 
 class WorldModel(PairedAutoencoder):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
-        super().__init__(input_shape, cfg)
-        self.n_actions = n_actions
+        super().__init__(input_shape, n_actions, cfg)
         self.arch = cfg.model.arch.predictor
         if self.arch == 'mlp':
             self.predictor = MLP.from_cfg(
@@ -43,15 +42,17 @@ class WorldModel(PairedAutoencoder):
         return parents_loss
 
     def training_step(self, batch, batch_idx):
-        ob = batch['ob']
-        next_ob = batch['next_ob']
-        z = self.encoder(ob)
-        effects, attn_weights = self.predict(z, batch['action'])
+        obs = batch['ob']
+        actions = batch['action']
+        next_obs = batch['next_ob']
+        z = self.encoder(obs)
+        effects, attn_weights = self.predict(z, actions)
         next_z_hat = z + effects
         losses = {
+            'actions': self.action_semantics_loss(actions, effects),
             'effects': self.effects_loss(effects),
             'parents': self.parents_loss(attn_weights),
-            'reconst': self.reconstruction_loss(ob, next_ob, z, next_z_hat),
+            'reconst': self.reconstruction_loss(obs, next_obs, z, next_z_hat),
         }
         loss = sum([losses[key] * self.cfg.losses[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}
