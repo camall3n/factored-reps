@@ -8,10 +8,9 @@ from factored_rl import configs
 # Env
 import gym
 from gym.wrappers import FlattenObservation, TimeLimit
-import numpy as np
 from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, ObservationPermutationWrapper, MoveAxisToCHW
-from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, TransformWrapper
+from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper
 
 # Model
 from factored_rl.models.ae import Autoencoder, PairedAutoencoder
