@@ -24,8 +24,7 @@ class WorldModel(PairedAutoencoder):
 
     def predict(self, features: Tensor, actions: Tensor) -> Tuple[Tensor, Tensor]:
         if self.arch == 'mlp':
-            actions_onehot = one_hot(actions, self.n_actions)
-            context = torch.concat((features, actions_onehot))
+            context = torch.concat((features, actions))
             effects, attn_weights = self.predictor(context), None
         elif self.arch == 'attn':
             effects, attn_weights = self.predictor(features, actions)
@@ -43,7 +42,7 @@ class WorldModel(PairedAutoencoder):
 
     def training_step(self, batch, batch_idx):
         obs = batch['ob']
-        actions = batch['action']
+        actions = one_hot(batch['action'], self.n_actions)
         next_obs = batch['next_ob']
         z = self.encoder(obs)
         effects, attn_weights = self.predict(z, actions)
@@ -77,19 +76,19 @@ class AttnPredictor(Module):
         self.output_projection = Linear(vdim, 1) #Ev
 
     def forward(self, features: torch.Tensor, actions: torch.Tensor):
-        if actions.dim() == 2:
-            raise ValueError(
-                f"'actions' must be a vector of integers rather than a matrix of one-hot rows")
-        z = features # (N,d)
-        a = one_hot(actions, self.n_actions) # (N,A)
+        z = features # (N,d) or (d,)
+        a = actions # (N,A) or (A,)
 
         is_batched = (z.dim() == 2)
         if (a.dim() == 2) != is_batched:
             raise ValueError(f'Model cannot simultaneously process batch and non-batch inputs:\n'
-                             f'  z.dim() = {z.dim()}; a.dim() = {a.dim()}')
+                             f'  features.dim() = {z.dim()}; actions.dim() = {a.dim()}'
+                             f'Check that actions are using a one-hot encoding?')
         if not is_batched:
             z = z.unsqueeze(0)
             a = a.unsqueeze(0)
+        if a.shape[0] != z.shape[0]:
+            raise ValueError(f"features and actions must have the same batch size")
 
         # repeat input for each head
         z = z.unsqueeze(-2).expand(-1, self.n_heads, -1) # (N,h,d)

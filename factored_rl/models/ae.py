@@ -46,7 +46,7 @@ class PairedAutoencoder(Autoencoder):
 
     def training_step(self, batch, batch_idx):
         ob = batch['ob']
-        actions = batch['action']
+        actions = one_hot(batch['action'], self.n_actions)
         next_ob = batch['next_ob']
         z = self.encoder(ob)
         next_z = self.encoder(next_ob)
@@ -69,24 +69,18 @@ class PairedAutoencoder(Autoencoder):
         return effects_loss
 
     def _get_action_residuals(self, actions: Tensor, effects: Tensor):
-        if self.cfg.losses.actions == 0:
-            return 0.0
-
-        if actions.dim() != 1:
-            raise ValueError(f'actions must be a vector; got dim = {actions.dim()}')
-        if effects.dim() != 2:
-            raise ValueError(f'effects must be a 2-D tensor; got dim = {effects.dim()}')
-
-        actions = one_hot(actions, self.n_actions)
-
-        action_mask = actions.unsqueeze(-1)
-        action_effects = action_mask * effects.unsqueeze(dim=1)
+        if actions.dim() != 2:
+            raise ValueError(f'actions must be a 2-D one-hot tensor; got dim = {actions.dim()}')
+        action_mask = actions.unsqueeze(-1) #(N,A,1)
+        action_effects = action_mask * effects.unsqueeze(dim=1) #(N,1,d)
         mean_action_effects = (action_effects.sum(dim=0, keepdim=True) /
-                               (action_mask.sum(dim=0, keepdim=True) + 1e-9))
-        action_residuals = ((action_effects - mean_action_effects) * action_mask).sum(dim=1)
+                               (action_mask.sum(dim=0, keepdim=True) + 1e-9)) #(A,d)
+        action_residuals = ((action_effects - mean_action_effects) * action_mask).sum(dim=1) #(N,d)
         return action_residuals
 
     def action_semantics_loss(self, actions: Tensor, effects: Tensor):
+        if self.cfg.losses.actions == 0:
+            return 0.0
         action_residuals = self._get_action_residuals(actions, effects)
         actions_loss = losses.compute_sparsity(action_residuals, self.cfg.losses.sparsity)
         return actions_loss
