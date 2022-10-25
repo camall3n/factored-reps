@@ -23,10 +23,10 @@ from factored_rl.experiments.common import cpu_count
 def main(cfg: configs.Config):
     configs.initialize_experiment(cfg, 'factorize')
 
-    train_dl, input_shape = initialize_dataloader(cfg, cfg.seed)
-    val_dl, _ = initialize_dataloader(cfg, cfg.seed + 1000000)
+    train_dl, input_shape, n_actions = initialize_dataloader(cfg, cfg.seed)
+    val_dl, _, _ = initialize_dataloader(cfg, cfg.seed + 1000000)
 
-    model = initialize_model(input_shape, cfg)
+    model = initialize_model(input_shape, n_actions, cfg)
     print(model)
     # ckpt_callback = ModelCheckpoint(save_last=True)
     trainer = pl.Trainer(
@@ -50,7 +50,7 @@ def initialize_dataloader(cfg: configs.Config, seed: int = None):
         persistent_workers=False if cfg.trainer.quick else True,
         worker_init_fn=dataset.get_worker_init_fn(),
     )
-    return dataloader, env.observation_space.shape
+    return dataloader, env.observation_space.shape, env.action_space.n
 
 if __name__ == '__main__':
     freeze_support() # do this to make sure multiprocessing works correctly

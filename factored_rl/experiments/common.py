@@ -14,6 +14,7 @@ from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, No
 
 # Model
 from factored_rl.models.ae import Autoencoder, PairedAutoencoder
+from factored_rl.models.wm import WorldModel
 from factored_rl.models.disent import build_disent_model
 
 # ----------------------------------------
@@ -70,22 +71,24 @@ def initialize_env(cfg: configs.Config, seed: int = None):
     env = ToFloatWrapper(env)
     return env
 
-def initialize_model(input_shape, cfg: configs.Config):
+def initialize_model(input_shape, n_actions, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
+        args = {'input_shape': input_shape, 'cfg': cfg}
         if cfg.model.action_sampling is None:
             module = Autoencoder
         elif cfg.model.arch.predictor is None:
             module = PairedAutoencoder
         else:
-            raise NotImplementedError(f'Predictor has not been added to initialize_model()')
+            module = WorldModel
+            args['n_actions'] = n_actions
 
         if cfg.loader.should_load:
             ckpt_path = get_checkpoint_path(cfg)
-            model = module.load_from_checkpoint(ckpt_path, input_shape=input_shape, cfg=cfg)
+            model = module.load_from_checkpoint(ckpt_path, **args)
         else:
-            model = module(input_shape, cfg)
+            model = module(**args)
     return model
 
 def get_checkpoint_path(cfg):

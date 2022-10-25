@@ -26,7 +26,7 @@ def main(cfg):
     env = initialize_env(cfg, cfg.seed)
     input_shape = env.observation_space.shape
     dataset = GymEnvData(env, cfg.seed, transform=None)
-    encode = get_encode_fn(input_shape, cfg)
+    encode = get_encode_fn(input_shape, env.action_space.n, cfg)
 
     metric_scores = {}
     for metric in initialize_metrics(cfg):
@@ -51,11 +51,11 @@ def main(cfg):
         file.write('\n')
     logging.getLogger().info(f'Results logged to: {filename}')
 
-def get_encode_fn(input_shape, cfg):
+def get_encode_fn(input_shape, n_actions, cfg):
     if cfg.model.name is None:
         return lambda x: x
     else:
-        model = initialize_model(input_shape, cfg)
+        model = initialize_model(input_shape, n_actions, cfg)
         return lambda x: model.encoder(torch.as_tensor(x).float().to(cfg.model.device))
 
 # ----------------------------------------
