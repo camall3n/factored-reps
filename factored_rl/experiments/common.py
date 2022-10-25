@@ -42,6 +42,7 @@ def initialize_env(cfg: configs.Config, seed: int = None):
     else:
         env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
+        raise NotImplementedError('Need to wrap env to support disent protocol')
 
     env.reset(seed=seed)
     env.action_space.seed(seed)
