@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import torch
+from torch import Tensor
 from torch.nn import Linear
 
 from factored_rl import configs
@@ -12,26 +13,47 @@ class WorldModel(PairedAutoencoder):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__(input_shape, cfg)
         self.n_actions = n_actions
+        self.arch = cfg.model.arch.predictor
+        if self.arch == 'mlp':
+            self.predictor = MLP.from_cfg(
+                n_inputs=self.n_latent_dims + self.n_actions,
+                n_outputs=self.n_latent_dims,
+                cfg=cfg.model.wm.mlp,
+            )
+        elif self.arch == 'attn':
+            self.predictor = AttnPredictor(self.n_latent_dims, self.n_actions, cfg.model.wm.attn)
 
-        self.predictor = MLP.from_cfg(
-            n_inputs=self.n_latent_dims + n_actions,
-            n_outputs=self.n_latent_dims,
-            cfg=cfg.model.wm.mlp,
-        )
+    def predict(self, features: Tensor, actions: Tensor) -> Tuple[Tensor, Tensor]:
+        if self.arch == 'mlp':
+            actions_onehot = one_hot(actions, self.n_actions)
+            context = torch.concat((features, actions_onehot))
+            effects, attn_weights = self.predictor(context), None
+        elif self.arch == 'attn':
+            effects, attn_weights = self.predictor(features, actions)
+        return effects, attn_weights
+
+    def parents_loss(self, attn_weights: Tensor):
+        if self.cfg.losses.parents == 0:
+            return 0.0
+        if attn_weights is None:
+            raise RuntimeError(
+                f'Cannot compute parents_loss because predictor does not produce attn_weights.\n'
+                f'  predictor = {self.arch}; cfg.losses.parents = {self.cfg.losses.parents}')
+        parents_loss = losses.compute_sparsity(attn_weights, self.cfg.losses.sparsity)
+        return parents_loss
 
     def training_step(self, batch, batch_idx):
         ob = batch['ob']
-        action = one_hot(batch['action'], self.n_actions)
         next_ob = batch['next_ob']
         z = self.encoder(ob)
-        context = torch.concat((z, action))
-        effects = self.predictor(context)
+        effects, attn_weights = self.predict(z, batch['action'])
         next_z_hat = z + effects
         losses = {
             'effects': self.effects_loss(effects),
+            'parents': self.parents_loss(attn_weights),
             'reconst': self.reconstruction_loss(ob, next_ob, z, next_z_hat),
         }
-        loss = sum([losses[key] * self.cfgs.losses[key] for key in losses.keys()])
+        loss = sum([losses[key] * self.cfg.losses[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
