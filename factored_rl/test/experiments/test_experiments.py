@@ -36,7 +36,7 @@ def test_rl_vs_rep():
     cfg = get_config(overrides)
     rl_vs_rep(cfg)
 
-def test_factorize():
+def test_factorize_ae():
     configurations = [
         ["env=taxi", "transform=images", "model=ae/betavae", "loss@losses.vae=betavae"],
         ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss@losses.sparsity=sparsity/unit_pnorm"],
@@ -51,11 +51,43 @@ def test_factorize():
         cfg = get_config(overrides)
         factorize(cfg)
 
-def test_save_and_load():
+def test_factorize_wm():
+    configurations = [
+        [
+            "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn",
+            "losses.effects=0.003", "losses.reconst=1.0", "losses.parents=1.0",
+            "loss@losses.sparsity=sparsity/sum_div_max"
+        ],
+    ]
+    for overrides in configurations:
+        overrides.extend([
+            "experiment=pytest",
+            "timestamp=false",
+            "trainer=rep.quick",
+        ])
+        cfg = get_config(overrides)
+        factorize(cfg)
+
+def test_save_and_load_ae():
     common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
     train_and_save = ["env=taxi", "transform=images", "model=ae/ae_cnn_64"]
     load_and_check = [
         "env=taxi", "transform=images", "model=ae/ae_cnn_64", "loader.should_load=true",
+        "loader.experiment=pytest"
+    ]
+    train_and_save.extend(common)
+    load_and_check.extend(common)
+    factorize(get_config(train_and_save))
+    disent_vs_rep(get_config(load_and_check))
+
+def test_save_and_load_wm():
+    common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
+    train_and_save = [
+        "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "losses.effects=0.003",
+        "losses.reconst=1.0", "losses.parents=1.0", "loss@losses.sparsity=sparsity/sum_div_max"
+    ]
+    load_and_check = [
+        "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loader.should_load=true",
         "loader.experiment=pytest"
     ]
     train_and_save.extend(common)

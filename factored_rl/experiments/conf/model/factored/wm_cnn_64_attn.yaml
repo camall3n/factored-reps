@@ -1,0 +1,16 @@
+defaults:
+  - cnn_64
+
+name: wm_cnn_64_attn
+arch:
+  encoder: cnn
+  decoder: cnn
+  predictor: attn
+action_sampling: all
+ae:
+  n_latent_dims: 10
+wm:
+  attn:
+    key_embed_dim: 20
+    action_embed_dim: 4
+    factor_embed_dim: 8
