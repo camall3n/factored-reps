@@ -1,5 +1,5 @@
 defaults:
-  - base_loss
+  - base_sparsity
 
 name: unit_pnorm
 p_norm: 2

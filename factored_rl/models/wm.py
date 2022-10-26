@@ -31,13 +31,13 @@ class WorldModel(PairedAutoencoder):
         return effects, attn_weights
 
     def parents_loss(self, attn_weights: Tensor):
-        if self.cfg.losses.parents == 0:
+        if self.cfg.loss.parents == 0:
             return 0.0
         if attn_weights is None:
             raise RuntimeError(
                 f'Cannot compute parents_loss because predictor does not produce attn_weights.\n'
-                f'  predictor = {self.arch}; cfg.losses.parents = {self.cfg.losses.parents}')
-        parents_loss = losses.compute_sparsity(attn_weights, self.cfg.losses.sparsity)
+                f'  predictor = {self.arch}; cfg.loss.parents = {self.cfg.loss.parents}')
+        parents_loss = losses.compute_sparsity(attn_weights, self.cfg.loss.sparsity)
         return parents_loss
 
     def training_step(self, batch, batch_idx):
@@ -53,7 +53,7 @@ class WorldModel(PairedAutoencoder):
             'parents': self.parents_loss(attn_weights),
             'reconst': self.reconstruction_loss(obs, next_obs, z, next_z_hat),
         }
-        loss = sum([losses[key] * self.cfg.losses[key] for key in losses.keys()])
+        loss = sum([losses[key] * self.cfg.loss[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)

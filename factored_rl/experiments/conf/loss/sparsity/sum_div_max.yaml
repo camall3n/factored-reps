@@ -1,5 +1,5 @@
 defaults:
-  - base_loss
+  - base_sparsity
 
 name: sum_div_max
 epsilon: 1.0e-6

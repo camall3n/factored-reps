@@ -93,23 +93,21 @@ class ModelConfig:
     wm: WMConfig = WMConfig()
 
 @dataclass
-class LossConfig:
+class SparsityConfig:
     name: Optional[str] = None
-    epsilon: Optional[float] = MISSING
-    p_norm: Optional[float] = MISSING
-    sigma: Optional[float] = MISSING
-    beta: Optional[float] = MISSING
-    loss_reduction: Optional[str] = MISSING
+    epsilon: float = MISSING
+    p_norm: float = MISSING
+    sigma: float = MISSING
 
 @dataclass
-class LossesConfig:
+class LossConfig:
     actions: float = MISSING # consistent semantics
     effects: float = MISSING # sparse effects
     parents: float = MISSING # sparse dependencies
     reconst: float = MISSING # current observation
     distance: str = 'mse' # for predictions/reconstructions
-    sparsity: LossConfig = MISSING
-    vae: LossConfig = MISSING
+    sparsity: SparsityConfig = MISSING
+    vae_beta: float = MISSING
 
 @dataclass
 class LoaderConfig:
@@ -181,7 +179,7 @@ class Config:
     agent: AgentConfig = MISSING
     env: EnvConfig = MISSING
     model: ModelConfig = MISSING
-    losses: LossesConfig = LossesConfig()
+    loss: LossConfig = LossConfig()
     trainer: TrainerConfig = MISSING
     transform: TransformConfig = MISSING
     loader: LoaderConfig = LoaderConfig()
@@ -196,7 +194,8 @@ cs.store(group='agent', name='base_dqn_agent', node=DQNAgentConfig)
 cs.store(group='env', name='base_env', node=EnvConfig)
 cs.store(group='env', name='taxi_env', node=TaxiEnvConfig)
 cs.store(group='model', name='base_model', node=ModelConfig)
-cs.store(group='loss', name='base_loss', node=LossConfig) # TODO: is this being duplicated?
+cs.store(group='loss', name='base_loss', node=LossConfig)
+cs.store(group='loss/sparsity', name='base_sparsity', node=SparsityConfig)
 cs.store(group='trainer', name='base_trainer', node=TrainerConfig)
 cs.store(group='trainer', name='lightning_trainer', node=LightningTrainerConfig)
 cs.store(group='transform', name='base_transform', node=TransformConfig)

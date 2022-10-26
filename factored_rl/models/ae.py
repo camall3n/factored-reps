@@ -39,10 +39,10 @@ class PairedAutoencoder(Autoencoder):
         distance_modes = {
             'mse': torch.nn.functional.mse_loss,
         }
-        if self.cfg.losses.distance not in distance_modes:
+        if self.cfg.loss.distance not in distance_modes:
             raise RuntimeError(
-                f"Distance mode {self.cfg.losses.distance} not in {list(distance_modes.keys())}")
-        self.distance = distance_modes[self.cfg.losses.distance]
+                f"Distance mode {self.cfg.loss.distance} not in {list(distance_modes.keys())}")
+        self.distance = distance_modes[self.cfg.loss.distance]
 
     def training_step(self, batch, batch_idx):
         ob = batch['ob']
@@ -56,16 +56,16 @@ class PairedAutoencoder(Autoencoder):
             'effects': self.effects_loss(effects),
             'reconst': self.reconstruction_loss(ob, next_ob, z, next_z),
         }
-        loss = sum([losses[key] * self.cfg.losses[key] for key in losses.keys()])
+        loss = sum([losses[key] * self.cfg.loss[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
         return loss
 
     def effects_loss(self, effects: Tensor):
-        if self.cfg.losses.effects == 0:
+        if self.cfg.loss.effects == 0:
             return 0.0
-        effects_loss = losses.compute_sparsity(effects, self.cfg.losses.sparsity)
+        effects_loss = losses.compute_sparsity(effects, self.cfg.loss.sparsity)
         return effects_loss
 
     def _get_action_residuals(self, actions: Tensor, effects: Tensor):
@@ -79,14 +79,14 @@ class PairedAutoencoder(Autoencoder):
         return action_residuals
 
     def action_semantics_loss(self, actions: Tensor, effects: Tensor):
-        if self.cfg.losses.actions == 0:
+        if self.cfg.loss.actions == 0:
             return 0.0
         action_residuals = self._get_action_residuals(actions, effects)
-        actions_loss = losses.compute_sparsity(action_residuals, self.cfg.losses.sparsity)
+        actions_loss = losses.compute_sparsity(action_residuals, self.cfg.loss.sparsity)
         return actions_loss
 
     def reconstruction_loss(self, ob: Tensor, next_ob: Tensor, z: Tensor, next_z: Tensor):
-        if self.cfg.losses.reconst == 0:
+        if self.cfg.loss.reconst == 0:
             return 0.0
         ob_hat = self.decoder(z)
         next_ob_hat = self.decoder(next_z)

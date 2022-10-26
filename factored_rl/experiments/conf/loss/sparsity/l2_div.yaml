@@ -1,5 +1,5 @@
 defaults:
-  - base_loss
+  - base_sparsity
 
 name: l2_div
 sigma: 0.01

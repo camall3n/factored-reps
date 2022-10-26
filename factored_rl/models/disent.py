@@ -22,8 +22,8 @@ def build_disent_model(input_shape: Tuple, cfg: configs.Config):
             cfg=BetaVae.cfg(
                 optimizer=cfg.trainer.optimizer._target_.split('.')[-1].lower(),
                 optimizer_kwargs=dict(lr=cfg.trainer.learning_rate),
-                loss_reduction=cfg.losses.vae.loss_reduction,
-                beta=cfg.losses.vae.beta,
+                loss_reduction='mean_sum',
+                beta=cfg.loss.vae_beta,
             ))
     else:
         raise NotImplementedError(f"Don't know how to build disent model: {cfg.model.name}")

@@ -38,9 +38,10 @@ def test_rl_vs_rep():
 
 def test_factorize_ae():
     configurations = [
-        ["env=taxi", "transform=images", "model=ae/betavae", "loss@losses.vae=betavae"],
-        ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss@losses.sparsity=sparsity/unit_pnorm"],
-        ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp", "losses.actions=0.003", "losses.effects=0.003", "losses.reconst=1.0", "loss@losses.sparsity=sparsity/sum_div_max"],
+        ["env=taxi", "transform=images", "model=ae/betavae", "loss=betavae"],
+        ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss/sparsity=unit_pnorm"],
+        ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp",
+         "loss.actions=0.003", "loss.effects=0.003", "loss.reconst=1.0"],
     ] # yapf: disable
     for overrides in configurations:
         overrides.extend([
@@ -54,9 +55,9 @@ def test_factorize_ae():
 def test_factorize_wm():
     configurations = [
         [
-            "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn",
-            "losses.actions=0.003", "losses.effects=0.003", "losses.reconst=1.0",
-            "losses.parents=1.0", "loss@losses.sparsity=sparsity/sum_div_max"
+            "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loss.actions=0.003",
+            "loss.effects=0.003", "loss.reconst=1.0", "loss.parents=1.0",
+            "loss/sparsity=sum_div_max"
         ],
     ]
     for overrides in configurations:
@@ -83,9 +84,8 @@ def test_save_and_load_ae():
 def test_save_and_load_wm():
     common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
     train_and_save = [
-        "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "losses.actions=0.003",
-        "losses.effects=0.003", "losses.reconst=1.0", "losses.parents=1.0",
-        "loss@losses.sparsity=sparsity/sum_div_max"
+        "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loss.actions=0.003",
+        "loss.effects=0.003", "loss.reconst=1.0", "loss.parents=1.0", "loss/sparsity=sum_div_max"
     ]
     load_and_check = [
         "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loader.should_load=true",

@@ -42,7 +42,7 @@ def test_action_residuals():
     dummy_ae = OmegaConf.create("""
         n_actions: 5
         cfg:
-          losses:
+          loss:
             actions: 1.0
         """)
 

@@ -1,0 +1,9 @@
+defaults:
+  - base_loss
+  - sparsity: sum_div_max
+
+actions: 0.0
+effects: 0.0
+parents: 0.0
+reconst: 1.0
+distance: mse
