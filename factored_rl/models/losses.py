@@ -10,13 +10,13 @@ def compute_sparsity(data: torch.TensorType, cfg: configs.LossConfig):
     if cfg.name == 'sum_div_max':
         return sum_div_max_loss(data, epsilon=cfg.epsilon)
     elif cfg.name == 'unit_pnorm':
-        return unit_pnorm_loss(data, p=cfg.p_norm)
+        return unit_pnorm_loss(data, p=cfg.p_norm, epsilon=cfg.epsilon)
     elif cfg.name == 'l2_div':
         return l2_div_loss(data, sigma=cfg.sigma)
     else:
         raise RuntimeError(f"Unknown sparsity loss: '{cfg.name}'")
 
-def sum_div_max_loss(data, epsilon=1.0e-6):
+def sum_div_max_loss(data, epsilon=1.0e-9):
     assert epsilon > 0
     magnitudes = torch.abs(data)
     l1 = torch.sum(magnitudes, dim=-1)
@@ -24,11 +24,11 @@ def sum_div_max_loss(data, epsilon=1.0e-6):
     residual_scores = l1 / (lmax + epsilon)
     return torch.mean(residual_scores)
 
-def unit_pnorm_loss(data, p=2):
+def unit_pnorm_loss(data, p=2, epsilon=1.0e-9):
     assert p > 0
     magnitudes = torch.abs(data)
-    l1 = torch.sum(magnitudes, dim=-1)
-    normalized_data = magnitudes / l1
+    l1 = torch.sum(magnitudes, dim=-1, keepdim=True)
+    normalized_data = magnitudes / (l1 + epsilon)
     residual_scores = -1 * torch.sum(normalized_data**p, dim=-1)
     return torch.mean(residual_scores)
 

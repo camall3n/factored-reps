@@ -39,7 +39,7 @@ def test_rl_vs_rep():
 def test_factorize_ae():
     configurations = [
         ["env=taxi", "transform=images", "model=ae/betavae", "loss=betavae"],
-        ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp", "loss/sparsity=unit_pnorm"],
+        ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp"],
         ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp",
          "loss.actions=0.003", "loss.effects=0.003", "loss.reconst=1.0"],
     ] # yapf: disable
@@ -57,7 +57,7 @@ def test_factorize_wm():
         [
             "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loss.actions=0.003",
             "loss.effects=0.003", "loss.reconst=1.0", "loss.parents=1.0",
-            "loss/sparsity=sum_div_max"
+            "loss/sparsity=unit_pnorm"
         ],
     ]
     for overrides in configurations:
