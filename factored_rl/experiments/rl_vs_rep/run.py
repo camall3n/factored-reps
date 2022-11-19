@@ -7,7 +7,7 @@ import hydra
 from factored_rl import configs
 
 # Env
-from factored_rl.experiments.common import initialize_env, initialize_model
+from factored_rl.experiments.common import initialize_env, initialize_model, get_checkpoint_path
 from factored_rl.wrappers.move_axis import MoveAxisToCHW
 from gym.wrappers import TimeLimit
 
@@ -37,6 +37,10 @@ def main(cfg: configs.Config):
     filename = cfg.dir + 'results.json'
     with open(filename, 'w') as results_file:
         train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+
+    if not cfg.loader.should_load:
+        ckpt_path = get_checkpoint_path(cfg, logs_dirname='pytorch_logs', create_new_version=True)
+        agent.save('qnet', ckpt_path, is_best=False)
 
 # ----------------------------------------
 # Agent

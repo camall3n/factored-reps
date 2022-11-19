@@ -1,7 +1,7 @@
 import os
 import glob
 
-import pytorch_lightning as pl
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from factored_rl import configs
 
@@ -94,27 +94,34 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
             ckpt_path = get_checkpoint_path(cfg)
             model = module.load_from_checkpoint(ckpt_path, **module_args)
             if not cfg.loader.should_train:
+                model.eval()
                 model.encoder.freeze()
         else:
             model = module(**module_args)
     return model
 
-def get_checkpoint_path(cfg):
+def get_checkpoint_path(cfg, logs_dirname='lightning_logs', create_new_version=False):
     if cfg.loader.checkpoint_path is None:
         experiment = cfg.experiment if cfg.loader.experiment is None else cfg.loader.experiment
         trial = cfg.trial if cfg.loader.trial is None else cfg.loader.trial
         seed = f'{cfg.seed if cfg.loader.seed is None else cfg.loader.seed:04d}'
         load_dir = os.path.join('/', *cfg.dir.split('/')[:-4], experiment, trial, seed)
+        logger = TensorBoardLogger(save_dir=load_dir, name=logs_dirname)
         if cfg.loader.version is None:
-            version = pl.Trainer(max_epochs=1, default_root_dir=load_dir).logger.version - 1
+            version = logger.version - 1
+            if create_new_version:
+                version += 1
         else:
             version = cfg.loader.version
-        checkpoint_dir = os.path.join(load_dir, f'lightning_logs/version_{version}/checkpoints/')
+        checkpoint_dir = os.path.join(load_dir, f'{logs_dirname}/version_{version}/checkpoints/')
         checkpoints = glob.glob(os.path.join(checkpoint_dir, '*.ckpt'))
         if len(checkpoints) > 1:
             raise RuntimeError(f'Multiple checkpoints detected in {checkpoint_dir}\n'
                                f'Please specify model.checkpoint_path')
-        ckpt_path = checkpoints[0]
+        elif len(checkpoints) == 1:
+            ckpt_path = checkpoints[0]
+        elif create_new_version:
+            ckpt_path = checkpoint_dir
         return ckpt_path
 
 def cpu_count():

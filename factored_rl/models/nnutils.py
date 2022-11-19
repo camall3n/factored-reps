@@ -71,11 +71,11 @@ class Module(torch.nn.Module):
 
     def save(self, name, model_dir, is_best=False):
         os.makedirs(model_dir, exist_ok=True)
-        model_file = os.path.join(model_dir, '{}_latest.pytorch'.format(name))
+        model_file = os.path.join(model_dir, '{}_latest.ckpt'.format(name))
         torch.save(self.state_dict(), model_file)
         logging.info('Model saved to {}'.format(model_file))
         if is_best:
-            best_file = os.path.join(model_dir, '{}_best.pytorch'.format(name))
+            best_file = os.path.join(model_dir, '{}_best.ckpt'.format(name))
             shutil.copyfile(model_file, best_file)
             logging.info('New best model! Model copied to {}'.format(best_file))
 
