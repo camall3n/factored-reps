@@ -7,9 +7,9 @@ from torch.nn import Linear
 from factored_rl import configs
 from factored_rl.models.nnutils import Module, one_hot, attention
 from factored_rl.models import MLP, losses
-from factored_rl.models.ae import PairedAutoencoder
+from factored_rl.models.ae import PairedAutoencoderModel
 
-class WorldModel(PairedAutoencoder):
+class WorldModel(PairedAutoencoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__(input_shape, n_actions, cfg)
         self.arch = cfg.model.arch.predictor

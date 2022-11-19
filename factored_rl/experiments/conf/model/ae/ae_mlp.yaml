@@ -3,6 +3,7 @@ defaults:
 
 name: ae_mlp
 arch:
+  type: ae
   encoder: mlp
   decoder: mlp
 action_sampling: null

@@ -3,6 +3,7 @@ defaults:
 
 name: ae_cnn_64
 arch:
+  type: ae
   encoder: cnn
   decoder: cnn
 action_sampling: null

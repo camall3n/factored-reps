@@ -4,6 +4,7 @@ defaults:
 name: betavae
 lib: disent
 arch:
+  type: ae
   encoder: cnn
   decoder: cnn
 action_sampling: null

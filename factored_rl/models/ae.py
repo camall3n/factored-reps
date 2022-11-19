@@ -8,15 +8,24 @@ from factored_rl import configs
 from factored_rl.models.nnutils import Sequential, Reshape, one_hot
 from factored_rl.models import Network, MLP, CNN, losses
 
-class Autoencoder(pl.LightningModule):
+class EncoderModel(pl.LightningModule):
+    def __init__(self, input_shape: Tuple, cfg: configs.Config):
+        super().__init__()
+        self.input_shape = tuple(input_shape)
+        self.n_latent_dims = cfg.model.n_latent_dims
+        self.output_shape = self.n_latent_dims
+        self.cfg = cfg
+        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
+
+class AutoencoderModel(pl.LightningModule):
     def __init__(self, input_shape: Tuple, cfg: configs.Config):
         super().__init__()
         self.input_shape = tuple(input_shape)
         self.n_latent_dims = cfg.model.n_latent_dims
         self.output_shape = self.input_shape
         self.cfg = cfg
-        self.encoder = Encoder(input_shape, self.n_latent_dims, cfg.model)
-        self.decoder = Decoder(self.encoder, input_shape, cfg.model)
+        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
+        self.decoder = DecoderNet(self.encoder, input_shape, cfg.model)
 
     def training_step(self, batch, batch_idx):
         x = batch
@@ -31,7 +40,7 @@ class Autoencoder(pl.LightningModule):
         optimizer = partial_optimizer(self.parameters(), lr=self.cfg.trainer.learning_rate)
         return optimizer
 
-class PairedAutoencoder(Autoencoder):
+class PairedAutoencoderModel(AutoencoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__(input_shape, cfg)
         self.n_actions = n_actions
@@ -94,7 +103,7 @@ class PairedAutoencoder(Autoencoder):
                         self.distance(input=next_ob_hat, target=next_ob)) / 2
         return reconst_loss
 
-class Encoder(Network):
+class EncoderNet(Network):
     def forward(self, x):
         is_batched = (tuple(x.shape) != tuple(self.input_shape))
         x = super().forward(x)
@@ -102,8 +111,8 @@ class Encoder(Network):
             x = torch.squeeze(x, 0)
         return x
 
-class Decoder(Network):
-    def __init__(self, encoder: Encoder, output_shape, cfg: configs.ModelConfig):
+class DecoderNet(Network):
+    def __init__(self, encoder: EncoderNet, output_shape, cfg: configs.ModelConfig):
         super(Network, self).__init__() # skip over the Network init function
         self.input_shape = encoder.output_shape
         self.output_shape = output_shape

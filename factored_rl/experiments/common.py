@@ -13,7 +13,7 @@ from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, Obse
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper
 
 # Model
-from factored_rl.models.ae import Autoencoder, PairedAutoencoder
+from factored_rl.models.ae import EncoderModel, AutoencoderModel, PairedAutoencoderModel
 from factored_rl.models.wm import WorldModel
 from factored_rl.models.disent import build_disent_model
 
@@ -75,18 +75,26 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
-        module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
-        if cfg.model.action_sampling is None:
-            module = Autoencoder
-            del module_args['n_actions']
-        elif cfg.model.arch.predictor is None:
-            module = PairedAutoencoder
-        else:
+        if cfg.model.arch.type == 'enc':
+            module = EncoderModel
+            module_args = {'input_shape': input_shape, 'cfg': cfg}
+        elif cfg.model.arch.type == 'ae':
+            module = AutoencoderModel
+            module_args = {'input_shape': input_shape, 'cfg': cfg}
+        elif cfg.model.arch.type == 'paired_ae':
+            module = PairedAutoencoderModel
+            module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
+        elif cfg.model.arch.type == 'wm':
             module = WorldModel
+            module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
+        else:
+            raise NotImplementedError(f'Unknown model architecture: {cfg.model.arch.type}')
 
         if cfg.loader.should_load:
             ckpt_path = get_checkpoint_path(cfg)
             model = module.load_from_checkpoint(ckpt_path, **module_args)
+            if not cfg.loader.should_train:
+                model.encoder.freeze()
         else:
             model = module(**module_args)
     return model

@@ -41,6 +41,7 @@ def instantiate(obj):
 
 @dataclass
 class ArchitectureConfig:
+    type: Optional[str] = None
     encoder: Optional[str] = None
     decoder: Optional[str] = None
     predictor: Optional[str] = None
@@ -108,6 +109,7 @@ class LossConfig:
 @dataclass
 class LoaderConfig:
     should_load: bool = False # whether to load model from checkpoint
+    should_train: bool = False # whether to allow loaded model to continue training
     experiment: Optional[str] = None # which experiment to load
     trial: Optional[str] = None # which trial to load
     seed: Optional[int] = None # which seed to load

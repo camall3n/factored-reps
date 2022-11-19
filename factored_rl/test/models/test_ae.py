@@ -5,7 +5,7 @@ from omegaconf import OmegaConf
 import torch
 
 from factored_rl.models.nnutils import one_hot
-from factored_rl.models.ae import Autoencoder, PairedAutoencoder
+from factored_rl.models.ae import AutoencoderModel, PairedAutoencoderModel
 
 @pytest.fixture
 def model():
@@ -13,7 +13,7 @@ def model():
         cfg = hydra.compose(config_name='config', overrides=['model=ae/ae_cnn_64'])
     cfg = cfg
     input_shape = tuple((3, ) + cfg.model.cnn.supported_2d_input_shape)
-    model = Autoencoder(input_shape, cfg)
+    model = AutoencoderModel(input_shape, cfg)
     return model
 
 def test_transposed_flag(model):
@@ -58,7 +58,7 @@ def test_action_residuals():
         [ 0.9, -0.4],
     ]) # yapf: disable
 
-    action_residuals = PairedAutoencoder._get_action_residuals(dummy_ae, actions, effects)
+    action_residuals = PairedAutoencoderModel._get_action_residuals(dummy_ae, actions, effects)
     expected_result = torch.tensor([
         [ 0.3000,  0.3500],
         [-0.3500,  0.1500],

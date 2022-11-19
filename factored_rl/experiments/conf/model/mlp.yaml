@@ -4,6 +4,7 @@ defaults:
 name: mlp
 lib: factored_rl
 arch:
+  type: enc
   encoder: mlp
 flatten_input: true
 mlp:

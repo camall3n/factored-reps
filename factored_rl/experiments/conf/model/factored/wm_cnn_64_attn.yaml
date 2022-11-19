@@ -3,6 +3,7 @@ defaults:
 
 name: wm_cnn_64_attn
 arch:
+  type: wm
   encoder: cnn
   decoder: cnn
   predictor: attn

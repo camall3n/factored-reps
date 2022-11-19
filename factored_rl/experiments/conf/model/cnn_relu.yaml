@@ -2,6 +2,7 @@ defaults:
   - base_model
 
 arch:
+  type: enc
   encoder: cnn
 lib: factored_rl
 flatten_input: false

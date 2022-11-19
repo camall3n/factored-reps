@@ -1,16 +1,16 @@
+import copy
 import math
 
 import numpy as np
 import torch
+from torch.nn import Linear
 
 from factored_rl import configs
-from factored_rl.models.nnutils import extract
-from factored_rl.models import Network
+from factored_rl.models.nnutils import extract, Sequential, Module
 from .replaymemory import ReplayMemory
 
 class DQNAgent():
-    def __init__(self, observation_space, action_space, cfg: configs.Config):
-        self.observation_space = observation_space
+    def __init__(self, action_space, model: Module, cfg: configs.Config):
         self.action_space = action_space
         self.cfg = cfg
 
@@ -26,10 +26,11 @@ class DQNAgent():
         self.replay = ReplayMemory(cfg.agent.replay_buffer_size, on_retrieve=on_retrieve)
 
         self.n_training_steps = 0
-        input_shape = self.observation_space.shape
         n_actions = self.action_space.n
-        self.q = Network(input_shape, n_actions, cfg.model).to(cfg.model.device)
-        self.q_target = Network(input_shape, n_actions, cfg.model).to(cfg.model.device)
+
+        q_net_template = Sequential(model.encoder, Linear(cfg.model.n_latent_dims, n_actions))
+        self.q = q_net_template.to(cfg.model.device)
+        self.q_target = copy.deepcopy(q_net_template).to(cfg.model.device)
         self.q_target.hard_copy_from(self.q)
         self.q.print_summary()
         self.replay.reset()

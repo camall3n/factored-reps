@@ -7,7 +7,7 @@ import hydra
 from factored_rl import configs
 
 # Env
-from factored_rl.experiments.common import initialize_env
+from factored_rl.experiments.common import initialize_env, initialize_model
 from factored_rl.wrappers.move_axis import MoveAxisToCHW
 from gym.wrappers import TimeLimit
 
@@ -49,7 +49,8 @@ def initialize_agent(env, cfg: configs.Config):
         elif cfg.env.name == 'taxi':
             agent = TaxiExpert(env.unwrapped)
     elif cfg.agent.name == 'dqn':
-        agent = DQNAgent(env.observation_space, env.action_space, cfg)
+        model = initialize_model(env.observation_space.shape, env.action_space.n, cfg)
+        agent = DQNAgent(env.action_space, model, cfg)
     elif cfg.agent.name == 'random':
         agent = RandomAgent(env.action_space)
     else:
