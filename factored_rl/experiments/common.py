@@ -7,7 +7,7 @@ from factored_rl import configs
 
 # Env
 import gym
-from gym.wrappers import FlattenObservation, TimeLimit
+from gym.wrappers import FlattenObservation
 from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, ObservationPermutationWrapper, MoveAxisToCHW
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper

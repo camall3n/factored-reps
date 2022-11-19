@@ -8,7 +8,6 @@ from factored_rl import configs
 
 # Env
 from factored_rl.experiments.common import initialize_env, initialize_model, get_checkpoint_path
-from factored_rl.wrappers.move_axis import MoveAxisToCHW
 from gym.wrappers import TimeLimit
 
 # Agent

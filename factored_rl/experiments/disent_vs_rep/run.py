@@ -14,7 +14,6 @@ from disent import metrics
 from disent.util.seeds import seed as disent_seed
 from disent.dataset.data import GymEnvData
 from disent.dataset import DisentIterDataset
-from disent.dataset.transform import ToImgTensorF32
 
 # ----------------------------------------
 # Args & hyperparams

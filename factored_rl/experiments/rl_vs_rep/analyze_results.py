@@ -1,5 +1,4 @@
 import glob
-import json
 from omegaconf import OmegaConf
 import os
 from tqdm import tqdm
