@@ -35,8 +35,10 @@ def load_results(experiment_name) -> pd.DataFrame:
             continue
         results_filename = experiment_dir + '/results.jsonl'
         if not os.path.exists(results_filename):
-            print(f'Results missing: {results_filename}')
-            continue
+            results_filename = results_filename.replace('.jsonl', '.json')
+            if not os.path.exists(results_filename):
+                print(f'Results missing: {results_filename}')
+                continue
         results = pd.read_json(results_filename, lines=True)
         if len(results) == 0:
             print(f'Results empty: {results_filename}')
