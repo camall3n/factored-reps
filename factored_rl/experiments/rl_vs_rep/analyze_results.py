@@ -33,7 +33,7 @@ def load_results(experiment_name) -> pd.DataFrame:
         except FileNotFoundError:
             print(f'Missing configs: {config_filename}')
             continue
-        results_filename = experiment_dir + '/results.json'
+        results_filename = experiment_dir + '/results.jsonl'
         if not os.path.exists(results_filename):
             print(f'Results missing: {results_filename}')
             continue

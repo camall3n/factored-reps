@@ -33,7 +33,7 @@ def main(cfg: configs.Config):
 
     agent = initialize_agent(env, cfg)
 
-    filename = cfg.dir + 'results.json'
+    filename = cfg.dir + 'results.jsonl'
     with open(filename, 'w') as results_file:
         train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
 
