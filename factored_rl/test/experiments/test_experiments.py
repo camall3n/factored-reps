@@ -80,6 +80,7 @@ def test_save_and_load_ae():
     load_and_check.extend(common)
     factorize(get_config(train_and_save))
     disent_vs_rep(get_config(load_and_check))
+    rl_vs_rep(get_config(load_and_check + ["agent=dqn"]))
 
 def test_save_and_load_wm():
     common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
@@ -95,3 +96,4 @@ def test_save_and_load_wm():
     load_and_check.extend(common)
     factorize(get_config(train_and_save))
     disent_vs_rep(get_config(load_and_check))
+    rl_vs_rep(get_config(load_and_check + ["agent=dqn"]))
