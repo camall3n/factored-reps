@@ -15,9 +15,9 @@ def build_disent_model(input_shape: Tuple, cfg: configs.Config):
             model=DisentAutoencoder(
                 # z_multiplier is needed to output mu & logvar when parameterising normal distribution
                 encoder=EncoderConv64(x_shape=input_shape,
-                                      z_size=cfg.model.ae.n_latent_dims,
+                                      z_size=cfg.model.n_latent_dims,
                                       z_multiplier=2),
-                decoder=DecoderConv64(x_shape=input_shape, z_size=cfg.model.ae.n_latent_dims),
+                decoder=DecoderConv64(x_shape=input_shape, z_size=cfg.model.n_latent_dims),
             ),
             cfg=BetaVae.cfg(
                 optimizer=cfg.trainer.optimizer._target_.split('.')[-1].lower(),

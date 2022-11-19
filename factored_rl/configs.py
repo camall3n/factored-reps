@@ -64,10 +64,6 @@ class CNNConfig:
     final_activation: Optional[ActivationType] = None
 
 @dataclass
-class AEConfig:
-    n_latent_dims: int = MISSING
-
-@dataclass
 class AttnConfig:
     key_embed_dim: Optional[int] = None
     action_embed_dim: int = MISSING
@@ -86,10 +82,10 @@ class ModelConfig:
     action_sampling: Optional[str] = MISSING # None, 'random' or 'valid'
     lib: Optional[str] = None # external library name (e.g. 'disent', 'dreamerv2')
     device: str = MISSING
+    n_latent_dims: int = MISSING
     flatten_input: bool = False
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
-    ae: AEConfig = AEConfig()
     wm: WMConfig = WMConfig()
 
 @dataclass

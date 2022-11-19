@@ -12,7 +12,7 @@ class Autoencoder(pl.LightningModule):
     def __init__(self, input_shape: Tuple, cfg: configs.Config):
         super().__init__()
         self.input_shape = tuple(input_shape)
-        self.n_latent_dims = cfg.model.ae.n_latent_dims
+        self.n_latent_dims = cfg.model.n_latent_dims
         self.output_shape = self.input_shape
         self.cfg = cfg
         self.encoder = Encoder(input_shape, self.n_latent_dims, cfg.model)
