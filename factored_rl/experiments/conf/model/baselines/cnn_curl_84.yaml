@@ -13,3 +13,4 @@ mlp:
   final_activation:
     - {_target_: torch.nn.LayerNorm, _partial_: true}
     - _target_: torch.nn.Tanh
+n_latent_dims: ??? # 50

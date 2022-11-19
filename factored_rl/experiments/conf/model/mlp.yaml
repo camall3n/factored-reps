@@ -12,3 +12,4 @@ mlp:
   activation:
     - _target_: torch.nn.Tanh
   final_activation: null
+n_latent_dims: 10

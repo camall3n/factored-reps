@@ -7,7 +7,6 @@ arch:
   decoder: cnn
   predictor: attn
 action_sampling: all
-n_latent_dims: 10
 wm:
   attn:
     key_embed_dim: 20

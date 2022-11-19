@@ -1,5 +1,5 @@
 defaults:
-  - cnn_relu
+  - cnn_64
 
 name: betavae
 lib: disent
@@ -7,7 +7,6 @@ arch:
   encoder: cnn
   decoder: cnn
 action_sampling: null
-n_latent_dims: 32
 cnn:
   supported_2d_input_shape: [64, 64]
   n_output_channels: [32, 32, 64, 64]

@@ -6,4 +6,3 @@ arch:
   encoder: mlp
   decoder: mlp
 action_sampling: null
-n_latent_dims: 10

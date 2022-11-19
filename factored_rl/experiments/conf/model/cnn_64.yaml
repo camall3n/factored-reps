@@ -10,3 +10,4 @@ cnn:
 mlp:
   n_hidden_layers: 1
   n_units_per_layer: 64
+n_latent_dims: 10

@@ -22,3 +22,4 @@ mlp:
   n_units_per_layer: 0
   activation: null
   final_activation: null
+n_latent_dims: ???

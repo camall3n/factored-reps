@@ -6,4 +6,3 @@ arch:
   encoder: cnn
   decoder: cnn
 action_sampling: null
-n_latent_dims: 10
