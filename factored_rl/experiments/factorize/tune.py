@@ -3,10 +3,18 @@ import optuna
 
 # Args & hyperparams
 import hydra
+from hydra.core.global_hydra import GlobalHydra
+from omegaconf import OmegaConf
 from factored_rl import configs
 
 from factored_rl.experiments.factorize.run import main as factorize
 from factored_rl.experiments.rl_vs_rep.run import main as rl_vs_rep
+
+def get_config(name, path, overrides):
+    GlobalHydra.instance().clear()
+    with hydra.initialize(version_base=None, config_path=path):
+        cfg = hydra.compose(config_name=name, overrides=overrides)
+    return cfg
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg: configs.Config):
@@ -34,9 +42,11 @@ def main(cfg: configs.Config):
 
         factorize(cfg)
 
-        cfg.loader.experiment = cfg.experiment
         cfg.loader.should_load = True
         cfg.loader.should_train = False
+        quick = cfg.trainer.quick
+        cfg.trainer = get_config(name='trainer/rl', path='../conf', overrides=[]).trainer
+        cfg.trainer.quick = quick
         cfg.trainer.rl_learning_rate = trial.suggest_float(
             'trainer.rl_learning_rate',
             low=1e-5,
