@@ -70,17 +70,17 @@ def test_factorize_wm():
         factorize(cfg)
 
 def test_save_and_load_ae():
-    common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
-    train_and_save = ["env=taxi", "transform=images", "model=ae/ae_cnn_64"]
-    load_and_check = [
-        "env=taxi", "transform=images", "model=ae/ae_cnn_64", "loader.should_load=true",
-        "loader.experiment=pytest"
+    common = [
+        "experiment=pytest", "timestamp=false", "env=taxi", "transform=images",
+        "model=ae/ae_cnn_64", "trainer=rep.quick"
     ]
+    train_and_save = []
+    load_and_check = ["loader.should_load=true", "loader.experiment=pytest"]
     train_and_save.extend(common)
     load_and_check.extend(common)
     factorize(get_config(train_and_save))
     disent_vs_rep(get_config(load_and_check))
-    rl_vs_rep(get_config(load_and_check + ["agent=dqn"]))
+    rl_vs_rep(get_config(load_and_check + ["agent=dqn", "trainer=rl.quick"]))
 
 def test_save_and_load_wm():
     common = ["experiment=pytest", "timestamp=false", "trainer=rep.quick"]
@@ -96,4 +96,4 @@ def test_save_and_load_wm():
     load_and_check.extend(common)
     factorize(get_config(train_and_save))
     disent_vs_rep(get_config(load_and_check))
-    rl_vs_rep(get_config(load_and_check + ["agent=dqn"]))
+    rl_vs_rep(get_config(load_and_check + ["trainer=rl.quick", "agent=dqn"]))

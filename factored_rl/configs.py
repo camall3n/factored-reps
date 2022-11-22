@@ -154,7 +154,8 @@ class TransformConfig:
 class TrainerConfig:
     name: str = MISSING
     batch_size: int = MISSING
-    learning_rate: float = MISSING
+    rep_learning_rate: float = MISSING
+    rl_learning_rate: float = MISSING
     optimizer: Optional[OptimizerType] = None
     quick: bool = False
 

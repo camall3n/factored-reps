@@ -37,7 +37,7 @@ class AutoencoderModel(pl.LightningModule):
 
     def configure_optimizers(self):
         partial_optimizer = configs.instantiate(self.cfg.trainer.optimizer)
-        optimizer = partial_optimizer(self.parameters(), lr=self.cfg.trainer.learning_rate)
+        optimizer = partial_optimizer(self.parameters(), lr=self.cfg.trainer.rep_learning_rate)
         return optimizer
 
 class PairedAutoencoderModel(AutoencoderModel):

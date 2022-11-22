@@ -35,7 +35,7 @@ class DQNAgent():
         self.q.print_summary()
         self.replay.reset()
         params = list(self.q.parameters())
-        self.optimizer = torch.optim.Adam(params, lr=cfg.trainer.learning_rate)
+        self.optimizer = torch.optim.Adam(params, lr=cfg.trainer.rl_learning_rate)
 
     def save(self, fname, dir, is_best):
         self.q.save(fname, dir, is_best)

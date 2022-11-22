@@ -21,7 +21,7 @@ def build_disent_model(input_shape: Tuple, cfg: configs.Config):
             ),
             cfg=BetaVae.cfg(
                 optimizer=cfg.trainer.optimizer._target_.split('.')[-1].lower(),
-                optimizer_kwargs=dict(lr=cfg.trainer.learning_rate),
+                optimizer_kwargs=dict(lr=cfg.trainer.rep_learning_rate),
                 loss_reduction='mean_sum',
                 beta=cfg.loss.vae_beta,
             ))
