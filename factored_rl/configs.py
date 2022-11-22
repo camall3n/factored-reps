@@ -92,7 +92,7 @@ class ModelConfig:
 class SparsityConfig:
     name: Optional[str] = None
     epsilon: float = 1.0e-9
-    p_norm: float = MISSING
+    p_norm: float = 2.0
     sigma: float = MISSING
 
 @dataclass
