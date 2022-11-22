@@ -35,11 +35,13 @@ def main(cfg: configs.Config):
 
     filename = cfg.dir + 'results.jsonl'
     with open(filename, 'w') as results_file:
-        train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
+        results = train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
 
     if not cfg.loader.should_load:
         ckpt_path = get_checkpoint_path(cfg, logs_dirname='pytorch_logs', create_new_version=True)
         agent.save('qnet', ckpt_path, is_best=False)
+
+    return results
 
 # ----------------------------------------
 # Agent
