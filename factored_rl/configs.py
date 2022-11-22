@@ -231,6 +231,6 @@ def initialize_experiment(cfg, experiment_name):
     log.info('\n' + get_config_yaml_str(cfg))
     log.info(f'Training on device: {cfg.model.device}\n')
 
-    filename = cfg.dir + 'config.yaml'
+    filename = cfg.dir + f'config_{experiment_name}.yaml'
     with open(filename, 'w') as args_file:
         args_file.write(get_config_yaml_str(cfg))
