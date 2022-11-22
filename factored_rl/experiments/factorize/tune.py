@@ -1,10 +1,10 @@
 import hydra
 import optuna
+import sqlite3
 
 # Args & hyperparams
 import hydra
 from hydra.core.global_hydra import GlobalHydra
-from omegaconf import OmegaConf
 from factored_rl import configs
 
 from factored_rl.experiments.factorize.run import main as factorize
@@ -18,11 +18,17 @@ def get_config(name, path, overrides):
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg: configs.Config):
-    study = optuna.create_study(
-        study_name=cfg.experiment,
-        storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db",
-        load_if_exists=True,
-        direction='maximize')
+    try:
+        study = optuna.create_study(
+            study_name=cfg.experiment,
+            storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db",
+            load_if_exists=True,
+            direction='maximize')
+    except sqlite3.OperationalError:
+        # Fixes race condition where two nodes try to create at the same time
+        study = optuna.load_study(
+            study_name=cfg.experiment,
+            storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
 
     def objective(trial: optuna.Trial):
         cfg.trial = f'trial_{trial.number:04d}'
