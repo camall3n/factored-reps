@@ -47,11 +47,14 @@ class WorldModel(PairedAutoencoderModel):
         z = self.encoder(obs)
         effects, attn_weights = self.predict(z, actions)
         next_z_hat = z + effects
+        final_activation = torch.sigmoid if self.cfg.model.arch.decoder == 'cnn' else lambda x: x
+        obs_hat = final_activation(self.decoder(z))
+        next_obs_hat = final_activation(self.decoder(next_z_hat))
         losses = {
             'actions': self.action_semantics_loss(actions, effects),
             'effects': self.effects_loss(effects),
             'parents': self.parents_loss(attn_weights),
-            'reconst': self.reconstruction_loss(obs, next_obs, z, next_z_hat),
+            'reconst': self.reconstruction_loss(obs, next_obs, obs_hat, next_obs_hat),
         }
         loss = sum([losses[key] * self.cfg.loss[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}

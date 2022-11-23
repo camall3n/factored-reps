@@ -30,7 +30,8 @@ class AutoencoderModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x = batch
         z = self.encoder(x)
-        x_hat = self.decoder(z)
+        final_activation = torch.sigmoid if self.cfg.model.arch.decoder == 'cnn' else lambda x: x
+        x_hat = final_activation(self.decoder(z))
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
         self.log('loss/reconst', loss)
         return loss
@@ -60,10 +61,13 @@ class PairedAutoencoderModel(AutoencoderModel):
         z = self.encoder(ob)
         next_z = self.encoder(next_ob)
         effects = next_z - z
+        final_activation = torch.sigmoid if self.cfg.model.arch.decoder == 'cnn' else lambda x: x
+        ob_hat = final_activation(self.decoder(z))
+        next_ob_hat = final_activation(self.decoder(next_z))
         losses = {
             'actions': self.action_semantics_loss(actions, effects),
             'effects': self.effects_loss(effects),
-            'reconst': self.reconstruction_loss(ob, next_ob, z, next_z),
+            'reconst': self.reconstruction_loss(ob, next_ob, ob_hat, next_ob_hat),
         }
         loss = sum([losses[key] * self.cfg.loss[key] for key in losses.keys()])
         losses = {('loss/' + key): value for key, value in losses.items()}
@@ -94,11 +98,10 @@ class PairedAutoencoderModel(AutoencoderModel):
         actions_loss = losses.compute_sparsity(action_residuals, self.cfg.loss.sparsity)
         return actions_loss
 
-    def reconstruction_loss(self, ob: Tensor, next_ob: Tensor, z: Tensor, next_z: Tensor):
+    def reconstruction_loss(self, ob: Tensor, next_ob: Tensor, ob_hat: Tensor,
+                            next_ob_hat: Tensor):
         if self.cfg.loss.reconst == 0:
             return 0.0
-        ob_hat = self.decoder(z)
-        next_ob_hat = self.decoder(next_z)
         reconst_loss = (self.distance(input=ob_hat, target=ob) +
                         self.distance(input=next_ob_hat, target=next_ob)) / 2
         return reconst_loss
