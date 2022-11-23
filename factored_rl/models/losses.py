@@ -25,11 +25,12 @@ def sum_div_max_loss(data, epsilon=1.0e-9):
     return torch.mean(residual_scores)
 
 def unit_pnorm_loss(data, p=2, epsilon=1.0e-9):
-    assert p > 0
+    assert p > 1
+    d = data.shape[-1]
     magnitudes = torch.abs(data)
     l1 = torch.sum(magnitudes, dim=-1, keepdim=True)
     normalized_data = magnitudes / (l1 + epsilon)
-    residual_scores = -1 * torch.sum(normalized_data**p, dim=-1)
+    residual_scores = d + 1 - d * torch.sum(normalized_data**p, dim=-1)**(1 / (p - 1))
     return torch.mean(residual_scores)
 
 def l2_div_loss(data, sigma=0.01):
