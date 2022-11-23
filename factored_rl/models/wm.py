@@ -64,10 +64,6 @@ class WorldModel(PairedAutoencoderModel):
             # stack images along H dimension
             obs_stack = torch.cat((obs, obs_hat, (obs - obs_hat)), dim=2)
             next_obs_stack = torch.cat((obs, obs_hat, (obs - obs_hat)), dim=2)
-            import matplotlib.pyplot as plt
-            import numpy as np
-            plt.imshow(np.moveaxis(obs_stack[0].detach().numpy(), 0, -1))
-            plt.show()
             tensorboard = self.logger.experiment
             tensorboard.add_images('img/obs_reconst_diff', obs_stack, self.global_step)
             tensorboard.add_images('img/next_obs_reconst_diff', next_obs_stack, self.global_step)
