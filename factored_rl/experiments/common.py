@@ -10,7 +10,7 @@ import gym
 from gym.wrappers import FlattenObservation
 from visgrid.envs import GridworldEnv, TaxiEnv
 from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, ObservationPermutationWrapper, MoveAxisToCHW
-from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper
+from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, ClipWrapper
 
 # Model
 from factored_rl.models.ae import EncoderModel, AutoencoderModel, PairedAutoencoderModel
@@ -68,6 +68,10 @@ def initialize_env(cfg: configs.Config, seed: int = None):
             env = RotationWrapper(env)
     if cfg.transform.noise:
         env = NoiseWrapper(env, cfg.transform.noise_std)
+        if cfg.transform.name == 'images':
+            env = ClipWrapper(env, 0., 1.)
+        else:
+            env = ClipWrapper(env, -1., 1.)
     env = ToFloatWrapper(env)
     return env
 
