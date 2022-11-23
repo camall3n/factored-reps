@@ -154,6 +154,7 @@ class TransformConfig:
 class TrainerConfig:
     name: str = MISSING
     batch_size: int = MISSING
+    log_every_n_steps: Optional[int] = None
     rep_learning_rate: float = MISSING
     rl_learning_rate: float = MISSING
     optimizer: Optional[OptimizerType] = None
@@ -161,7 +162,6 @@ class TrainerConfig:
 
 @dataclass
 class LightningTrainerConfig(TrainerConfig):
-    log_every_n_steps: int = MISSING
     max_steps: int = MISSING
     num_dataloader_workers: int = MISSING
     overfit_batches: int = MISSING
