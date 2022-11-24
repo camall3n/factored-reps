@@ -4,6 +4,7 @@ defaults:
 name: rep.quick
 batch_size: 2
 max_steps: 1
+log_every_n_steps: 1
 num_dataloader_workers: 0
 quick: true
 overfit_batches: 0
