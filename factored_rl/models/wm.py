@@ -60,10 +60,12 @@ class WorldModel(PairedAutoencoderModel):
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
-        if batch_idx % self.cfg.trainer.log_every_n_steps == 0:
+        if self.global_step % self.cfg.trainer.log_every_n_steps == 0:
             # stack images along H dimension
-            obs_stack = torch.cat((obs, obs_hat, (obs - obs_hat)), dim=2)
-            next_obs_stack = torch.cat((obs, obs_hat, (obs - obs_hat)), dim=2)
+            N = 24
+            obs_stack = torch.cat((obs[:N], obs_hat[:N], (obs[:N] - obs_hat[:N])), dim=2)
+            next_obs_stack = torch.cat(
+                (next_obs[:N], next_obs_hat[:N], (next_obs[:N] - next_obs_hat[:N])), dim=2)
             tensorboard = self.logger.experiment
             tensorboard.add_images('img/obs_reconst_diff', obs_stack, self.global_step)
             tensorboard.add_images('img/next_obs_reconst_diff', next_obs_stack, self.global_step)
