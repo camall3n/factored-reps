@@ -1,5 +1,5 @@
 import glob
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, errors
 import os
 from tqdm import tqdm
 
@@ -7,43 +7,51 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-experiment_name = 'rl_vs_rep_02'
+# experiment_name = 'rl_vs_rep_02'
+experiment_name = 'wm_tune01'
+
+def try_load(load_fn, dirname, filename_list):
+    for filename in filename_list:
+        try:
+            with open(dirname + '/' + filename, 'r') as file:
+                result = load_fn(file)
+        except FileNotFoundError:
+            continue # check next filename
+        break # already loaded
+    else:
+        print(f'Could not find {filename_list} in {dirname}')
+        result = None
+    return result
 
 #%%
 def load_results(experiment_name) -> pd.DataFrame:
 #%%
     results_list = []
-    experiment_dirs = glob.glob(f'results/factored_rl/{experiment_name}/exp*/*')
+    experiment_dirs = glob.glob(f'results/factored_rl/{experiment_name}/*/*')
     sorted_experiment_dirs = list(sorted(experiment_dirs))
     # start = 400
     # end = 500
     start = 0
     end = len(sorted_experiment_dirs)
     for i in tqdm(range(start, end)):
-        # for experiment_dir in tqdm(sorted(experiment_dirs)):
         experiment_dir = sorted_experiment_dirs[i]
-        config_filename = experiment_dir + '/config.yaml'
-        # if 'expert' in config_filename:
-        #     break
-        # else:
-        #     continue
-        try:
-            with open(config_filename, 'r') as config_file:
-                cfg = OmegaConf.load(config_file)
-        except FileNotFoundError:
-            print(f'Missing configs: {config_filename}')
+
+        cfg = try_load(OmegaConf.load, experiment_dir, ['config_rl_vs_rep.yaml', 'config.yaml'])
+        if cfg is None:
             continue
-        results_filename = experiment_dir + '/results.jsonl'
-        if not os.path.exists(results_filename):
-            results_filename = results_filename.replace('.jsonl', '.json')
-            if not os.path.exists(results_filename):
-                print(f'Results missing: {results_filename}')
-                continue
-        results = pd.read_json(results_filename, lines=True)
+
+        results = try_load(lambda x: pd.read_json(x, lines=True), experiment_dir, ['results.jsonl', 'results.json'])
+        if results is None:
+            continue
         if len(results) == 0:
-            print(f'Results empty: {results_filename}')
+            print(f'Results empty: {experiment_dir}')
             continue
-        arch = cfg.agent.model.get('architecture', cfg.agent.model.arch.encoder)
+
+        try:
+            arch = cfg.model.arch.get('type', cfg.model.arch)
+        except errors.ConfigAttributeError:
+            arch = cfg.agent.model.get('type', cfg.agent.model.architecture)
+        noise = cfg.transform.get('noise', cfg.transform.noise_std) > 0
         args = {
             'experiment': cfg.experiment,
             'env': cfg.env.name,
@@ -51,9 +59,8 @@ def load_results(experiment_name) -> pd.DataFrame:
             'transform': cfg.transform.name,
             'agent': cfg.agent.name,
             'arch': arch,
-            'model': cfg.agent.model.get('name', arch),
             'seed': cfg.seed,
-            'noise': cfg.transform.noise,
+            'noise': noise,
             'max_steps': cfg.env.n_steps_per_episode,
         }
         for arg, value in args.items():
@@ -71,7 +78,7 @@ def plot_results(data):
     quick = False
     os.makedirs(f'images/{experiment_name}', exist_ok=True)
 
-    for env in ['gridworld', 'taxi']:
+    for env in ['taxi']:#['gridworld', 'taxi']:break
         subset = data
         if quick:
             subset = subset.query(f"seed==1")
@@ -84,7 +91,7 @@ def plot_results(data):
         max_steps = subset.max_steps.max()
         random_steps = random.steps.mean()
         expert_steps = expert.steps.mean()
-        for noise_val in [True, False]:
+        for noise_val in [True]:#, False]:
             subset = dqn.query(f"noise=={noise_val}")
 
             fig, ax = plt.subplots(figsize=(12, 6))
@@ -95,11 +102,15 @@ def plot_results(data):
                 y=y_axis,
                 x=x_axis,
                 style='arch',
-                style_order=['mlp', 'cnn'],
-                hue='transform',
-                hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
+                units='trial',
+                estimator=None,
+                # style_order=['mlp', 'cnn'],
+                # hue='transform',
+                # hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
                 # palette='colorblind',
             )
+            best_seed = dqn.query(f'trial=="trial_0407"')
+            ax.plot(best_seed[x_axis], best_seed[y_axis], 'r')
             text_offset = dqn.episode.max() / 100
             plt.hlines(expert_steps,
                        dqn.episode.min(),
@@ -136,7 +147,9 @@ def plot_results(data):
 #%%
 
 def main():
-    data = load_results(experiment_name)
+    baselines = load_results('rl_baselines')
+    exp_data = load_results(experiment_name)
+    data = pd.concat((exp_data, baselines), ignore_index=True)
     plot_results(data)
 
 
