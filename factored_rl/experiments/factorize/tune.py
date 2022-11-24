@@ -48,8 +48,8 @@ def main(cfg: configs.Config):
 
         factorize(cfg)
 
-        cfg.loader.should_load = True
-        cfg.loader.should_train = False
+        cfg.loader.load_config = False
+        cfg.loader.load_model = True
         quick = cfg.trainer.quick
         cfg.trainer = get_config(name='trainer/rl', path='../conf', overrides=[]).trainer
         cfg.trainer.quick = quick

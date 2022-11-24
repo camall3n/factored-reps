@@ -21,22 +21,27 @@ from factored_rl.experiments.common import cpu_count
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg: configs.Config):
-    configs.initialize_experiment(cfg, 'factorize')
+    cfg = configs.initialize_experiment(cfg, 'factorize')
 
     train_dl, input_shape, n_actions = initialize_dataloader(cfg, cfg.seed)
     val_dl, _, _ = initialize_dataloader(cfg, cfg.seed + 1000000)
 
     model = initialize_model(input_shape, n_actions, cfg)
     print(model)
-    # ckpt_callback = ModelCheckpoint(save_last=True)
+    ckpt_callback = ModelCheckpoint(
+        save_last=True,
+        save_top_k=-1,
+        every_n_train_steps=cfg.trainer.log_every_n_steps,
+        save_on_train_epoch_end=False,
+    )
     trainer = pl.Trainer(
         max_steps=cfg.trainer.max_steps,
         overfit_batches=cfg.trainer.overfit_batches,
         gpus=(1 if cfg.model.device == 'cuda' else 0),
         default_root_dir=cfg.dir,
-        # checkpoint_callback=ckpt_callback,
+        callbacks=[ckpt_callback],
     )
-    trainer.fit(model, train_dl, val_dl)
+    trainer.fit(model, train_dl, val_dl, ckpt_path=cfg.loader.checkpoint_path)
 
 def initialize_dataloader(cfg: configs.Config, seed: int = None):
     env = initialize_env(cfg, seed)

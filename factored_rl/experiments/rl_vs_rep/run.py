@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg: configs.Config):
-    configs.initialize_experiment(cfg, 'rl_vs_rep')
+    cfg = configs.initialize_experiment(cfg, 'rl_vs_rep')
 
     env = initialize_env(cfg, cfg.seed)
     if cfg.trainer.quick:
@@ -37,7 +37,7 @@ def main(cfg: configs.Config):
     with open(filename, 'w') as results_file:
         results = train_agent_on_env(agent, env, cfg.env.n_training_episodes, results_file)
 
-    if not cfg.loader.should_load:
+    if not cfg.loader.load_model:
         ckpt_path = get_checkpoint_path(cfg, logs_dirname='pytorch_logs', create_new_version=True)
         agent.save('qnet', ckpt_path, is_best=False)
 

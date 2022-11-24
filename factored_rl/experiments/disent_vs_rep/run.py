@@ -21,7 +21,7 @@ from disent.dataset import DisentIterDataset
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg):
-    configs.initialize_experiment(cfg, 'disent_vs_rep')
+    cfg = configs.initialize_experiment(cfg, 'disent_vs_rep')
     env = initialize_env(cfg, cfg.seed)
     input_shape = env.observation_space.shape
     dataset = GymEnvData(env, cfg.seed, transform=None)

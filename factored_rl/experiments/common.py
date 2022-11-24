@@ -94,13 +94,14 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
         else:
             raise NotImplementedError(f'Unknown model architecture: {cfg.model.arch.type}')
 
-        if cfg.loader.should_load:
-            ckpt_path = get_checkpoint_path(cfg)
-            model = module.load_from_checkpoint(ckpt_path, **module_args)
-            if not cfg.loader.should_train:
+        if cfg.loader.load_model:
+            cfg.loader.checkpoint_path = get_checkpoint_path(cfg)
+            model = module.load_from_checkpoint(cfg.loader.checkpoint_path, **module_args)
+            if cfg.loader.eval_only:
                 model.eval()
                 model.encoder.freeze()
         else:
+            cfg.loader.checkpoint_path = None
             model = module(**module_args)
     return model
 
@@ -118,7 +119,9 @@ def get_checkpoint_path(cfg, logs_dirname='lightning_logs', create_new_version=F
         else:
             version = cfg.loader.version
         checkpoint_dir = os.path.join(load_dir, f'{logs_dirname}/version_{version}/checkpoints/')
-        checkpoints = glob.glob(os.path.join(checkpoint_dir, '*.ckpt'))
+        checkpoints = glob.glob(os.path.join(checkpoint_dir, 'last.ckpt'))
+        if checkpoints == []:
+            checkpoints = glob.glob(os.path.join(checkpoint_dir, '*.ckpt'))
         if len(checkpoints) > 1:
             raise RuntimeError(f'Multiple checkpoints detected in {checkpoint_dir}\n'
                                f'Please specify model.checkpoint_path')

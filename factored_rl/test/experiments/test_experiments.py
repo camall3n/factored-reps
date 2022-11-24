@@ -75,7 +75,7 @@ def test_save_and_load_ae():
         "model=ae/ae_cnn_64", "trainer=rep.quick"
     ]
     train_and_save = []
-    load_and_check = ["loader.should_load=true", "loader.experiment=pytest"]
+    load_and_check = ["loader.load_model=true", "loader.experiment=pytest"]
     train_and_save.extend(common)
     load_and_check.extend(common)
     factorize(get_config(train_and_save))
@@ -89,7 +89,7 @@ def test_save_and_load_wm():
         "loss.effects=0.003", "loss.reconst=1.0", "loss.parents=1.0", "loss/sparsity=sum_div_max"
     ]
     load_and_check = [
-        "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loader.should_load=true",
+        "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loader.load_model=true",
         "loader.experiment=pytest"
     ]
     train_and_save.extend(common)

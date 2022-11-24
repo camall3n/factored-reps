@@ -107,8 +107,9 @@ class LossConfig:
 
 @dataclass
 class LoaderConfig:
-    should_load: bool = False # whether to load model from checkpoint
-    should_train: bool = False # whether to allow loaded model to continue training
+    load_model: bool = False # whether to load model from checkpoint
+    load_config: bool = False # whether to load config.yaml from previous run
+    eval_only: bool = False # whether to prevent loaded model from continuing to train
     experiment: Optional[str] = None # which experiment to load
     trial: Optional[str] = None # which trial to load
     seed: Optional[int] = None # which seed to load
@@ -232,5 +233,18 @@ def initialize_experiment(cfg, experiment_name):
     log.info(f'Training on device: {cfg.model.device}\n')
 
     filename = cfg.dir + f'config_{experiment_name}.yaml'
-    with open(filename, 'w') as args_file:
-        args_file.write(get_config_yaml_str(cfg))
+    if cfg.loader.load_config:
+        old_cfg = cfg
+        cfg = OmegaConf.load(filename)
+        cfg.loader = old_cfg.loader
+        # Override max steps
+        max_steps = old_cfg.trainer.get('max_steps', -1)
+        if max_steps > cfg.trainer.get('max_steps', 0):
+            if not hasattr(cfg.trainer, 'max_steps'):
+                raise KeyError('Invalid config key: max_steps')
+            cfg.trainer.max_steps = max_steps
+    else:
+        with open(filename, 'w') as args_file:
+            args_file.write(get_config_yaml_str(cfg))
+
+    return cfg
