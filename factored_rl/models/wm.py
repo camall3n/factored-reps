@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch
 from torch import Tensor
-from torch.nn import Linear
+from torch.nn import Linear, ModuleList
 
 from factored_rl import configs
 from factored_rl.models.nnutils import Module, one_hot, attention
@@ -14,13 +14,13 @@ class WorldModel(PairedAutoencoderModel):
         super().__init__(input_shape, n_actions, cfg)
         self.arch = cfg.model.arch.predictor
         if self.arch == 'mlp':
-            self.predictor = MLP.from_cfg(
+            self.predictor = MLP.from_config(
                 n_inputs=self.n_latent_dims + self.n_actions,
                 n_outputs=self.n_latent_dims,
                 cfg=cfg.model.wm.mlp,
             )
         elif self.arch == 'attn':
-            self.predictor = AttnPredictor(self.n_latent_dims, self.n_actions, cfg.model.wm.attn)
+            self.predictor = AttnPredictor(self.n_latent_dims, self.n_actions, cfg.model.wm)
 
     def predict(self, features: Tensor, actions: Tensor) -> Tuple[Tensor, Tensor]:
         if self.arch == 'mlp':
@@ -72,20 +72,36 @@ class WorldModel(PairedAutoencoderModel):
         return loss
 
 class AttnPredictor(Module):
-    def __init__(self, n_latent_dims: int, n_actions: int, cfg: configs.AttnConfig):
+    def __init__(self, n_latent_dims: int, n_actions: int, cfg: configs.WMConfig):
         super().__init__()
         self.n_latent_dims = n_latent_dims # d
         self.n_actions = n_actions # A
         self.n_heads = n_latent_dims # h
-        self.dropout_p = cfg.dropout
+        self.dropout_p = cfg.attn.dropout
 
-        vdim = (cfg.factor_embed_dim + cfg.action_embed_dim) #Ev
-        kdim = cfg.key_embed_dim if cfg.key_embed_dim is not None else vdim #Ek
+        vdim = (cfg.attn.factor_embed_dim + cfg.attn.action_embed_dim) #Ev
+        kdim = cfg.attn.key_embed_dim if cfg.attn.key_embed_dim is not None else vdim #Ek
         self.action_query_projection = Linear(n_actions, kdim) #Ek
         self.factor_key_projection = Linear(n_latent_dims, kdim) #Ek
-        self.action_val_projection = Linear(n_actions, cfg.action_embed_dim) #Ea
-        self.factor_val_projection = Linear(n_latent_dims, cfg.factor_embed_dim) #Ef
-        self.output_projection = Linear(vdim, 1) #Ev
+        self.action_val_projection = Linear(n_actions, cfg.attn.action_embed_dim) #Ea
+        self.factor_val_projection = Linear(n_latent_dims, cfg.attn.factor_embed_dim) #Ef
+        # self.output_projection = Linear(vdim, 1) #Ev
+
+        self.input_mlps = ModuleList([
+            MLP.from_config(
+                n_inputs=vdim,
+                n_outputs=vdim,
+                cfg=cfg.mlp,
+            ) for _ in range(self.n_heads)
+        ])
+
+        self.output_mlps = ModuleList([
+            MLP.from_config(
+                n_inputs=vdim,
+                n_outputs=1, # one output value (factor effect) per head
+                cfg=cfg.mlp,
+            ) for _ in range(self.n_heads)
+        ])
 
     def forward(self, features: torch.Tensor, actions: torch.Tensor):
         z = features # (N,d) or (d,)
@@ -123,19 +139,28 @@ class AttnPredictor(Module):
         factor_vals = factor_embeds.expand(-1, -1, self.n_latent_dims, -1) # (N,h,d,Ef)
 
         # concat values s.t. every input has both action and factor info
-        values = torch.concat((factor_vals, action_vals), dim=-1) # (N,h,d,Ev)
+        concat_vals = torch.cat((factor_vals, action_vals), dim=-1) # (N,h,d,Ev)
+
+        # split values out so the input to each head gets transformed by a different mlp
+        split_vals = torch.split(concat_vals, 1, dim=1)
+        vals_to_merge = [mlp(val) for (mlp, val) in zip(self.input_mlps, split_vals)]
+        values = torch.cat(vals_to_merge, dim=1)
 
         dropout_p = self.dropout_p if self.training else 0.0
-        effect_embed, attn_weights = attention(queries, keys, values, dropout_p=dropout_p)
+        attn_outputs, attn_weights = attention(queries, keys, values, dropout_p=dropout_p)
         # (N,h,1,Ev)   (N,h,1,d)
         #    ^            ^   ^
         #  head         head  token in sequence
 
-        effect_embed = effect_embed.squeeze(-2) # (N,h,Ev)
+        attn_outputs = attn_outputs.squeeze(-2) # (N,h,Ev)
         attn_weights = attn_weights.squeeze(-2) # (N,h,d)
 
-        effect = self.output_projection(effect_embed) # (N,h,1)
-        effect = effect.squeeze(-1) # (N,h)
+        # split attn_outputs so the output of each head gets transformed by a different mlp
+        split_effects = torch.split(attn_outputs, 1, dim=1) # [(N,1,Ev), ..., (N,1,Ev)]
+        effects_to_merge = [mlp(val) for (mlp, val) in zip(self.output_mlps, split_effects)]
+        effect_embed = torch.cat(effects_to_merge, dim=1) # (N,h,1)
+
+        effect = effect_embed.squeeze(-1) # (N,h)
 
         if not is_batched:
             effect = effect.squeeze(0) # (h,)

@@ -14,3 +14,9 @@ mlp:
     - _target_: torch.nn.Tanh
   final_activation: null
 n_latent_dims: 10
+qnet:
+  n_hidden_layers: 1
+  n_units_per_layer: 64
+  activation:
+    - _target_: torch.nn.ReLU
+  final_activation: null

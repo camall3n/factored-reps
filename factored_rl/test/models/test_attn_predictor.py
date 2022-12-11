@@ -9,10 +9,18 @@ from factored_rl.models.wm import AttnPredictor
 @pytest.fixture
 def cfg():
     return OmegaConf.create("""
-    key_embed_dim: 6
-    factor_embed_dim: 4
-    action_embed_dim: 2
-    dropout: 0.0
+    mlp:
+      n_hidden_layers: 1
+      n_units_per_layer: 64
+      activation:
+        - _target_: torch.nn.ReLU
+      final_activation:
+        - _target_: torch.nn.Tanh
+    attn:
+      key_embed_dim: 6
+      factor_embed_dim: 4
+      action_embed_dim: 2
+      dropout: 0.0
     """)
 
 def test_batch_shapes(cfg):

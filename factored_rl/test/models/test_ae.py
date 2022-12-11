@@ -13,7 +13,7 @@ def model():
         cfg = hydra.compose(config_name='config', overrides=['model=ae/ae_cnn_64'])
     cfg = cfg
     input_shape = tuple((3, ) + cfg.model.cnn.supported_2d_input_shape)
-    model = AutoencoderModel(input_shape, cfg)
+    model = AutoencoderModel(input_shape, 1, cfg)
     return model
 
 def test_transposed_flag(model):

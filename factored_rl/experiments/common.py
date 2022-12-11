@@ -81,19 +81,16 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
     elif cfg.model.name is not None:
         if cfg.model.arch.type == 'enc':
             module = EncoderModel
-            module_args = {'input_shape': input_shape, 'cfg': cfg}
         elif cfg.model.arch.type == 'ae':
             module = AutoencoderModel
-            module_args = {'input_shape': input_shape, 'cfg': cfg}
         elif cfg.model.arch.type == 'paired_ae':
             module = PairedAutoencoderModel
-            module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
         elif cfg.model.arch.type == 'wm':
             module = WorldModel
-            module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
         else:
             raise NotImplementedError(f'Unknown model architecture: {cfg.model.arch.type}')
 
+        module_args = {'input_shape': input_shape, 'n_actions': n_actions, 'cfg': cfg}
         if cfg.loader.load_model:
             cfg.loader.checkpoint_path = get_checkpoint_path(cfg)
             model = module.load_from_checkpoint(cfg.loader.checkpoint_path, **module_args)

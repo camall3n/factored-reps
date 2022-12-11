@@ -9,22 +9,20 @@ from factored_rl.models.nnutils import Sequential, Reshape, one_hot
 from factored_rl.models import Network, MLP, CNN, losses
 
 class EncoderModel(pl.LightningModule):
-    def __init__(self, input_shape: Tuple, cfg: configs.Config):
+    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__()
         self.input_shape = tuple(input_shape)
         self.n_latent_dims = cfg.model.n_latent_dims
         self.output_shape = self.n_latent_dims
         self.cfg = cfg
         self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
+        if cfg.model.qnet is not None:
+            self.qnet = MLP.from_config(self.n_latent_dims, n_actions, cfg.model.qnet)
 
-class AutoencoderModel(pl.LightningModule):
-    def __init__(self, input_shape: Tuple, cfg: configs.Config):
-        super().__init__()
-        self.input_shape = tuple(input_shape)
-        self.n_latent_dims = cfg.model.n_latent_dims
+class AutoencoderModel(EncoderModel):
+    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
+        super().__init__(input_shape, n_actions, cfg)
         self.output_shape = self.input_shape
-        self.cfg = cfg
-        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
         self.decoder = DecoderNet(self.encoder, input_shape, cfg.model)
 
     def training_step(self, batch, batch_idx):
@@ -43,7 +41,7 @@ class AutoencoderModel(pl.LightningModule):
 
 class PairedAutoencoderModel(AutoencoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
-        super().__init__(input_shape, cfg)
+        super().__init__(input_shape, n_actions, cfg)
         self.n_actions = n_actions
         assert cfg.model.action_sampling is not None
         distance_modes = {

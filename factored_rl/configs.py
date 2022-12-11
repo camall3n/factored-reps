@@ -87,6 +87,7 @@ class ModelConfig:
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     wm: WMConfig = WMConfig()
+    qnet: Optional[MLPConfig] = None
 
 @dataclass
 class SparsityConfig:

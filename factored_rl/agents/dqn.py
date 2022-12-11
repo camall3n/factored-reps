@@ -3,14 +3,14 @@ import math
 
 import numpy as np
 import torch
-from torch.nn import Linear
+import pytorch_lightning as pl
 
 from factored_rl import configs
 from factored_rl.models.nnutils import extract, Sequential, Module
 from .replaymemory import ReplayMemory
 
 class DQNAgent():
-    def __init__(self, action_space, model: Module, cfg: configs.Config):
+    def __init__(self, action_space, model: pl.LightningModule, cfg: configs.Config):
         self.action_space = action_space
         self.cfg = cfg
 
@@ -26,9 +26,8 @@ class DQNAgent():
         self.replay = ReplayMemory(cfg.agent.replay_buffer_size, on_retrieve=on_retrieve)
 
         self.n_training_steps = 0
-        n_actions = self.action_space.n
 
-        q_net_template = Sequential(model.encoder, Linear(cfg.model.n_latent_dims, n_actions))
+        q_net_template = Sequential(model.encoder, model.qnet)
         self.q = q_net_template.to(cfg.model.device)
         self.q_target = copy.deepcopy(q_net_template).to(cfg.model.device)
         self.q_target.hard_copy_from(self.q)
