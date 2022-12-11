@@ -50,6 +50,7 @@ def main(cfg: configs.Config):
 
         cfg.loader.load_config = False
         cfg.loader.load_model = True
+        cfg.loader.eval_only = True
         quick = cfg.trainer.quick
         cfg.trainer = get_config(name='trainer/rl', path='../conf', overrides=[]).trainer
         cfg.trainer.quick = quick
