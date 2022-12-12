@@ -1,3 +1,5 @@
+import os
+
 import hydra
 import optuna
 import sqlite3
@@ -18,6 +20,7 @@ def get_config(name, path, overrides):
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg: configs.Config):
+    os.makedirs('factored_rl/hyperparams/tuning/', exist_ok=True)
     try:
         study = optuna.create_study(
             study_name=cfg.experiment,
