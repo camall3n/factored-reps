@@ -13,7 +13,7 @@ from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, Obse
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, ClipWrapper
 
 # Model
-from factored_rl.models.ae import EncoderModel, AutoencoderModel, PairedAutoencoderModel
+from factored_rl.models.ae import BaseModel, EncoderModel, AutoencoderModel, PairedAutoencoderModel
 from factored_rl.models.wm import WorldModel
 from factored_rl.models.disent import build_disent_model
 
@@ -79,7 +79,9 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
-        if cfg.model.arch.type == 'enc':
+        if cfg.model.arch.type == 'qnet':
+            module = BaseModel
+        elif cfg.model.arch.type == 'enc':
             module = EncoderModel
         elif cfg.model.arch.type == 'ae':
             module = AutoencoderModel

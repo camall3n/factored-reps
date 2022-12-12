@@ -24,15 +24,18 @@ def test_disent_vs_rep():
         disent_vs_rep(cfg)
 
 def test_rl_vs_rep():
-    overrides = [
-        "experiment=pytest",
-        "env=taxi",
-        "timestamp=false",
-        "transform=images",
-        "agent=dqn",
-        "model=cnn_64",
-        "trainer=rl.quick",
+    configurations = [
+        ["transform=images", "model=cnn_64"],
+        ["transform=identity", "model=qnet"],
     ]
+    for overrides in configurations:
+        overrides.extend([
+            "experiment=pytest",
+            "env=taxi",
+            "timestamp=false",
+            "agent=dqn",
+            "trainer=rl.quick",
+        ])
     cfg = get_config(overrides)
     rl_vs_rep(cfg)
 

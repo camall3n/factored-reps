@@ -8,16 +8,22 @@ from factored_rl import configs
 from factored_rl.models.nnutils import Sequential, Reshape, one_hot
 from factored_rl.models import Network, MLP, CNN, losses
 
-class EncoderModel(pl.LightningModule):
+class BaseModel(pl.LightningModule):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__()
         self.input_shape = tuple(input_shape)
-        self.n_latent_dims = cfg.model.n_latent_dims
+        self.n_latent_dims = input_shape[0]
         self.output_shape = self.n_latent_dims
         self.cfg = cfg
-        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
         if cfg.model.qnet is not None:
             self.qnet = MLP.from_config(self.n_latent_dims, n_actions, cfg.model.qnet)
+
+class EncoderModel(BaseModel):
+    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
+        self.n_latent_dims = cfg.model.n_latent_dims
+        self.output_shape = self.n_latent_dims
+        super().__init__(input_shape, n_actions, cfg)
+        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
 
 class AutoencoderModel(EncoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
