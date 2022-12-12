@@ -1,4 +1,5 @@
 import os
+import time
 
 import hydra
 import optuna
@@ -33,6 +34,14 @@ def main(cfg: configs.Config):
             break
         except sqlite3.OperationalError:
             pass
+        try:
+            # Fixes race condition where two nodes each try to create database
+            study = optuna.load_study(
+                study_name=cfg.experiment,
+                storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
+            break
+        except sqlite3.OperationalError:
+            time.sleep(1)
     else:
         print('Unable to create/load study after 100 attempts.')
 
