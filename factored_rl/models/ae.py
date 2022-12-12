@@ -41,9 +41,7 @@ class AutoencoderModel(EncoderModel):
         return loss
 
     def configure_optimizers(self):
-        partial_optimizer = configs.instantiate(self.cfg.trainer.optimizer)
-        optimizer = partial_optimizer(self.parameters(), lr=self.cfg.trainer.rep_learning_rate)
-        return optimizer
+        return torch.optim.AdamW(self.parameters(), lr=self.cfg.trainer.rep_learning_rate)
 
 class PairedAutoencoderModel(AutoencoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):

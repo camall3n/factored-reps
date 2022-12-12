@@ -26,7 +26,6 @@ OmegaConf.register_new_resolver("eval", eval, replace=True)
 # -----------------------------------------------------------------------
 
 ActivationType = List[Dict[str, Any]]
-OptimizerType = Dict[str, Any]
 
 def instantiate(obj):
     if obj is None:
@@ -159,7 +158,6 @@ class TrainerConfig:
     log_every_n_steps: Optional[int] = None
     rep_learning_rate: float = MISSING
     rl_learning_rate: float = MISSING
-    optimizer: Optional[OptimizerType] = None
     quick: bool = False
 
 @dataclass

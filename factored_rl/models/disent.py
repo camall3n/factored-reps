@@ -20,7 +20,7 @@ def build_disent_model(input_shape: Tuple, cfg: configs.Config):
                 decoder=DecoderConv64(x_shape=input_shape, z_size=cfg.model.n_latent_dims),
             ),
             cfg=BetaVae.cfg(
-                optimizer=cfg.trainer.optimizer._target_.split('.')[-1].lower(),
+                optimizer='adamw',
                 optimizer_kwargs=dict(lr=cfg.trainer.rep_learning_rate),
                 loss_reduction='mean_sum',
                 beta=cfg.loss.vae_beta,

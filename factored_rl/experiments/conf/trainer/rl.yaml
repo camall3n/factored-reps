@@ -5,7 +5,4 @@ defaults:
 name: rl
 batch_size: 32
 rl_learning_rate: 0.001
-optimizer:
-  _target_: torch.optim.Adam
-  _partial_: true
 quick: false
