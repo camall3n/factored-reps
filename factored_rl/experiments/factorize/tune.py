@@ -34,29 +34,31 @@ def main(cfg: configs.Config):
             storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
 
     def objective(trial: optuna.Trial):
-        cfg.trial = f'trial_{trial.number:04d}'
-        cfg.trainer.rep_learning_rate = trial.suggest_float(
-            'trainer.rep_learning_rate',
-            low=1e-5,
-            high=1e-2,
-            log=True,
-        )
-        cfg.loss.sparsity.name = trial.suggest_categorical(
-            'loss.sparsity.name',
-            ['sum_div_max', 'unit_pnorm'],
-        )
-        cfg.loss.actions = trial.suggest_float('loss.actions', low=1e-5, high=10.0, log=True)
-        cfg.loss.effects = trial.suggest_float('loss.effects', low=1e-5, high=10.0, log=True)
-        cfg.loss.parents = trial.suggest_float('loss.parents', low=1e-5, high=10.0, log=True)
+        if 'rep' in cfg.trainer.name:
+            cfg.trial = f'trial_{trial.number:04d}'
+            cfg.trainer.rep_learning_rate = trial.suggest_float(
+                'trainer.rep_learning_rate',
+                low=1e-5,
+                high=1e-2,
+                log=True,
+            )
+            cfg.loss.sparsity.name = trial.suggest_categorical(
+                'loss.sparsity.name',
+                ['sum_div_max', 'unit_pnorm'],
+            )
+            cfg.loss.actions = trial.suggest_float('loss.actions', low=1e-5, high=10.0, log=True)
+            cfg.loss.effects = trial.suggest_float('loss.effects', low=1e-5, high=10.0, log=True)
+            cfg.loss.parents = trial.suggest_float('loss.parents', low=1e-5, high=10.0, log=True)
 
-        factorize(cfg)
+            factorize(cfg)
 
-        cfg.loader.load_config = False
-        cfg.loader.load_model = True
-        cfg.loader.eval_only = True
-        quick = cfg.trainer.quick
-        cfg.trainer = get_config(name='trainer/rl', path='../conf', overrides=[]).trainer
-        cfg.trainer.quick = quick
+            cfg.loader.load_config = False
+            cfg.loader.load_model = True
+            cfg.loader.eval_only = True
+            quick = cfg.trainer.quick
+            cfg.trainer = get_config(name='trainer/rl', path='../conf', overrides=[]).trainer
+            cfg.trainer.quick = quick
+
         cfg.trainer.rl_learning_rate = trial.suggest_float(
             'trainer.rl_learning_rate',
             low=1e-5,
