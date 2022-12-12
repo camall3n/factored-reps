@@ -1,9 +1,7 @@
 import os
-import time
 
 import hydra
 import optuna
-import sqlite3
 
 # Args & hyperparams
 import hydra
@@ -23,27 +21,15 @@ def get_config(name, path, overrides):
 def main(cfg: configs.Config):
     os.makedirs('factored_rl/hyperparams/tuning/', exist_ok=True)
 
-    for i in range(100):
-        # Fixes race condition where two nodes write to database simultaneously
-        try:
-            study = optuna.create_study(
-                study_name=cfg.experiment,
-                storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db",
-                load_if_exists=True,
-                direction='maximize')
-            break
-        except sqlite3.OperationalError:
-            pass
-        try:
-            # Fixes race condition where two nodes each try to create database
-            study = optuna.load_study(
-                study_name=cfg.experiment,
-                storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
-            break
-        except sqlite3.OperationalError:
-            time.sleep(1)
-    else:
-        print('Unable to create/load study after 100 attempts.')
+    storage = optuna.storages.JournalStorage(
+        optuna.storages.JournalFileStorage(
+            f"./factored_rl/hyperparams/tuning/{cfg.experiment}.journal"))
+    study = optuna.create_study(
+        study_name=cfg.experiment,
+        storage=storage,
+        load_if_exists=True,
+        direction='maximize',
+    )
 
     def objective(trial: optuna.Trial):
         cfg.trial = f'trial_{trial.number:04d}'
