@@ -100,6 +100,8 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
         else:
             cfg.loader.checkpoint_path = None
             model = module(**module_args)
+
+    model = model.to(cfg.model.device)
     return model
 
 def get_checkpoint_path(cfg, logs_dirname='lightning_logs', create_new_version=False):
