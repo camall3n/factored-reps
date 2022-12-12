@@ -21,23 +21,20 @@ def get_config(name, path, overrides):
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
 def main(cfg: configs.Config):
     os.makedirs('factored_rl/hyperparams/tuning/', exist_ok=True)
-    try:
-        study = optuna.create_study(
-            study_name=cfg.experiment,
-            storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db",
-            load_if_exists=True,
-            direction='maximize')
-    except sqlite3.OperationalError:
-        # Fixes race condition where two nodes try to create at the same time
-        while True:
-            # Fixes race condition where two nodes simultaneously write to the database
-            try:
-                study = optuna.load_study(
-                    study_name=cfg.experiment,
-                    storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
-                break
-            except sqlite3.OperationalError:
-                pass
+
+    for i in range(100):
+        # Fixes race condition where two nodes write to database simultaneously
+        try:
+            study = optuna.create_study(
+                study_name=cfg.experiment,
+                storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db",
+                load_if_exists=True,
+                direction='maximize')
+            break
+        except sqlite3.OperationalError:
+            pass
+    else:
+        print('Unable to create/load study after 100 attempts.')
 
     def objective(trial: optuna.Trial):
         cfg.trial = f'trial_{trial.number:04d}'
