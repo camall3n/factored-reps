@@ -34,8 +34,8 @@ def main(cfg: configs.Config):
             storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
 
     def objective(trial: optuna.Trial):
+        cfg.trial = f'trial_{trial.number:04d}'
         if 'rep' in cfg.trainer.name:
-            cfg.trial = f'trial_{trial.number:04d}'
             cfg.trainer.rep_learning_rate = trial.suggest_float(
                 'trainer.rep_learning_rate',
                 low=1e-5,

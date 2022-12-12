@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import TextIO
 import yaml
 
 # Args & hyperparams
@@ -66,7 +67,7 @@ def initialize_agent(env, cfg: configs.Config):
 # Evaluate RL performance
 # ----------------------------------------
 
-def train_agent_on_env(agent, env, n_episodes, results_file=None):
+def train_agent_on_env(agent, env, n_episodes: int, results_file: TextIO = None):
     total_reward = 0
     total_steps = 0
     losses = []
@@ -109,6 +110,7 @@ def train_agent_on_env(agent, env, n_episodes, results_file=None):
         results.append(episode_result)
         if results_file is not None:
             results_file.write(json.dumps(episode_result) + '\n')
+            results_file.flush()
         logging.getLogger().info('\n' + yaml.dump(episode_result, sort_keys=False))
     return results
 
