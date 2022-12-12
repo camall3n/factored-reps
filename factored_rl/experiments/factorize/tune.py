@@ -29,9 +29,15 @@ def main(cfg: configs.Config):
             direction='maximize')
     except sqlite3.OperationalError:
         # Fixes race condition where two nodes try to create at the same time
-        study = optuna.load_study(
-            study_name=cfg.experiment,
-            storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
+        while True:
+            # Fixes race condition where two nodes simultaneously write to the database
+            try:
+                study = optuna.load_study(
+                    study_name=cfg.experiment,
+                    storage=f"sqlite:///factored_rl/hyperparams/tuning/{cfg.experiment}.db")
+                break
+            except sqlite3.OperationalError:
+                pass
 
     def objective(trial: optuna.Trial):
         cfg.trial = f'trial_{trial.number:04d}'
