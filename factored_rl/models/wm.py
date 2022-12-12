@@ -63,7 +63,7 @@ class WorldModel(PairedAutoencoderModel):
         self.log_dict(losses)
         if self.global_step % self.cfg.trainer.log_every_n_steps == 0:
             # stack images along H dimension
-            N = 24
+            N = min(24, len(obs))
             obs_stack = torch.cat((obs[:N], obs_hat[:N], (obs[:N] - obs_hat[:N])), dim=2)
             next_obs_stack = torch.cat(
                 (next_obs[:N], next_obs_hat[:N], (next_obs[:N] - next_obs_hat[:N])), dim=2)
