@@ -1,6 +1,5 @@
 from typing import Tuple
 
-import matplotlib.pyplot as plt
 import torch
 from torch import Tensor
 from torch.nn import Linear, ModuleList
@@ -62,20 +61,10 @@ class WorldModel(PairedAutoencoderModel):
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
         if self.global_step % self.cfg.trainer.log_every_n_steps == 0:
-            # stack images along H dimension
-            N = min(24, len(obs))
-            obs_stack = torch.cat((obs[:N], obs_hat[:N], (obs[:N] - obs_hat[:N])), dim=2)
-            next_obs_stack = torch.cat(
-                (next_obs[:N], next_obs_hat[:N], (next_obs[:N] - next_obs_hat[:N])), dim=2)
-            tensorboard = self.logger.experiment
-            # The following add_images() calls crash intermittently, due to a matplotlib issue:
-            # https://github.com/Lightning-AI/lightning/issues/11925#issuecomment-1111727962
-            #
-            # Workaround: add plt.pause(0.1) after each call
-            tensorboard.add_images('img/obs_reconst_diff', obs_stack, self.global_step)
-            plt.pause(0.1)
-            tensorboard.add_images('img/next_obs_reconst_diff', next_obs_stack, self.global_step)
-            plt.pause(0.1)
+            self.log_images(obs, obs_hat, 'img/obs_reconst_diff')
+            self.log_images(next_obs, next_obs_hat, 'img/next_obs_reconst_diff')
+
+        self.prune_if_necessary(losses)
         return loss
 
 class AttnPredictor(Module):

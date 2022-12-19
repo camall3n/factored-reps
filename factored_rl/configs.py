@@ -168,6 +168,13 @@ class LightningTrainerConfig(TrainerConfig):
     persistent_workers: bool = MISSING
 
 @dataclass
+class TunerConfig:
+    tune_rep: bool = True
+    tune_rl: bool = False
+    should_prune: bool = False
+    tune_metric: str = 'rl' # 'rl' or 'reconst'
+
+@dataclass
 class Config:
     experiment: str = MISSING
     trial: str = 'trial' # A name for the trial
@@ -180,6 +187,7 @@ class Config:
     loss: LossConfig = LossConfig()
     trainer: TrainerConfig = MISSING
     transform: TransformConfig = MISSING
+    tuner: TunerConfig = TunerConfig()
     loader: LoaderConfig = LoaderConfig()
     test: bool = False
     verbose: bool = False

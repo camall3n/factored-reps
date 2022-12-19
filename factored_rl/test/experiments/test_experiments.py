@@ -1,13 +1,58 @@
+import pytest
+
 import hydra
 
 from factored_rl.experiments.disent_vs_rep.run import main as disent_vs_rep
 from factored_rl.experiments.rl_vs_rep.run import main as rl_vs_rep
 from factored_rl.experiments.factorize.run import main as factorize
+from factored_rl.experiments.factorize.tune import main as tune_factorize
 
 def get_config(overrides):
     with hydra.initialize(version_base=None, config_path='../../experiments/conf'):
         cfg = hydra.compose(config_name='config', overrides=overrides)
     return cfg
+
+def test_tune_factorize():
+    configurations = [
+        ["tuner.tune_rep=true", "tuner.tune_rl=false", "tuner.should_prune=true", "tuner.tune_metric=reconst"],
+        ["tuner.tune_rep=true", "tuner.tune_rl=true", "tuner.should_prune=false", "tuner.tune_metric=rl"],
+    ] # yapf: disable
+    for overrides in configurations:
+        overrides.extend([
+            "env=taxi",
+            "agent=dqn",
+            "transform=images",
+            "model=factored/wm_cnn_64_attn",
+            "experiment=pytest",
+            "timestamp=false",
+            "trainer=rep.quick",
+        ])
+        cfg = get_config(overrides)
+        tune_factorize(cfg)
+
+def test_tune_factorize_errors():
+    configurations = [
+        # nothing to tune
+        ["tuner.tune_rep=false", "tuner.tune_rl=false", "tuner.should_prune=false", "tuner.tune_metric=rl"],
+        # unknown metric
+        ["tuner.tune_rep=true", "tuner.tune_rl=false", "tuner.should_prune=false", "tuner.tune_metric=actions"],
+        # pruning requires tune_rep
+        ["tuner.tune_rep=false", "tuner.tune_rl=true", "tuner.should_prune=true", "tuner.tune_metric=rep"],
+        # pruning incompatible with tuning via RL metric
+        ["tuner.tune_rep=true", "tuner.tune_rl=true", "tuner.should_prune=true", "tuner.tune_metric=rl"],
+    ] # yapf: disable
+    for overrides in configurations:
+        overrides.extend([
+            "env=taxi",
+            "transform=images",
+            "model=factored/wm_cnn_64_attn",
+            "experiment=pytest",
+            "timestamp=false",
+            "trainer=rep.quick",
+        ])
+        cfg = get_config(overrides)
+        with pytest.raises(RuntimeError):
+            tune_factorize(cfg)
 
 def test_disent_vs_rep():
     configurations = [

@@ -1,5 +1,7 @@
 from typing import Tuple
 
+import matplotlib.pyplot as plt
+import optuna
 import pytorch_lightning as pl
 import torch
 from torch import Tensor
@@ -43,6 +45,24 @@ class AutoencoderModel(EncoderModel):
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
         self.log('loss/reconst', loss)
         return loss
+
+    def log_images(self, obs: Tensor, obs_hat: Tensor, log_str='img/obs_reconst_diff'):
+        # stack images along H dimension
+        N = min(24, len(obs))
+        obs_stack = torch.cat((obs[:N], obs_hat[:N], (obs[:N] - obs_hat[:N])), dim=2)
+        tensorboard = self.logger.experiment
+        # The following add_images() calls crash intermittently, due to a matplotlib issue:
+        # https://github.com/Lightning-AI/lightning/issues/11925#issuecomment-1111727962
+        #
+        # Workaround: add plt.pause(0.1) after each call
+        tensorboard.add_images(log_str, obs_stack, self.global_step)
+        plt.pause(0.1)
+
+    def prune_if_necessary(self, losses):
+        if self.cfg.tuner.tune_rep and self.cfg.tuner.tune_metric == 'reconst':
+            self.trial.report(losses['loss/reconst'], step=self.global_step)
+            if self.trial.should_prune():
+                raise optuna.TrialPruned()
 
     def configure_optimizers(self):
         return torch.optim.AdamW(self.parameters(), lr=self.cfg.trainer.rep_learning_rate)

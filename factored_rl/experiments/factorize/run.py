@@ -1,8 +1,10 @@
 from multiprocessing import freeze_support
+from typing import Optional
 
 # Args & hyperparams
 import hydra
 from factored_rl import configs
+import optuna
 
 # Data
 from factored_rl.experiments.common import initialize_env, initialize_model
@@ -20,7 +22,10 @@ from factored_rl.experiments.common import cpu_count
 # ----------------------------------------
 
 @hydra.main(config_path="../conf", config_name='config', version_base=None)
-def main(cfg: configs.Config):
+def hydra_main(cfg: configs.Config):
+    main(cfg)
+
+def main(cfg: configs.Config, trial: Optional[optuna.Trial] = None):
     cfg = configs.initialize_experiment(cfg, 'factorize')
 
     train_dl, input_shape, n_actions = initialize_dataloader(cfg, cfg.seed)
@@ -28,6 +33,7 @@ def main(cfg: configs.Config):
 
     model = initialize_model(input_shape, n_actions, cfg)
     print(model)
+    model.trial = trial
     ckpt_callback = ModelCheckpoint(
         save_last=True,
         save_top_k=-1,
@@ -42,6 +48,7 @@ def main(cfg: configs.Config):
         callbacks=[ckpt_callback],
     )
     trainer.fit(model, train_dl, val_dl, ckpt_path=cfg.loader.checkpoint_path)
+    return trainer.callback_metrics
 
 def initialize_dataloader(cfg: configs.Config, seed: int = None):
     env = initialize_env(cfg, seed)
