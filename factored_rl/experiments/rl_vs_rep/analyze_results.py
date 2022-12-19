@@ -8,7 +8,8 @@ import pandas as pd
 import seaborn as sns
 
 # experiment_name = 'rl_vs_rep_02'
-experiment_name = 'wm_tune01'
+experiment_names = ['gt_03', 'cnn_06']
+experiment_names = ['wm_tune04']
 
 def try_load(load_fn, dirname, filename_list):
     for filename in filename_list:
@@ -25,7 +26,7 @@ def try_load(load_fn, dirname, filename_list):
 
 #%%
 def load_results(experiment_name) -> pd.DataFrame:
-#%%
+    #%%
     results_list = []
     experiment_dirs = glob.glob(f'results/factored_rl/{experiment_name}/*/*')
     sorted_experiment_dirs = list(sorted(experiment_dirs))
@@ -74,7 +75,7 @@ def load_results(experiment_name) -> pd.DataFrame:
 
 #%%
 def plot_results(data):
-#%%
+    #%%
     quick = False
     os.makedirs(f'images/{experiment_name}', exist_ok=True)
 
@@ -103,13 +104,14 @@ def plot_results(data):
                 x=x_axis,
                 style='arch',
                 units='trial',
+                # units='seed',
                 estimator=None,
                 # style_order=['mlp', 'cnn'],
-                # hue='transform',
+                hue='transform',
                 # hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
                 # palette='colorblind',
             )
-            best_seed = dqn.query(f'trial=="trial_0407"')
+            best_seed = dqn.query(f'trial=="trial_0140"')
             ax.plot(best_seed[x_axis], best_seed[y_axis], 'r')
             text_offset = dqn.episode.max() / 100
             plt.hlines(expert_steps,
@@ -148,9 +150,11 @@ def plot_results(data):
 
 def main():
     baselines = load_results('rl_baselines')
-    exp_data = load_results(experiment_name)
-    data = pd.concat((exp_data, baselines), ignore_index=True)
-    plot_results(data)
+    data = baselines.copy()
+    for experiment_name in experiment_names:
+        exp_data = load_results(experiment_name)
+        data = pd.concat((exp_data, data), ignore_index=True)
+    plot_results(exp_data)
 
 
 if __name__ == '__main__':
