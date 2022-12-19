@@ -101,7 +101,7 @@ oauthlib==3.2.0
 omegaconf==2.2.3
 onager==0.1.3
 opencv-python==4.4.0.46
-optuna==3.0.3
+optuna @ git+https://github.com/optuna/optuna.git@e310dadcf8f91b57a379d925cbfe445068a9f3aa
 packaging==21.3
 pandas==1.4.3
 pandocfilters==1.4.2
