@@ -7,6 +7,7 @@ from gym import spaces
 from gym.core import ObsType, ActType
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 
 from .. import utils
@@ -19,7 +20,6 @@ class PendulumEnv(gym.Env):
 
     def __init__(self, exploring_starts: bool = True, start_position: Tuple = None,
                  terminate_on_goal: bool = True,
-                 hidden_goal: bool = False,
                  init_state: Tuple = None,
                  should_render: bool = True):
     
@@ -34,11 +34,12 @@ class PendulumEnv(gym.Env):
             dimensions now represents the render size
         """
 
-        self.environment = gym.make('Pendulum-v1', g= self._gravity_const)
+        self.environment = gym.make('Pendulum-v1', g= self._gravity_const).unwrapped
+        self._initial_state = None
 
         self.exploring_starts = exploring_starts if start_position is None else False
         self.fixed_goal = True
-        self.hidden_goal = hidden_goal
+        #self.hidden_goal = hidden_goal
         self.terminate_on_goal = terminate_on_goal
         self.should_render = should_render
         
@@ -46,7 +47,7 @@ class PendulumEnv(gym.Env):
         self.action_space = self.environment.action_space
         self.goal_state = np.array([0.0, 0.0, 0.0])
 
-        self._initialize_state(init_state)
+        self._initialize_env_state(init_state)
         self._initialize_state_space()
         self._initialize_obs_space()
 
@@ -54,19 +55,8 @@ class PendulumEnv(gym.Env):
     def _initialize_state_space(self):
         
         #state represented as: (x, y, angular vel) with ranges ([-1,1], [-1,1], [-8,8])
-        #TODO: maybe use a Dict representation with tags for each box in state?
-        if self.hidden_goal:
-            self.factored_state = (spaces.Box(-1,1,shape=(2,)), spaces.Box(-8,8, shape=(1,)))
-
-        if not self.hidden_goal:
-            self.factored_state = (spaces.Box(-1,1,shape=(2,)), spaces.Box(-8,8, shape=(1,)), spaces.Box(-1,1,shape=(2,)), spaces.Box(-8,8, shape=(1,)))
         
-        '''
-        A tuple (more precisely: the cartesian product) of Space instances.
-
-        Elements of this space are tuples of elements of the constituent spaces.    
-        '''
-        self.state_space = spaces.Tuple(self.factored_state)
+        self.state_space = spaces.Box(low=np.array([-1,-1,-8]), high=np.array([1,1,8]))
 
     
     def _initialize_obs_space(self):
@@ -76,10 +66,9 @@ class PendulumEnv(gym.Env):
         self.img_observation_space = spaces.Box(0.0, 1.0, env_screen_shape, dtype = np.float32)
 
         #access the already created factored state for making state_space
-        #TODO: am I allowed to do this? otherwise need to recreate individual Box sizes to form tuple/dict observation space
-        factored_obs_shape = self.factored_state
+        self.factor_observation_space = copy.deepcopy(self.state_space)
 
-        self.factor_observation_space = spaces.Tuple(factored_obs_shape)
+        #TODO: I don't need to access the self.state_space "shape" (of the Box) and create the self.factored_observation_space again from that right?
 
         self.set_rendering(self.should_render)
         
@@ -88,19 +77,24 @@ class PendulumEnv(gym.Env):
 
         if init_state is not None:
             self.environment.state = init_state
+            self._initial_state = init_state
 
-
-    def _reset(self):
-        pass
+    
+    #TODO: not needed because environment internal mechanics handled by Gym in environment.reset() right?
+    def _reset(self, init_state):
+        self._initial_state = init_state
     
     def reset(self, seed: Optional[int] = None) -> Tuple[ObsType, dict]:
+
+        super().reset(seed=seed)
         self.environment.reset(seed=seed)
         self._cached_state = None
         self._cached_render = None
 
-        self._reset()
-
+        #TODO: I use the private _reset() function to update the self._initial_state reference
         state = self.get_state()
+        self._reset(state)
+        
         obs = self.get_observation(state)
         info = self._get_info(state)
         return obs, info
@@ -132,32 +126,63 @@ class PendulumEnv(gym.Env):
     
     def can_run(self, action):
 
+        assert (action in range(-8,8))
+
         return True if (action >= -8.0 and action <= +8.0) else False
     
     def get_state(self):
         
-        if self.hidden_goal:
-            return self.environment.observation_space
-        else:
-            return self.environment.observation_space + np.array([0.0,0.0,0.0], dtype = np.float32)
+        return np.asarray(self.environment.state)
+       
     
     
     def set_state(self, state):
-        pass
+        
+        is_valid = self._check_valid_state(state)
+
+        assert is_valid, 'Attempted to call set_state with an invalid state'
+
+        self.environment.state = state
+        self._initial_state = state
+    
+    def _check_valid_state(self, state):
+
+        is_valid = self.state_space.contains(state)
+
+        return is_valid
+    
+    def is_valid_state(self, state):
+        return self._check_valid_state(state)
     
     def get_observation(self, state=None):
 
         if state is None:
             state = self.get_state()
 
-        
         if self.should_render:
             obs = self._render(state)
-        
         else:
-            obs = self.get_state()
+            obs = state
 
         return obs
+    
+    def _render(self, state):
+
+        current_state = self.get_state()
+
+        try:
+            if state is not None:
+                self.set_state(state)
+
+            if (self._cached_state is None) or (state != self._cached_state).any():
+                self._cached_state = state
+                self._cached_render = self.environment.render(mode = 'rgb_array')
+            
+            return self._cached_render
+
+        finally:
+            self.set_state(current_state)
+        
     
     def _get_info(self, state=None):
         if state is None:
@@ -197,13 +222,4 @@ class PendulumEnv(gym.Env):
 
         if blocking:
             plt.show()
-    
-    def _render(self, state: Optional[Tuple] = None) -> np.ndarray:
-    
-    def _resize_if_necessary(self, image, desired_shape):
-    
-    def _render_composite_image(self, frame: np.ndarray, content: np.ndarray) -> np.ndarray:
-    
-    def _render_frame(self, content) -> np.ndarray:
-    
-   
+
