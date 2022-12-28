@@ -55,7 +55,7 @@ def get_encode_fn(input_shape, n_actions, cfg):
         return lambda x: x
     else:
         model = initialize_model(input_shape, n_actions, cfg)
-        return lambda x: model.encoder(torch.as_tensor(x).float().to(cfg.model.device))
+        return lambda x: model.encode(torch.as_tensor(x).float().to(cfg.model.device))
 
 # ----------------------------------------
 # Disent metrics

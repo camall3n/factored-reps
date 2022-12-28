@@ -6,36 +6,38 @@ import torch
 
 from factored_rl.models.nnutils import one_hot
 from factored_rl.models.ae import AutoencoderModel, PairedAutoencoderModel
+from factored_rl.configs import _initialize_device
 
 @pytest.fixture
 def model():
     with hydra.initialize(version_base=None, config_path='../../experiments/conf'):
         cfg = hydra.compose(config_name='config', overrides=['model=ae/ae_cnn_64'])
+    _initialize_device(cfg)
     cfg = cfg
     input_shape = tuple((3, ) + cfg.model.cnn.supported_2d_input_shape)
     model = AutoencoderModel(input_shape, 1, cfg)
     return model
 
-def test_transposed_flag(model):
+def test_transposed_flag(model: AutoencoderModel):
     cnn = model.encoder.model[0]
     tcnn = model.decoder.model[-1]
     assert cnn.transposed == False
     assert tcnn.transposed == True
 
-def test_shapes_single(model):
+def test_shapes_single(model: AutoencoderModel):
     x = torch.zeros(model.input_shape)
-    z = model.encoder(x)
+    z = model.encode(x)
     assert z.shape == (model.n_latent_dims, )
 
     x_hat = model.decoder(z)
     assert x_hat.shape == x.shape
 
-def test_shapes_batch(model):
+def test_shapes_batch(model: AutoencoderModel):
     x = torch.zeros((10, ) + model.input_shape)
-    z = model.encoder(x)
+    z = model.encode(x)
     assert z.shape == (10, model.n_latent_dims)
 
-    x_hat = model.decoder(z)
+    x_hat = model.decode(z)
     assert x_hat.shape == x.shape
 
 def test_action_residuals():

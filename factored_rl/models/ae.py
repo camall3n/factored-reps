@@ -36,12 +36,39 @@ class AutoencoderModel(EncoderModel):
         super().__init__(input_shape, n_actions, cfg)
         self.output_shape = self.input_shape
         self.decoder = DecoderNet(self.encoder, input_shape, cfg.model)
+        self.subtract_mean_input = cfg.model.subtract_mean_input
+        if self.subtract_mean_input:
+            self.mean_input = torch.zeros(input_shape, device=cfg.model.device).detach()
+            self.n_inputs_observed = 0
+
+    def update_mean_input(self, x: Tensor):
+        if self.subtract_mean_input:
+            with torch.no_grad():
+                n_inputs = len(x)
+
+                # https://math.stackexchange.com/questions/106700/incremental-averaging
+                #   m_n = m_{n-1} + (k/n) * (a_n - m_{n-1})
+                self.n_inputs_observed += n_inputs
+                update_fraction = (n_inputs / self.n_inputs_observed)
+                self.mean_input += update_fraction * (x.mean(dim=0) - self.mean_input)
+
+    def encode(self, x):
+        if self.subtract_mean_input:
+            x = x - self.mean_input
+        return self.encoder(x)
+
+    def decode(self, z):
+        final_activation = torch.sigmoid if self.cfg.model.arch.decoder == 'cnn' else lambda x: x
+        x_hat = final_activation(self.decoder(z))
+        if self.subtract_mean_input:
+            x_hat = x_hat + self.mean_input
+        return x_hat
 
     def training_step(self, batch, batch_idx):
         x = batch
-        z = self.encoder(x)
-        final_activation = torch.sigmoid if self.cfg.model.arch.decoder == 'cnn' else lambda x: x
-        x_hat = final_activation(self.decoder(z))
+        self.update_mean_input(x)
+        z = self.encode(x)
+        x_hat = self.decode(z)
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
         self.log('loss/reconst', loss)
         return loss
@@ -82,14 +109,15 @@ class PairedAutoencoderModel(AutoencoderModel):
 
     def training_step(self, batch, batch_idx):
         ob = batch['ob']
+        self.update_mean_input(ob)
         actions = one_hot(batch['action'], self.n_actions)
         next_ob = batch['next_ob']
-        z = self.encoder(ob)
-        next_z = self.encoder(next_ob)
+        self.update_mean_input(next_ob)
+        z = self.encode(ob)
+        next_z = self.encode(next_ob)
         effects = next_z - z
-        final_activation = torch.sigmoid if self.cfg.model.arch.decoder == 'cnn' else lambda x: x
-        ob_hat = final_activation(self.decoder(z))
-        next_ob_hat = final_activation(self.decoder(next_z))
+        ob_hat = self.decode(z)
+        next_ob_hat = self.decode(next_z)
         losses = {
             'actions': self.action_semantics_loss(actions, effects),
             'effects': self.effects_loss(effects),
