@@ -61,8 +61,8 @@ def main(cfg: configs.Config):
                 raise RuntimeError(f'Cannot tune representation for architecture "{arch}"')
             cfg.trainer.rep_learning_rate = trial.suggest_float(
                 'trainer.rep_learning_rate',
-                low=1e-5,
-                high=1e-2,
+                low=3e-5,
+                high=3e-3,
                 log=True,
             )
 
@@ -98,8 +98,8 @@ def main(cfg: configs.Config):
         if cfg.tuner.tune_rl:
             cfg.trainer.rl_learning_rate = trial.suggest_float(
                 'trainer.rl_learning_rate',
-                low=1e-5,
-                high=1e-2,
+                low=3e-5,
+                high=3e-3,
                 log=True,
             )
 
