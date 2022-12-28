@@ -6,4 +6,4 @@ arch:
   type: paired_ae
   encoder: cnn
   decoder: cnn
-action_sampling: null
+action_sampling: all
