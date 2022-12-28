@@ -8,8 +8,7 @@ import pandas as pd
 import seaborn as sns
 
 # experiment_name = 'rl_vs_rep_02'
-experiment_names = ['gt_03', 'cnn_06']
-experiment_names = ['wm_tune04']
+experiment_names = ['gt_03', 'cnn_08']
 
 def try_load(load_fn, dirname, filename_list):
     for filename in filename_list:
@@ -18,6 +17,9 @@ def try_load(load_fn, dirname, filename_list):
                 result = load_fn(file)
         except FileNotFoundError:
             continue # check next filename
+        except ValueError:
+            print(f'Potentially clobbered output in {dirname}')
+            continue
         break # already loaded
     else:
         print(f'Could not find {filename_list} in {dirname}')
@@ -60,6 +62,7 @@ def load_results(experiment_name) -> pd.DataFrame:
             'transform': cfg.transform.name,
             'agent': cfg.agent.name,
             'arch': arch,
+            'rl_lr': cfg.trainer.get('rl_learning_rate', 0) if cfg.get('trainer', None) is not None else 0,
             'seed': cfg.seed,
             'noise': noise,
             'max_steps': cfg.env.n_steps_per_episode,
@@ -70,6 +73,8 @@ def load_results(experiment_name) -> pd.DataFrame:
             results['rolling_' + column] = results[column].rolling(10).mean()
         results_list.append(results)
 
+    if results_list == []:
+        raise RuntimeError(f'No results for experiment "{experiment_name}"')
     data = pd.concat(results_list, ignore_index=True)
     return data
 
@@ -103,13 +108,13 @@ def plot_results(data):
                 y=y_axis,
                 x=x_axis,
                 style='arch',
-                units='trial',
+                # units='trial',
                 # units='seed',
-                estimator=None,
+                # estimator=None,
                 # style_order=['mlp', 'cnn'],
-                hue='transform',
+                hue='rl_lr',
                 # hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
-                # palette='colorblind',
+                palette='colorblind',
             )
             best_seed = dqn.query(f'trial=="trial_0140"')
             ax.plot(best_seed[x_axis], best_seed[y_axis], 'r')
@@ -154,7 +159,7 @@ def main():
     for experiment_name in experiment_names:
         exp_data = load_results(experiment_name)
         data = pd.concat((exp_data, data), ignore_index=True)
-    plot_results(exp_data)
+    plot_results(data.query("agent!='dqn' or (arch=='enc' and rl_lr in [0.0002, 0.0003]) or arch=='qnet'"))
 
 
 if __name__ == '__main__':
