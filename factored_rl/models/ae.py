@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Dict
 
 import matplotlib.pyplot as plt
 import optuna
@@ -71,6 +71,7 @@ class AutoencoderModel(EncoderModel):
         x_hat = self.decode(z)
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
         self.log('loss/reconst', loss)
+        self.prune_if_necessary({'loss/reconst': loss})
         return loss
 
     def log_images(self, obs: Tensor, obs_hat: Tensor, log_str='img/obs_reconst_diff'):
@@ -85,7 +86,7 @@ class AutoencoderModel(EncoderModel):
         tensorboard.add_images(log_str, obs_stack, self.global_step)
         plt.pause(0.1)
 
-    def prune_if_necessary(self, losses):
+    def prune_if_necessary(self, losses: Dict):
         if self.cfg.tuner.tune_rep and self.cfg.tuner.tune_metric == 'reconst':
             self.trial.report(losses['loss/reconst'], step=self.global_step)
             if self.trial.should_prune():
@@ -127,6 +128,7 @@ class PairedAutoencoderModel(AutoencoderModel):
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
+        self.prune_if_necessary(losses)
         return loss
 
     def effects_loss(self, effects: Tensor):
