@@ -66,4 +66,4 @@ def initialize_dataloader(cfg: configs.Config, seed: int = None):
 
 if __name__ == '__main__':
     freeze_support() # do this to make sure multiprocessing works correctly
-    main()
+    hydra_main()
