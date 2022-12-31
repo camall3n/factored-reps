@@ -87,6 +87,7 @@ def test_rl_vs_rep():
 def test_factorize_ae():
     configurations = [
         ["env=taxi", "transform=images", "model=ae/betavae", "loss=betavae"],
+        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
         ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp"],
         ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp",
          "loss.actions=0.003", "loss.effects=0.003", "loss.reconst=1.0"],

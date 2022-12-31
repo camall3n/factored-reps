@@ -78,16 +78,17 @@ class AutoencoderModel(EncoderModel):
         return loss
 
     def log_images(self, obs: Tensor, obs_hat: Tensor, log_str='img/obs_reconst_diff'):
-        # stack images along H dimension
-        N = min(24, len(obs))
-        obs_stack = torch.cat((obs[:N], obs_hat[:N], (obs[:N] - obs_hat[:N])), dim=2)
-        tensorboard = self.logger.experiment
-        # The following add_images() calls crash intermittently, due to a matplotlib issue:
-        # https://github.com/Lightning-AI/lightning/issues/11925#issuecomment-1111727962
-        #
-        # Workaround: add plt.pause(0.1) after each call
-        tensorboard.add_images(log_str, obs_stack, self.global_step)
-        plt.pause(0.1)
+        if self.cfg.transform.name == 'images':
+            # stack images along H dimension
+            N = min(24, len(obs))
+            obs_stack = torch.cat((obs[:N], obs_hat[:N], (obs[:N] - obs_hat[:N])), dim=2)
+            tensorboard = self.logger.experiment
+            # The following add_images() calls crash intermittently, due to a matplotlib issue:
+            # https://github.com/Lightning-AI/lightning/issues/11925#issuecomment-1111727962
+            #
+            # Workaround: add plt.pause(0.1) after each call
+            tensorboard.add_images(log_str, obs_stack, self.global_step)
+            plt.pause(0.1)
 
     def prune_if_necessary(self, losses: Dict):
         if self.cfg.tuner.tune_rep and self.cfg.tuner.tune_metric == 'reconst':
