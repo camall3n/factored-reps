@@ -71,6 +71,9 @@ class AutoencoderModel(EncoderModel):
         x_hat = self.decode(z)
         loss = torch.nn.functional.mse_loss(input=x_hat, target=x)
         self.log('loss/reconst', loss)
+        if self.global_step % self.cfg.trainer.log_every_n_steps == 0:
+            self.log_images(x, x_hat, 'img/obs_reconst_diff')
+
         self.prune_if_necessary({'loss/reconst': loss})
         return loss
 
@@ -128,6 +131,10 @@ class PairedAutoencoderModel(AutoencoderModel):
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
+        if self.global_step % self.cfg.trainer.log_every_n_steps == 0:
+            self.log_images(ob, ob_hat, 'img/obs_reconst_diff')
+            self.log_images(next_ob, next_ob_hat, 'img/next_obs_reconst_diff')
+
         self.prune_if_necessary(losses)
         return loss
 
