@@ -61,8 +61,8 @@ def main(cfg: configs.Config):
                 raise RuntimeError(f'Cannot tune representation for architecture "{arch}"')
             cfg.trainer.rep_learning_rate = trial.suggest_float(
                 'trainer.rep_learning_rate',
-                low=3e-5,
-                high=3e-3,
+                low=2e-4,
+                high=5e-3,
                 log=True,
             )
 
@@ -73,17 +73,17 @@ def main(cfg: configs.Config):
                 )
                 cfg.loss.actions = trial.suggest_float('loss.actions',
                                                        low=1e-5,
-                                                       high=10.0,
+                                                       high=1e-3,
                                                        log=True)
                 cfg.loss.effects = trial.suggest_float('loss.effects',
-                                                       low=1e-5,
-                                                       high=10.0,
+                                                       low=1e-1,
+                                                       high=3e2,
                                                        log=True)
 
             if arch == 'wm':
                 cfg.loss.parents = trial.suggest_float('loss.parents',
-                                                       low=1e-5,
-                                                       high=10.0,
+                                                       low=3e-5,
+                                                       high=4e-2,
                                                        log=True)
 
             callback_metrics = factorize(cfg, trial)
