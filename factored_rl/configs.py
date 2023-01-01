@@ -83,7 +83,7 @@ class ModelConfig:
     device: str = MISSING
     n_latent_dims: int = MISSING
     flatten_input: bool = False
-    subtract_mean_input: bool = True
+    subtract_mean_input: bool = False
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     wm: WMConfig = WMConfig()
