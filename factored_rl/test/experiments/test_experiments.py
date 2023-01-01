@@ -12,6 +12,28 @@ def get_config(overrides):
         cfg = hydra.compose(config_name='config', overrides=overrides)
     return cfg
 
+def test_param_scaling():
+    configurations = [
+        ["model=ae/ae_cnn_64", "model.param_scaling=2"],
+        ["model=factored/ae_cnn_64", "model.param_scaling=3"],
+        ["model=factored/wm_cnn_64_attn", "model.param_scaling=4"],
+    ] # yapf: disable
+    for overrides in configurations:
+        overrides.extend([
+            "env=taxi",
+            "agent=dqn",
+            "transform=images",
+            "experiment=pytest",
+            "timestamp=false",
+            "trainer=rep.quick",
+            "tuner.tune_rep=true",
+            "tuner.tune_rl=false",
+            "tuner.should_prune=true",
+            "tuner.tune_metric=reconst",
+        ])
+        cfg = get_config(overrides)
+        tune_factorize(cfg)
+
 def test_tune_factorize():
     configurations = [
         ["tuner.tune_rep=true", "tuner.tune_rl=false", "tuner.should_prune=true", "tuner.tune_metric=reconst"],

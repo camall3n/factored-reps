@@ -84,6 +84,7 @@ class ModelConfig:
     n_latent_dims: int = MISSING
     flatten_input: bool = False
     subtract_mean_input: bool = False
+    param_scaling: int = 1 # multiply cnn n_channels & mlp n_units by this number
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     wm: WMConfig = WMConfig()

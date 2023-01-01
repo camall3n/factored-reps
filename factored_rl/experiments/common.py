@@ -79,6 +79,20 @@ def initialize_model(input_shape, n_actions, cfg: configs.Config):
     if cfg.model.lib == 'disent':
         return build_disent_model(input_shape, cfg)
     elif cfg.model.name is not None:
+        if cfg.model.param_scaling > 1:
+            scale = cfg.model.param_scaling
+            print(f'Scaling up model parameters by {scale}x')
+            # scale MLP n_units_per_layer
+            if cfg.model.mlp.get('n_units_per_layer', None) is not None:
+                n_units = cfg.model.mlp.n_units_per_layer
+                cfg.model.mlp.n_units_per_layer = scale * n_units
+            # scale CNN n_output_channels
+            if cfg.model.cnn.get('n_output_channels', None) is not None:
+                n_chans = cfg.model.cnn.n_output_channels
+                cfg.model.cnn.n_output_channels = [scale * n_chan for n_chan in n_chans]
+            # reset param_scaling to avoid double-scaling confusion later
+            cfg.model.param_scaling = 1
+
         if cfg.model.arch.type == 'qnet':
             module = BaseModel
         elif cfg.model.arch.type == 'enc':
