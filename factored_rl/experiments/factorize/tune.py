@@ -87,6 +87,9 @@ def main(cfg: configs.Config):
                                                        high=4e-2,
                                                        log=True)
 
+            if cfg.env.name == 'taxi':
+                cfg.env.depot_dropoff_only = True
+
             callback_metrics = factorize(cfg, trial)
 
             cfg.loader.load_config = False
@@ -103,6 +106,9 @@ def main(cfg: configs.Config):
                 high=3e-3,
                 log=True,
             )
+
+        if cfg.env.name == 'taxi':
+            cfg.env.depot_dropoff_only = True
 
         results = rl_vs_rep(cfg)
 
