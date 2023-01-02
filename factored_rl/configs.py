@@ -178,7 +178,8 @@ class TunerConfig:
 
 @dataclass
 class Config:
-    experiment: str = MISSING
+    script: str = '' # The name of the script being run
+    experiment: str = MISSING # A name for the experiment/study
     trial: str = 'trial' # A name for the trial
     seed: int = 0 # A seed for the random number generator
     timestamp: bool = True # Whether to add a timestamp to the experiment directory path
@@ -231,9 +232,10 @@ def _initialize_logger(cfg: Config) -> logging.Logger:
     log_filename = cfg.dir + 'log.txt'
     log.addHandler(logging.FileHandler(log_filename, mode='w'))
 
-def initialize_experiment(cfg, experiment_name):
+def initialize_experiment(cfg: Config, script_name: str):
+    cfg.script = script_name
     if cfg.get('experiment', None) is None:
-        cfg.experiment = experiment_name
+        cfg.experiment = script_name
     _initialize_experiment_dir(cfg)
     _initialize_logger(cfg)
     _initialize_device(cfg)
@@ -241,7 +243,7 @@ def initialize_experiment(cfg, experiment_name):
     log.info('\n' + get_config_yaml_str(cfg))
     log.info(f'Training on device: {cfg.model.device}\n')
 
-    filename = cfg.dir + f'config_{experiment_name}.yaml'
+    filename = cfg.dir + f'config_{script_name}.yaml'
     if cfg.loader.load_config:
         old_cfg = cfg
         cfg = OmegaConf.load(filename)
