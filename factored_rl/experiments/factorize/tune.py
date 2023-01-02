@@ -39,7 +39,6 @@ def main(cfg: configs.Config):
         pruner = optuna.pruners.SuccessiveHalvingPruner(
             min_resource=2000, # every trial gets at least min_resource steps
             reduction_factor=2, # only promote the best 1/reduction_factor of trials in each rung
-            bootstrap_count=6, # require >= bootstrap_count trials in each rung before promotion
         )
 
     else:
