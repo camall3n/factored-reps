@@ -27,6 +27,7 @@ def map_dataloader(map_dataset):
 @pytest.fixture
 def cfg():
     return OmegaConf.create("""
+    script: disent
     seed: 0
     model:
       arch:

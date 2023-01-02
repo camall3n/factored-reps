@@ -32,6 +32,10 @@ def initialize_env(cfg: configs.Config, seed: int = None):
                            should_render=False,
                            dimensions=GridworldEnv.dimensions_onehot)
     elif cfg.env.name == 'taxi':
+        if cfg.script in ['factorize', 'disent_vs_rep']:
+            cfg.env.depot_dropoff_only = False
+        elif cfg.script == 'rl_vs_rep':
+            cfg.env.depot_dropoff_only = True
         env = TaxiEnv(size=5,
                       n_passengers=1,
                       exploring_starts=cfg.env.exploring_starts,
