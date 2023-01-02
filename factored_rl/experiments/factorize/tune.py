@@ -66,7 +66,7 @@ def main(cfg: configs.Config):
                 log=True,
             )
 
-            cfg.model.param_scaling = trial.suggest_categorical('param_scaling', [1, 2, 4, 8, 16])
+            cfg.model.param_scaling = trial.suggest_categorical('param_scaling', [2, 4, 8, 16])
 
             if arch in ['wm', 'paired_ae']:
                 cfg.loss.sparsity.name = trial.suggest_categorical(
