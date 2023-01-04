@@ -296,6 +296,9 @@ def test_file():
     for i in range(10):
         obs, reward, terminated, truncated, info = test_env.step(np.array([0.0]))
 
+        if i == 3 or i==5 or i==7:
+            test_env.plot(blocking=False, save=True, filename='./test/step_{}.png'.format(i))
+
     print('New State (get_state): ', test_env.get_state())
 
     print('New Observation: type: {} | shape: {} | values: {}'.format(type(obs), obs.shape, obs))
@@ -306,7 +309,7 @@ def test_file():
     test_env.set_state(curr_state)
     print('Reset State (get_state): ', test_env.get_state())
 
-    test_env.plot(blocking=False, save=True, filename='./test/new_obs.png')
+    test_env.plot(blocking=False, save=True, filename='./test/final_obs.png')
 
     test_env.plot(current_obs, blocking=False, save=True, filename='./test/old_obs_arg.png')
 
