@@ -11,15 +11,65 @@ from optuna.visualization.matplotlib import plot_param_importances
 from optuna.visualization.matplotlib import plot_slice
 
 #%%
-experiment_name = 'wm_tune04'
+experiment_name = 'wm_tune06_reduced'
 storage = optuna.storages.JournalStorage(
     optuna.storages.JournalFileStorage(f"./factored_rl/hyperparams/tuning/{experiment_name}.journal"))
 study = optuna.load_study(
-    study_name=f'{experiment_name}',
+    study_name=f'{experiment_name}'.replace('_reduced',''),
     storage=storage,
 )
 str(study.best_trial)
-sorted([(t.values[0], str(t.params)) for t in study.get_trials() if str(t.state)=='TrialState.COMPLETE'])
+finished_trials = sorted([(t.values[0], t) for t in study.get_trials() if str(t.state) in ['TrialState.COMPLETE', 'TrialState.PRUNED']])
+
+both_sprites = sorted([258, 440, 253, 364, 484, 220, 198])
+one_sprite = sorted([326, 251, 398, 455, 441, 456, 135])
+
+one_sprite.extend([t.number for value, t in finished_trials if str(t.state) == 'TrialState.PRUNED'])
+
+both_entries = sorted([(t.number, t.values[0], t.params) for t in study.get_trials() if t.number in both_sprites])
+[entry[-1].update({'sprites': 2,'trial': entry[0], 'loss/reconst': entry[1]}) for entry in both_entries]
+both_entries = [entry[-1] for entry in both_entries]
+
+one_entries = sorted([(t.number, t.values[0], t.params) for t in study.get_trials() if t.number in one_sprite])
+[entry[-1].update({'sprites': 1,'trial': entry[0], 'loss/reconst': entry[1]}) for entry in one_entries]
+one_entries = [entry[-1] for entry in one_entries]
+
+both_entries.extend(one_entries)
+
+import seaborn as sns
+import pandas as pd
+
+df = pd.DataFrame(both_entries)
+
+sns.kdeplot(data=df, hue='sprites', x='trainer.rep_learning_rate', log_scale=True, cut=0)
+
+sns.kdeplot(data=df, hue='sprites', x='loss.actions', log_scale=True, cut=0)
+
+sns.kdeplot(data=df, hue='sprites', x='loss.effects', log_scale=True, cut=0)
+
+sns.kdeplot(data=df, hue='sprites', x='loss.parents', log_scale=True, cut=0)
+
+sns.histplot(data=df, hue='sprites', x='loss.sparsity.name')
+
+sns.kdeplot(data=df, hue='sprites', x='loss/reconst', log_scale=False, clip=[0,0.04], cut=0)
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+x_var = 'loss.parents'
+y_var = 'loss.actions'
+z_var = 'loss/reconst'
+ax = sns.scatterplot(data=df.sort_values(by=z_var, ascending=False), y=y_var, x=x_var, hue=z_var, palette=sns.color_palette("viridis", as_cmap=True), hue_norm=mpl.colors.LogNorm())
+ax.set_xscale('log')
+ax.set_yscale('log')
+norm = plt.Normalize(df[z_var].min(), df[z_var].max())
+sm = plt.cm.ScalarMappable(cmap="viridis", norm=norm)
+sm.set_array([])
+ax.get_legend().remove()
+ax.figure.colorbar(sm, label=z_var)
+sns.kdeplot(data=df.query('sprites==2'), color='k', y=y_var, x=x_var, log_scale=False, ax=ax, levels=4)
+ax.set_title('Hyperparam distribution of "good" trials')
+
 
 #%%
 # experiment_name = 'wm_tune03'
