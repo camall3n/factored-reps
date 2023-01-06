@@ -1,7 +1,5 @@
-import pytest
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 
 from factored_rl.wrappers import PolynomialBasis, FourierBasis, LegendreBasis
 from visgrid.envs.point import BoundedPointEnv
