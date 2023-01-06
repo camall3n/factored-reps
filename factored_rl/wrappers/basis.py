@@ -1,3 +1,5 @@
+# Adapted from https://github.com/samlobel/q_functionals
+
 import gym
 from gym import spaces
 import numpy as np
