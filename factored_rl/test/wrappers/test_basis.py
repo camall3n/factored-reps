@@ -94,19 +94,30 @@ def test_fourier_2d():
     assert get_output_shape(FourierBasis, ndim=2, rank=2) == 12
     assert get_output_shape(FourierBasis, ndim=2, rank=3) == 20
 
-def test_3d():
+def test_polynomial_3d():
+    assert get_output_shape(PolynomialBasis, ndim=3, rank=1) == 4
+    # 0, x, y, z
     assert get_output_shape(PolynomialBasis, ndim=3, rank=2) == 10
     # 0, x, y, z, x^2, y^2, z^2, xy, yz, xz
-
-    assert get_output_shape(LegendreBasis, ndim=3, rank=1) == 4 # 0, x, y, z
-    assert get_output_shape(FourierBasis, ndim=3, rank=2) == 20
-
     assert get_output_shape(PolynomialBasis, ndim=3, rank=3) == 20
-    # 0, x, y, z, x^2, y^2, z^2, x^3, y^3, z^3, xy, yz, xz, xyz, xy^2, xz^2, yx^2, yz^2, zx^2, zy^2
+    # 0, x, y, z, x^2, y^2, z^2, x^3, y^3, z^3
+    # xy, yz, xz, xyz, xy^2, xz^2, yx^2, yz^2, zx^2, zy^2
+
+def test_legendre_3d():
+    assert get_output_shape(LegendreBasis, ndim=3, rank=1) == 4
+    assert get_output_shape(LegendreBasis, ndim=3, rank=2) == 10
+    assert get_output_shape(LegendreBasis, ndim=3, rank=3) == 20
+
+def test_fourier_3d():
+    assert get_output_shape(FourierBasis, ndim=3, rank=1) == 8
+    assert get_output_shape(FourierBasis, ndim=3, rank=2) == 20
+    assert get_output_shape(FourierBasis, ndim=3, rank=3) == 40
 
 def test_4d():
     assert get_output_shape(PolynomialBasis, ndim=4, rank=2) == 15
     # 0, w, x, y, z, w^2, x^2, y^2, z^2, wx, wy, wz, xy, xz, yz
+    assert get_output_shape(LegendreBasis, ndim=4, rank=2) == 15
+    assert get_output_shape(FourierBasis, ndim=4, rank=2) == 30
 
 if __name__ == '__main__':
     visualize_points(basis=PolynomialBasis, rank=5)
