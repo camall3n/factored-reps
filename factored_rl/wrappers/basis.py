@@ -3,7 +3,6 @@ from gym import spaces
 import numpy as np
 from numpy.polynomial import Polynomial
 from numpy.polynomial.legendre import Legendre
-import torch
 
 def cartesian_sum(max_sum, n_dim):
     ranks_to_add = list(range(0, max_sum + 1))
@@ -126,12 +125,7 @@ class LegendreBasis(BasisWrapper):
 
         indices = basis_terms.T[np.newaxis, ...] # (1, ndim, n_feat)
         indices = np.repeat(indices, repeats=legendre_1d_eval.shape[0], axis=0) # (B, ndim, n_feat)
-        # TODO: convert this N-D torch.gather to numpy
-        accumulator = torch.gather(
-            torch.as_tensor(legendre_1d_eval, dtype=torch.float),
-            dim=-1,
-            index=torch.as_tensor(indices, dtype=torch.long),
-        ).detach().numpy() # (B, n_dim, n_feat)
+        accumulator = np.take_along_axis(legendre_1d_eval, axis=-1, indices=indices) # (same)
         features = np.prod(accumulator, axis=-2).astype(np.float32) # (B, n_feat)
         return features
 
