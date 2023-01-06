@@ -16,35 +16,19 @@ def cartesian_sum(max_sum, n_dim):
                 cartesian_products_to_return.append(cartesian_pair + [r])
     return cartesian_products_to_return
 
-class BasisWrapper(gym.ObservationWrapper):
-    basis_element_multiplicity = 1 # Number of terms per basis element
-
-    def __init__(self, env: gym.Env, rank):
-        super().__init__(env)
+class BasisFunction:
+    def __init__(self, ndim: int, rank: int) -> None:
+        self.ndim = ndim
         self.rank = rank
-
-        ob_space = env.observation_space
-        assert isinstance(ob_space, spaces.Box)
-        assert np.issubdtype(ob_space.dtype, np.floating)
-        assert len(ob_space.shape) == 1, 'Basis wrapper requires flattened observations'
-        assert ob_space.is_bounded('both')
-        if not (np.allclose(ob_space.high, 1) and np.allclose(ob_space.low, -1)):
-            raise ValueError('Observation space must have range [-1, 1] for each dimension')
-
-        self.ndim = ob_space.shape[0]
 
         self.basis_terms = np.array(cartesian_sum(self.rank, self.ndim), dtype=np.float32)
         self.basis_terms = self.basis_terms.reshape(-1, self.ndim) # (n_basis_terms, ndim)
-        n_basis_terms = len(self.basis_terms)
 
-        n_features = self.basis_element_multiplicity * n_basis_terms
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(n_features, ))
-
-    def _get_basis_features(self, obs):
+    def _get_basis_features(self, obs: np.ndarray) -> np.ndarray:
         raise NotImplementedError(
             "Cannot get features with abstract base class. Use a specific basis.")
 
-    def get_basis_features(self, obs):
+    def get_basis_features(self, obs: np.ndarray) -> np.ndarray:
         """
         Compute a batch of basis features for a batch of observations
         """
@@ -57,14 +41,11 @@ class BasisWrapper(gym.ObservationWrapper):
             features = features.squeeze(axis=0)
         return features
 
-    def observation(self, obs):
-        return self.get_basis_features(obs)
-
-class PolynomialBasis(BasisWrapper):
+class PolynomialBasis(BasisFunction):
     basis_element_multiplicity = 1
 
-    def __init__(self, env, rank):
-        super().__init__(env, rank)
+    def __init__(self, ndim: int, rank: int):
+        super().__init__(ndim, rank)
 
     def _get_basis_features(self, obs):
         basis_terms = self.basis_terms
@@ -73,33 +54,16 @@ class PolynomialBasis(BasisWrapper):
         obs_prod = np.prod(obs_power, axis=-2)
         return obs_prod
 
-class FourierBasis(BasisWrapper):
-    basis_element_multiplicity = 2
-
-    def __init__(self, env, rank):
-        super().__init__(env, rank)
-        self.half_period = (self.observation_space.high[0] - self.observation_space.low[0])
-
-    def _get_basis_features(self, obs):
-        basis_terms = np.swapaxes(self.basis_terms, 0, 1) # (ndim, n_basis_terms)
-        thetas = np.matmul(obs, basis_terms) * (np.pi / self.half_period) # (batch, n_basis_terms)
-
-        sines = np.sin(thetas) # (batch, n_basis_terms)
-        cosines = np.cos(thetas) # (batch, n_basis_terms)
-
-        features = np.concatenate((sines, cosines), axis=-1) # (batch, multiplicity*n_basis_terms)
-        return features
-
-class LegendreBasis(BasisWrapper):
+class LegendreBasis(BasisFunction):
     basis_element_multiplicity = 1
 
-    def __init__(self, env, rank):
+    def __init__(self, ndim: int, rank: int):
         self.rank = rank
         self.legendre_coefficients = self.compute_legendre_matrix(self.rank) # (1, npow, npow)
         self.powers_needed = np.arange(self.rank + 1, dtype=np.float32) # (npow, )
-        super().__init__(env, rank)
+        super().__init__(ndim, rank)
 
-    def compute_legendre_matrix(self, rank):
+    def compute_legendre_matrix(self, rank: int) -> np.ndarray:
         max_order = rank + 1
         coefficients_for_orders = []
         for order in range(max_order):
@@ -129,5 +93,59 @@ class LegendreBasis(BasisWrapper):
         features = np.prod(accumulator, axis=-2).astype(np.float32) # (B, n_feat)
         return features
 
-class NormalizedRBFBasis(BasisWrapper):
+class FourierBasis(BasisFunction):
+    basis_element_multiplicity = 2
+
+    def __init__(self, ndim: int, rank: int, half_period: np.floating):
+        super().__init__(ndim, rank)
+        self.half_period = half_period
+
+    def _get_basis_features(self, obs):
+        basis_terms = np.swapaxes(self.basis_terms, 0, 1) # (ndim, n_basis_terms)
+        thetas = np.matmul(obs, basis_terms) * (np.pi / self.half_period) # (batch, n_basis_terms)
+
+        sines = np.sin(thetas) # (batch, n_basis_terms)
+        cosines = np.cos(thetas) # (batch, n_basis_terms)
+
+        features = np.concatenate((sines, cosines), axis=-1) # (batch, multiplicity*n_basis_terms)
+        return features
+
+class NormalizedRBFBasis(BasisFunction):
     pass
+
+class BasisWrapper(gym.ObservationWrapper):
+    basis_element_multiplicity = 1 # Number of terms per basis element
+
+    def __init__(self, env: gym.Env, basis: BasisFunction):
+        super().__init__(env)
+        self.basis = basis
+
+        ob_space = env.observation_space
+        assert isinstance(ob_space, spaces.Box)
+        assert np.issubdtype(ob_space.dtype, np.floating)
+        assert len(ob_space.shape) == 1, 'Basis wrapper requires flattened observations'
+        assert ob_space.is_bounded('both')
+        if not (np.allclose(ob_space.high, 1) and np.allclose(ob_space.low, -1)):
+            raise ValueError('Observation space must have range [-1, 1] for each dimension')
+
+        n_features = self.basis.basis_element_multiplicity * len(self.basis.basis_terms)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(n_features, ))
+
+    def observation(self, obs):
+        return self.basis.get_basis_features(obs)
+
+class PolynomialBasisWrapper(BasisWrapper):
+    def __init__(self, env: gym.Env, rank: int):
+        ndim = env.observation_space.shape[0]
+        super().__init__(env, PolynomialBasis(ndim, rank))
+
+class LegendreBasisWrapper(BasisWrapper):
+    def __init__(self, env: gym.Env, rank: int):
+        ndim = env.observation_space.shape[0]
+        super().__init__(env, LegendreBasis(ndim, rank))
+
+class FourierBasisWrapper(BasisWrapper):
+    def __init__(self, env: gym.Env, rank: int):
+        ndim = env.observation_space.shape[0]
+        half_period = (env.observation_space.high[0] - env.observation_space.low[0])
+        super().__init__(env, FourierBasis(ndim, rank, half_period))
