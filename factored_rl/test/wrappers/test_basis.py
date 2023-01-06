@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from factored_rl.wrappers.basis import BasisWrapper
 from factored_rl.wrappers import PolynomialBasisWrapper as Polynomial
 from factored_rl.wrappers import LegendreBasisWrapper as Legendre
 from factored_rl.wrappers import FourierBasisWrapper as Fourier
 from visgrid.envs.point import BoundedPointEnv
 
-def get_curves(basis, ndim=1, rank=1, n_points=1000):
-    action = 2 * np.ones(ndim, dtype=np.float32) / n_points
+def get_curves(basis: BasisWrapper, ndim: int = 1, rank: int = 1, n_segments: int = 1000):
+    action = 2 * np.ones(ndim, dtype=np.float32) / n_segments
 
     line_env = BoundedPointEnv(ndim)
     poly_env = basis(line_env, rank)
@@ -15,7 +16,7 @@ def get_curves(basis, ndim=1, rank=1, n_points=1000):
     def get_points(env):
         env.reset(x=(-1.0 * np.ones(ndim)))
         obs = []
-        for _ in range(n_points + 1):
+        for _ in range(n_segments + 1):
             obs.append(env.step(action)[0])
         obs = np.stack(obs)
         return obs
@@ -25,11 +26,12 @@ def get_curves(basis, ndim=1, rank=1, n_points=1000):
 
     return line_points, poly_points
 
-def visualize_points(basis, rank=1):
+def visualize_points(basis: BasisWrapper, rank: int = 1):
     line_points, poly_points = get_curves(basis=basis, rank=rank)
     fig, ax = plt.subplots()
     orders = poly_points.shape[-1]
-    legend_columns = basis.basis_element_multiplicity
+    basis_name = basis.__name__.replace('Wrapper', '')
+    legend_columns = 2 if basis_name == 'FourierBasis' else 1
     if legend_columns == 2:
         labels = [f'sin({i})' for i in range(orders // 2)]
         labels += [f'cos({i})' for i in range(orders // 2)]
@@ -39,10 +41,10 @@ def visualize_points(basis, rank=1):
     ax.set_xlabel('x')
     ax.set_ylabel('features')
     ax.legend(ncol=legend_columns, loc='lower right')
-    ax.set_title(f'{basis.__name__}')
+    ax.set_title(basis_name)
     plt.show()
 
-def get_output_shape(basis, ndim, rank):
+def get_output_shape(basis: BasisWrapper, ndim: int, rank: int):
     return get_curves(basis=basis, ndim=ndim, rank=rank)[-1].shape[-1]
 
 def test_polynomial_1d():
@@ -67,19 +69,20 @@ def test_polynomial_3d():
     # xy, yz, xz, xyz, xy^2, xz^2, yx^2, yz^2, zx^2, zy^2
 
 def test_legendre_1d():
+    # same shapes as polynomial
     assert get_output_shape(basis=Legendre, ndim=1, rank=0) == 1
     assert get_output_shape(basis=Legendre, ndim=1, rank=1) == 2
     assert get_output_shape(basis=Legendre, ndim=1, rank=2) == 3
     assert get_output_shape(basis=Legendre, ndim=1, rank=3) == 4
 
 def test_legendre_2d():
-    # same shapes as polynomial
     assert get_output_shape(basis=Legendre, ndim=2, rank=0) == 1
     assert get_output_shape(basis=Legendre, ndim=2, rank=1) == 3
     assert get_output_shape(basis=Legendre, ndim=2, rank=2) == 6
     assert get_output_shape(basis=Legendre, ndim=2, rank=3) == 10
 
 def test_legendre_3d():
+    assert get_output_shape(basis=Legendre, ndim=3, rank=0) == 1
     assert get_output_shape(basis=Legendre, ndim=3, rank=1) == 4
     assert get_output_shape(basis=Legendre, ndim=3, rank=2) == 10
     assert get_output_shape(basis=Legendre, ndim=3, rank=3) == 20
@@ -92,13 +95,13 @@ def test_fourier_1d():
     assert get_output_shape(basis=Fourier, ndim=1, rank=3) == 8
 
 def test_fourier_2d():
-    # twice as many features as polynomial
     assert get_output_shape(basis=Fourier, ndim=2, rank=0) == 2
     assert get_output_shape(basis=Fourier, ndim=2, rank=1) == 6
     assert get_output_shape(basis=Fourier, ndim=2, rank=2) == 12
     assert get_output_shape(basis=Fourier, ndim=2, rank=3) == 20
 
 def test_fourier_3d():
+    assert get_output_shape(basis=Fourier, ndim=3, rank=0) == 2
     assert get_output_shape(basis=Fourier, ndim=3, rank=1) == 8
     assert get_output_shape(basis=Fourier, ndim=3, rank=2) == 20
     assert get_output_shape(basis=Fourier, ndim=3, rank=3) == 40
