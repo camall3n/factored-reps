@@ -1,16 +1,16 @@
 import pytest
 
 import numpy as np
-from omegaconf import OmegaConf
 import torch
 from torch.utils.data import DataLoader
 
+from ..utils import cleanup, get_config
 from disent.dataset import DisentDataset, DisentIterDataset
 from disent.dataset.data import GymEnvData, TaxiData64x64
 from disent.dataset.transform import ToImgTensorF32
 from factored_rl.experiments.common import cpu_count, initialize_env
 
-#%%
+cleanup()
 
 @pytest.fixture
 def map_data():
@@ -26,28 +26,17 @@ def map_dataloader(map_dataset):
 
 @pytest.fixture
 def cfg():
-    return OmegaConf.create("""
-    script: disent
-    seed: 0
-    model:
-      arch:
-        encoder: cnn
-    env:
-      name: taxi
-      n_steps_per_episode: 50
-      exploring_starts: true
-      fixed_goal: false
-      grayscale: false
-      depot_dropoff_only: true
-    trainer:
-      batch_size: 4
-      quick: false
-      n_workers: 0
-    transform:
-      name: images
-      noise: true
-      noise_std: 0.01
-    """)
+    return get_config([
+        "script=disent",
+        "experiment=pytest",
+        "seed=0",
+        "model=cnn_64",
+        "env=taxi",
+        "env.depot_dropoff_only=false",
+        "trainer=rep.quick",
+        "trainer.batch_size=4",
+        "transform=images",
+    ])
 
 @pytest.fixture
 def iter_data(cfg):

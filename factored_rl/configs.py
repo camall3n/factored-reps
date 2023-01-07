@@ -75,6 +75,11 @@ class WMConfig:
     attn: AttnConfig = AttnConfig()
 
 @dataclass
+class BasisConfig:
+    name: Optional[str] = None # 'polynomial', 'fourier', 'legendre'
+    rank: int = MISSING
+
+@dataclass
 class ModelConfig:
     name: Optional[str] = None
     arch: ArchitectureConfig = ArchitectureConfig()
@@ -89,6 +94,7 @@ class ModelConfig:
     cnn: CNNConfig = CNNConfig()
     wm: WMConfig = WMConfig()
     qnet: Optional[MLPConfig] = None
+    basis: BasisConfig = BasisConfig()
 
 @dataclass
 class SparsityConfig:
@@ -152,6 +158,7 @@ class TransformConfig:
     name: str = MISSING
     noise: bool = True
     noise_std: float = 0.01
+    basis: BasisConfig = BasisConfig()
 
 @dataclass
 class TrainerConfig:
