@@ -9,6 +9,7 @@ from torch import Tensor
 from factored_rl import configs
 from factored_rl.models.nnutils import Sequential, Reshape, one_hot
 from factored_rl.models import Network, MLP, CNN, losses
+from factored_rl.wrappers import basis
 
 class BaseModel(pl.LightningModule):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
@@ -17,17 +18,39 @@ class BaseModel(pl.LightningModule):
         self.input_shape = tuple(input_shape)
         self.n_actions = n_actions
         self.process_configs()
+        self.initialize_basis_fn()
         self.initialize_qnet()
 
     def process_configs(self):
         self.n_latent_dims = self.input_shape[0]
         self.output_shape = self.n_latent_dims
 
-    def initialize_qnet(self):
-        if self.cfg.model.qnet.basis.name is not None:
+    def initialize_basis_fn(self):
+        basis_name = self.cfg.model.qnet.basis.name
+        if basis_name is None:
+            self.basis = None
+            self.n_features = self.n_latent_dims
+        else:
+            known_bases = {
+                'polynomial': basis.PolynomialBasisFunction,
+                'legendre': basis.LegendreBasisFunction,
+                'fourier': basis.FourierBasisFunction,
+            }
+            if basis_name not in known_bases:
+                raise NotImplementedError(
+                    f'Unknown basis type "{basis_name}" not in {known_bases}')
 
+            basis_type = known_bases[basis_name]
+            self.basis: basis.BasisFunction = basis_type(self.n_latent_dims,
+                                                         self.cfg.model.qnet.basis.rank)
+
+    def initialize_qnet(self):
+        n_inputs = self.n_latent_dims if (self.basis is None) else self.basis.n_features
         if self.cfg.model.qnet is not None:
-            self.qnet = MLP.from_config(self.n_latent_dims, self.n_actions, self.cfg.model.qnet)
+            if (self.basis is not None) and (self.cfg.model.qnet.n_hidden_layers > 0):
+                raise RuntimeError('Expected qnet head to be linear when using basis function')
+
+            self.qnet = MLP.from_config(n_inputs, self.n_actions, self.cfg.model.qnet)
 
 class EncoderModel(BaseModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
