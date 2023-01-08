@@ -24,6 +24,8 @@ class BaseModel(pl.LightningModule):
         self.output_shape = self.n_latent_dims
 
     def initialize_qnet(self):
+        if self.cfg.model.qnet.basis.name is not None:
+
         if self.cfg.model.qnet is not None:
             self.qnet = MLP.from_config(self.n_latent_dims, self.n_actions, self.cfg.model.qnet)
 
