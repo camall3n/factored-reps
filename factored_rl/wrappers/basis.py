@@ -22,11 +22,16 @@ class BasisFunction:
     basis_element_multiplicity = 1 # Number of terms per basis element
 
     def __init__(self, ndim: int, rank: int) -> None:
+        if ndim < 1:
+            raise ValueError('Input must have at least 1 dimension')
+        if rank < 0:
+            raise ValueError('Rank must be >= 0')
         self.ndim = ndim
         self.rank = rank
 
         self.basis_terms = np.array(cartesian_sum(self.rank, self.ndim), dtype=np.float32)
         self.basis_terms = self.basis_terms.reshape(-1, self.ndim) # (n_basis_terms, ndim)
+        self.n_features = len(self.basis_terms)
 
     def _get_basis_features(self, obs: np.ndarray) -> np.ndarray:
         raise NotImplementedError(
@@ -100,7 +105,7 @@ class LegendreBasisFunction(BasisFunction):
 class FourierBasisFunction(BasisFunction):
     basis_element_multiplicity = 2
 
-    def __init__(self, ndim: int, rank: int, half_period: np.floating):
+    def __init__(self, ndim: int, rank: int, half_period: np.floating = 2.0):
         super().__init__(ndim, rank)
         self.half_period = half_period
 

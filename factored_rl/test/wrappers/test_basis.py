@@ -1,7 +1,9 @@
+import pytest
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from factored_rl.wrappers.basis import BasisWrapper
+from factored_rl.wrappers.basis import BasisWrapper, PolynomialBasisFunction
 from factored_rl.wrappers import PolynomialBasisWrapper as Polynomial
 from factored_rl.wrappers import LegendreBasisWrapper as Legendre
 from factored_rl.wrappers import FourierBasisWrapper as Fourier
@@ -46,6 +48,20 @@ def visualize_points(basis: BasisWrapper, rank: int = 1):
 
 def get_output_shape(basis: BasisWrapper, ndim: int, rank: int):
     return get_curves(basis=basis, ndim=ndim, rank=rank)[-1].shape[-1]
+
+@pytest.mark.parametrize("ndim,rank", [(n, r) for n in range(1, 5) for r in range(4)])
+def test_basic_shapes(ndim, rank):
+    basis_fn = PolynomialBasisFunction(ndim=ndim, rank=rank)
+    env = BoundedPointEnv(ndim)
+    basis_wrapper = Polynomial(env, rank)
+    assert basis_fn.n_features == basis_wrapper.observation_space.shape[0]
+    assert get_output_shape(basis=Polynomial, ndim=ndim, rank=rank)
+
+def test_errors():
+    with pytest.raises(ValueError):
+        PolynomialBasisFunction(ndim=0, rank=1)
+    with pytest.raises(ValueError):
+        PolynomialBasisFunction(ndim=1, rank=-1)
 
 def test_polynomial_1d():
     assert get_output_shape(basis=Polynomial, ndim=1, rank=0) == 1 # 0
