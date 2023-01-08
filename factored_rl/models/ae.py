@@ -15,31 +15,39 @@ class BaseModel(pl.LightningModule):
         super().__init__()
         self.cfg = cfg
         self.input_shape = tuple(input_shape)
-        self.n_latent_dims = input_shape[0]
-        self.output_shape = self.n_latent_dims
-        if cfg.model.qnet is not None:
-            self.qnet = MLP.from_config(self.n_latent_dims, n_actions, cfg.model.qnet)
+        self.n_actions = n_actions
+        self.process_configs()
+        self.initialize_qnet()
 
-class EncoderModel(pl.LightningModule):
-    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
-        super().__init__()
-        self.cfg = cfg
-        self.input_shape = tuple(input_shape)
-        self.n_latent_dims = cfg.model.n_latent_dims
+    def process_configs(self):
+        self.n_latent_dims = self.input_shape[0]
         self.output_shape = self.n_latent_dims
-        if cfg.model.qnet is not None:
-            self.qnet = MLP.from_config(self.n_latent_dims, n_actions, cfg.model.qnet)
-        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
+
+    def initialize_qnet(self):
+        if self.cfg.model.qnet is not None:
+            self.qnet = MLP.from_config(self.n_latent_dims, self.n_actions, self.cfg.model.qnet)
+
+class EncoderModel(BaseModel):
+    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
+        super().__init__(input_shape, n_actions, cfg)
+        self.encoder = EncoderNet(self.input_shape, self.n_latent_dims, cfg.model)
+
+    def process_configs(self):
+        self.n_latent_dims = self.cfg.model.n_latent_dims
+        self.output_shape = self.n_latent_dims
 
 class AutoencoderModel(EncoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__(input_shape, n_actions, cfg)
-        self.output_shape = self.input_shape
         self.decoder = DecoderNet(self.encoder, input_shape, cfg.model)
         self.subtract_mean_input = cfg.model.subtract_mean_input
         if self.subtract_mean_input:
             self.mean_input = torch.zeros(input_shape, device=cfg.model.device).detach()
             self.n_inputs_observed = 0
+
+    def process_configs(self):
+        self.n_latent_dims = self.cfg.model.n_latent_dims
+        self.output_shape = self.n_latent_dims
 
     def update_mean_input(self, x: Tensor):
         if self.subtract_mean_input:
