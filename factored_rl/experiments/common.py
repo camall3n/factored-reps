@@ -9,7 +9,8 @@ from factored_rl import configs
 import gym
 from gym.wrappers import FlattenObservation
 from visgrid.envs import GridworldEnv, TaxiEnv
-from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, ObservationPermutationWrapper, MoveAxisToCHW
+from factored_rl.wrappers import RotationWrapper, FactorPermutationWrapper, ObservationPermutationWrapper
+from factored_rl.wrappers import MoveAxisToCHW, PolynomialBasisWrapper, FourierBasisWrapper, LegendreBasisWrapper
 from visgrid.wrappers import GrayscaleWrapper, InvertWrapper, ToFloatWrapper, NormalizeWrapper, NoiseWrapper, ClipWrapper
 
 # Model
@@ -77,6 +78,17 @@ def initialize_env(cfg: configs.Config, seed: int = None):
         else:
             env = ClipWrapper(env, -1., 1.)
     env = ToFloatWrapper(env)
+    if cfg.transform.basis.name is not None:
+        known_bases = {
+            'polynomial': PolynomialBasisWrapper,
+            'legendre': LegendreBasisWrapper,
+            'fourier': FourierBasisWrapper,
+        }
+        if cfg.transform.basis.name not in known_bases:
+            raise NotImplementedError(
+                f'Unknown basis type "{cfg.transform.basis.name}" not in {known_bases}')
+        else:
+            env = known_bases[cfg.transform.basis.name](env, cfg.transform.basis.rank)
     return env
 
 def initialize_model(input_shape, n_actions, cfg: configs.Config):

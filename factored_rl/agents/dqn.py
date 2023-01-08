@@ -6,7 +6,8 @@ import torch
 import pytorch_lightning as pl
 
 from factored_rl import configs
-from factored_rl.models.nnutils import extract, Sequential, Identity
+from factored_rl.models.nnutils import extract, Identity
+from factored_rl.models.qnet import QNetModule
 from .replaymemory import ReplayMemory
 
 class DQNAgent():
@@ -28,7 +29,7 @@ class DQNAgent():
         self.n_training_steps = 0
 
         encoder = model.encoder if hasattr(model, 'encoder') else Identity()
-        q_net_template = Sequential(encoder, model.qnet)
+        q_net_template = QNetModule(encoder, model.basis, model.qnet)
         self.q = q_net_template.to(cfg.model.device)
         self.q_target = copy.deepcopy(q_net_template).to(cfg.model.device)
         self.q_target.hard_copy_from(self.q)

@@ -9,37 +9,70 @@ from torch import Tensor
 from factored_rl import configs
 from factored_rl.models.nnutils import Sequential, Reshape, one_hot
 from factored_rl.models import Network, MLP, CNN, losses
+from factored_rl.wrappers import basis
 
 class BaseModel(pl.LightningModule):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__()
         self.cfg = cfg
         self.input_shape = tuple(input_shape)
-        self.n_latent_dims = input_shape[0]
-        self.output_shape = self.n_latent_dims
-        if cfg.model.qnet is not None:
-            self.qnet = MLP.from_config(self.n_latent_dims, n_actions, cfg.model.qnet)
+        self.n_actions = n_actions
+        self.process_configs()
+        self.initialize_basis_fn()
+        self.initialize_qnet()
 
-class EncoderModel(pl.LightningModule):
-    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
-        super().__init__()
-        self.cfg = cfg
-        self.input_shape = tuple(input_shape)
-        self.n_latent_dims = cfg.model.n_latent_dims
+    def process_configs(self):
+        self.n_latent_dims = self.input_shape[0]
         self.output_shape = self.n_latent_dims
-        if cfg.model.qnet is not None:
-            self.qnet = MLP.from_config(self.n_latent_dims, n_actions, cfg.model.qnet)
-        self.encoder = EncoderNet(input_shape, self.n_latent_dims, cfg.model)
+
+    def initialize_basis_fn(self):
+        basis_name = self.cfg.model.qnet.basis.name
+        if basis_name is None:
+            self.basis = None
+            self.n_features = self.n_latent_dims
+        else:
+            known_bases = {
+                'polynomial': basis.PolynomialBasisFunction,
+                'legendre': basis.LegendreBasisFunction,
+                'fourier': basis.FourierBasisFunction,
+            }
+            if basis_name not in known_bases:
+                raise NotImplementedError(
+                    f'Unknown basis type "{basis_name}" not in {known_bases}')
+
+            basis_type = known_bases[basis_name]
+            self.basis: basis.BasisFunction = basis_type(self.n_latent_dims,
+                                                         self.cfg.model.qnet.basis.rank)
+
+    def initialize_qnet(self):
+        n_inputs = self.n_latent_dims if (self.basis is None) else self.basis.n_features
+        if self.cfg.model.qnet is not None:
+            if (self.basis is not None) and (self.cfg.model.qnet.n_hidden_layers > 0):
+                raise RuntimeError('Expected qnet head to be linear when using basis function')
+
+            self.qnet = MLP.from_config(n_inputs, self.n_actions, self.cfg.model.qnet)
+
+class EncoderModel(BaseModel):
+    def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
+        super().__init__(input_shape, n_actions, cfg)
+        self.encoder = EncoderNet(self.input_shape, self.n_latent_dims, cfg.model)
+
+    def process_configs(self):
+        self.n_latent_dims = self.cfg.model.n_latent_dims
+        self.output_shape = self.n_latent_dims
 
 class AutoencoderModel(EncoderModel):
     def __init__(self, input_shape: Tuple, n_actions: int, cfg: configs.Config):
         super().__init__(input_shape, n_actions, cfg)
-        self.output_shape = self.input_shape
         self.decoder = DecoderNet(self.encoder, input_shape, cfg.model)
         self.subtract_mean_input = cfg.model.subtract_mean_input
         if self.subtract_mean_input:
             self.mean_input = torch.zeros(input_shape, device=cfg.model.device).detach()
             self.n_inputs_observed = 0
+
+    def process_configs(self):
+        self.n_latent_dims = self.cfg.model.n_latent_dims
+        self.output_shape = self.n_latent_dims
 
     def update_mean_input(self, x: Tensor):
         if self.subtract_mean_input:
