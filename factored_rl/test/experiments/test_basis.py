@@ -4,41 +4,34 @@ from ..utils import get_config, cleanup
 from factored_rl.experiments.rl_vs_rep.run import main as rl_vs_rep
 from factored_rl.experiments.factorize.run import main as factorize
 
-cleanup()
-
 def test_no_basis():
-    configurations = [
-        ["transform=identity"],
+    overrides = [
+        "transform=identity",
+        "experiment=pytest",
+        "env=taxi",
+        "timestamp=false",
+        "agent=dqn",
+        "trainer=rl.quick",
+        "model=qnet",
     ]
-    for overrides in configurations:
-        overrides.extend([
-            "experiment=pytest",
-            "env=taxi",
-            "timestamp=false",
-            "agent=dqn",
-            "trainer=rl.quick",
-            "model=qnet",
-        ])
     cfg = get_config(overrides)
     rl_vs_rep(cfg)
 
-def test_transform_basis_override():
-    configurations = [
-        ["transform=identity", "transform.basis.name=polynomial", "transform.basis.rank=3"],
-        ["transform=identity", "transform.basis.name=legendre", "transform.basis.rank=3"],
-        ["transform=identity", "transform.basis.name=fourier", "transform.basis.rank=2"],
+@pytest.mark.parametrize("basis,rank", [('polynomial', 3), ('legendre', 3), ('fourier', 2)])
+def test_transform_basis(basis, rank):
+    overrides = [
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        "transform=identity",
+        f"transform.basis.name={basis}",
+        f"transform.basis.rank={rank}",
+        "model=qnet",
+        "agent=dqn",
+        "trainer=rl.quick",
     ]
-    for overrides in configurations:
-        overrides.extend([
-            "experiment=pytest",
-            "env=taxi",
-            "timestamp=false",
-            "agent=dqn",
-            "trainer=rl.quick",
-            "model=qnet",
-        ])
-        cfg = get_config(overrides)
-        rl_vs_rep(cfg)
+    cfg = get_config(overrides)
+    rl_vs_rep(cfg)
 
 def test_model_basis():
     common = [
@@ -61,3 +54,5 @@ def test_model_basis():
     ]
     factorize(get_config(common + train_rep_and_save))
     rl_vs_rep(get_config(common + load_and_train_rl))
+
+cleanup()

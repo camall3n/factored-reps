@@ -6,135 +6,162 @@ from factored_rl.experiments.rl_vs_rep.run import main as rl_vs_rep
 from factored_rl.experiments.factorize.run import main as factorize
 from factored_rl.experiments.factorize.tune import main as tune_factorize
 
-cleanup()
+@pytest.mark.parametrize("model,scale", [
+    ('ae/ae_cnn_64', 2),
+    ('factored/ae_cnn_64', 3),
+    ('factored/wm_cnn_64_attn', 4),
+])
+def test_param_scaling(model, scale):
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        "transform=images",
+        "agent=dqn",
+        f"model={model}",
+        f"model.param_scaling={scale}",
+        "trainer=rep.quick",
+        "tuner.tune_rep=true",
+        "tuner.tune_rl=false",
+        "tuner.should_prune=true",
+        "tuner.tune_metric=reconst",
+    ])
+    tune_factorize(cfg)
+    cleanup()
 
-def test_param_scaling():
-    configurations = [
-        ["model=ae/ae_cnn_64", "model.param_scaling=2"],
-        ["model=factored/ae_cnn_64", "model.param_scaling=3"],
-        ["model=factored/wm_cnn_64_attn", "model.param_scaling=4"],
-    ] # yapf: disable
-    for overrides in configurations:
-        overrides.extend([
-            "env=taxi",
-            "agent=dqn",
-            "transform=images",
-            "experiment=pytest",
-            "timestamp=false",
-            "trainer=rep.quick",
-            "tuner.tune_rep=true",
-            "tuner.tune_rl=false",
-            "tuner.should_prune=true",
-            "tuner.tune_metric=reconst",
-        ])
-        cfg = get_config(overrides)
+@pytest.mark.parametrize("tune_rl,prune,metric", [
+    ('false', 'true', 'reconst'),
+    ('true', 'false', 'rl'),
+])
+def test_tune_factorize(tune_rl: bool, prune: bool, metric: str):
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        "transform=images",
+        "model=factored/wm_cnn_64_attn",
+        "agent=dqn",
+        "trainer=rep.quick",
+        "tuner.tune_rep=true",
+        f"tuner.tune_rl={tune_rl}",
+        f"tuner.should_prune={prune}",
+        f"tuner.tune_metric={metric}",
+    ])
+    tune_factorize(cfg)
+    cleanup()
+
+@pytest.mark.parametrize(
+    "tune_rep,tune_rl,prune,metric",
+    [
+        ('false', 'false', 'false', 'rl'), # nothing to tune
+        ('true', 'false', 'false', 'actions'), # unknown metric
+        ('false', 'true', 'true', 'rep'), # pruning requires tune_rep
+        ('true', 'true', 'true', 'rl'), # pruning incompatible with tuning via RL metric
+    ])
+def test_tune_factorize_errors(tune_rep, tune_rl, prune, metric):
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        "transform=images",
+        "model=factored/wm_cnn_64_attn",
+        "agent=dqn",
+        "trainer=rep.quick",
+        f"tuner.tune_rep={tune_rep}",
+        f"tuner.tune_rl={tune_rl}",
+        f"tuner.should_prune={prune}",
+        f"tuner.tune_metric={metric}",
+    ])
+    with pytest.raises(RuntimeError):
         tune_factorize(cfg)
+    cleanup()
 
-def test_tune_factorize():
-    configurations = [
-        ["tuner.tune_rep=true", "tuner.tune_rl=false", "tuner.should_prune=true", "tuner.tune_metric=reconst"],
-        ["tuner.tune_rep=true", "tuner.tune_rl=true", "tuner.should_prune=false", "tuner.tune_metric=rl"],
-    ] # yapf: disable
-    for overrides in configurations:
-        overrides.extend([
-            "env=taxi",
-            "agent=dqn",
-            "transform=images",
-            "model=factored/wm_cnn_64_attn",
-            "experiment=pytest",
-            "timestamp=false",
-            "trainer=rep.quick",
-        ])
-        cfg = get_config(overrides)
-        tune_factorize(cfg)
+@pytest.mark.parametrize("env,transform,model_override", [
+    ('gridworld', 'rotate', []),
+    ('taxi', 'images', ['model=ae/ae_cnn_64']),
+])
+def test_disent_vs_rep(env, transform, model_override):
+    cfg = get_config([
+        f"env={env}",
+        f"transform={transform}",
+        "experiment=pytest",
+        "timestamp=false",
+        "trainer.quick=true",
+    ] + model_override)
+    disent_vs_rep(cfg)
 
-def test_tune_factorize_errors():
-    configurations = [
-        # nothing to tune
-        ["tuner.tune_rep=false", "tuner.tune_rl=false", "tuner.should_prune=false", "tuner.tune_metric=rl"],
-        # unknown metric
-        ["tuner.tune_rep=true", "tuner.tune_rl=false", "tuner.should_prune=false", "tuner.tune_metric=actions"],
-        # pruning requires tune_rep
-        ["tuner.tune_rep=false", "tuner.tune_rl=true", "tuner.should_prune=true", "tuner.tune_metric=rep"],
-        # pruning incompatible with tuning via RL metric
-        ["tuner.tune_rep=true", "tuner.tune_rl=true", "tuner.should_prune=true", "tuner.tune_metric=rl"],
-    ] # yapf: disable
-    for overrides in configurations:
-        overrides.extend([
-            "env=taxi",
-            "transform=images",
-            "model=factored/wm_cnn_64_attn",
-            "experiment=pytest",
-            "timestamp=false",
-            "trainer=rep.quick",
-        ])
-        cfg = get_config(overrides)
-        with pytest.raises(RuntimeError):
-            tune_factorize(cfg)
+@pytest.mark.parametrize('transform,model', [
+    ('images', 'cnn_64'),
+    ('identity', 'qnet'),
+])
+def test_rl_vs_rep(transform, model):
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        f"transform={transform}",
+        f"model={model}",
+        "agent=dqn",
+        "trainer=rl.quick",
+    ])
+    rl_vs_rep(cfg)
 
-def test_disent_vs_rep():
-    configurations = [
-        ["env=gridworld", "transform=rotate"],
-        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
-    ] # yapf: disable
-    for overrides in configurations:
-        overrides.extend([
-            "experiment=pytest",
-            "timestamp=false",
-            "trainer.quick=true",
-        ])
-        cfg = get_config(overrides)
-        disent_vs_rep(cfg)
+def test_factorize_betavae():
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        "transform=images",
+        "model=ae/betavae",
+        "loss=betavae",
+        "trainer=rep.quick",
+    ])
+    factorize(cfg)
 
-def test_rl_vs_rep():
-    configurations = [
-        ["transform=images", "model=cnn_64"],
-        ["transform=identity", "model=qnet"],
-    ]
-    for overrides in configurations:
-        overrides.extend([
-            "experiment=pytest",
-            "env=taxi",
-            "timestamp=false",
-            "agent=dqn",
-            "trainer=rl.quick",
-        ])
-        cfg = get_config(overrides)
-        rl_vs_rep(cfg)
+@pytest.mark.parametrize("env,transform,model", [
+    ('taxi', 'images', 'ae/ae_cnn_64'),
+    ('gridworld', 'permute_factors', 'ae/ae_mlp'),
+])
+def test_factorize_ae(env, transform, model):
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        f"env={env}",
+        f"transform={transform}",
+        f"model={model}",
+        "trainer=rep.quick",
+    ])
+    factorize(cfg)
 
-def test_factorize_ae():
-    configurations = [
-        ["env=taxi", "transform=images", "model=ae/betavae", "loss=betavae"],
-        ["env=taxi", "transform=images", "model=ae/ae_cnn_64"],
-        ["env=gridworld", "transform=permute_factors", "model=ae/ae_mlp"],
-        ["env=gridworld", "transform=permute_factors", "model=factored/ae_mlp",
-         "loss.actions=0.003", "loss.effects=0.003", "loss.reconst=1.0"],
-    ] # yapf: disable
-    for overrides in configurations:
-        overrides.extend([
-            "experiment=pytest",
-            "timestamp=false",
-            "trainer=rep.quick",
-        ])
-        cfg = get_config(overrides)
-        factorize(cfg)
+def test_factorize_ae_losses():
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=gridworld",
+        "transform=permute_factors",
+        "model=factored/ae_mlp",
+        "loss.actions=0.003",
+        "loss.effects=0.003",
+        "loss.reconst=1.0",
+        "trainer=rep.quick",
+    ])
+    factorize(cfg)
 
-def test_factorize_wm():
-    configurations = [
-        [
-            "env=taxi", "transform=images", "model=factored/wm_cnn_64_attn", "loss.actions=0.003",
-            "loss.effects=0.003", "loss.reconst=1.0", "loss.parents=1.0",
-            "loss/sparsity=unit_pnorm"
-        ],
-    ]
-    for overrides in configurations:
-        overrides.extend([
-            "experiment=pytest",
-            "timestamp=false",
-            "trainer=rep.quick",
-        ])
-        cfg = get_config(overrides)
-        factorize(cfg)
+def test_factorize_wm_losses():
+    cfg = get_config([
+        "experiment=pytest",
+        "timestamp=false",
+        "env=taxi",
+        "transform=images",
+        "model=factored/wm_cnn_64_attn",
+        "loss.actions=0.003",
+        "loss.effects=0.003",
+        "loss.reconst=1.0",
+        "loss.parents=1.0",
+        "loss/sparsity=unit_pnorm",
+        "trainer=rep.quick",
+    ])
+    factorize(cfg)
 
 def test_save_and_load_ae():
     common = [
