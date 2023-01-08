@@ -80,6 +80,10 @@ class BasisConfig:
     rank: int = MISSING
 
 @dataclass
+class QNetConfig(MLPConfig):
+    basis: BasisConfig = BasisConfig()
+
+@dataclass
 class ModelConfig:
     name: Optional[str] = None
     arch: ArchitectureConfig = ArchitectureConfig()
@@ -93,8 +97,7 @@ class ModelConfig:
     mlp: MLPConfig = MLPConfig()
     cnn: CNNConfig = CNNConfig()
     wm: WMConfig = WMConfig()
-    qnet: Optional[MLPConfig] = None
-    basis: BasisConfig = BasisConfig()
+    qnet: Optional[QNetConfig] = None
 
 @dataclass
 class SparsityConfig:

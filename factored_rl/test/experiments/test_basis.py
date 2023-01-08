@@ -21,12 +21,11 @@ def test_no_basis():
     cfg = get_config(overrides)
     rl_vs_rep(cfg)
 
-def test_basis_override():
+def test_transform_basis_override():
     configurations = [
-        ["transform=identity", "transform.basis.name=polynomial"],
-        ["transform=identity", "transform.basis.name=legendre"],
-        ["transform=identity", "transform.basis.name=fourier", "transform.basis.rank=1"],
-        ["transform=identity", "model.basis.name=polynomial", "model.basis.rank=1"],
+        ["transform=identity", "transform.basis.name=polynomial", "transform.basis.rank=3"],
+        ["transform=identity", "transform.basis.name=legendre", "transform.basis.rank=3"],
+        ["transform=identity", "transform.basis.name=fourier", "transform.basis.rank=2"],
     ]
     for overrides in configurations:
         overrides.extend([
@@ -37,5 +36,26 @@ def test_basis_override():
             "trainer=rl.quick",
             "model=qnet",
         ])
-    cfg = get_config(overrides)
-    rl_vs_rep(cfg)
+        cfg = get_config(overrides)
+        rl_vs_rep(cfg)
+
+def test_model_basis_override():
+    configurations = [
+        [
+            "transform=identity",
+            "model=qnet",
+            "model.qnet.basis.name=polynomial",
+            "model.qnet.basis.rank=1",
+        ],
+    ]
+    for overrides in configurations:
+        overrides.extend([
+            "experiment=pytest",
+            "env=taxi",
+            "timestamp=false",
+            "agent=dqn",
+            "trainer=rl.quick",
+            "model=qnet",
+        ])
+        cfg = get_config(overrides)
+        rl_vs_rep(cfg)

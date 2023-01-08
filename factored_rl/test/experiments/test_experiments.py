@@ -99,8 +99,8 @@ def test_rl_vs_rep():
             "agent=dqn",
             "trainer=rl.quick",
         ])
-    cfg = get_config(overrides)
-    rl_vs_rep(cfg)
+        cfg = get_config(overrides)
+        rl_vs_rep(cfg)
 
 def test_factorize_ae():
     configurations = [
