@@ -50,17 +50,6 @@ class BasisFunction:
             features = features.squeeze(axis=0)
         return features
 
-class IdentityBasisFunction(BasisFunction):
-    basis_element_multiplicity = 1
-
-    def __init__(self, ndim: int) -> None:
-        super().__init__(ndim=ndim, rank=0)
-        self.basis_terms = np.ones((1, ndim))
-        self.n_features = ndim
-
-    def _get_basis_features(self, obs):
-        return obs
-
 class PolynomialBasisFunction(BasisFunction):
     basis_element_multiplicity = 1
 

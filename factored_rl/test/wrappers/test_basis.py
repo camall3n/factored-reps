@@ -3,7 +3,7 @@ import pytest
 import matplotlib.pyplot as plt
 import numpy as np
 
-from factored_rl.wrappers.basis import BasisWrapper, IdentityBasisFunction, PolynomialBasisFunction
+from factored_rl.wrappers.basis import BasisWrapper, PolynomialBasisFunction
 from factored_rl.wrappers import PolynomialBasisWrapper as PolynomialWrapper
 from factored_rl.wrappers import LegendreBasisWrapper as LegendreWrapper
 from factored_rl.wrappers import FourierBasisWrapper as FourierWrapper
@@ -62,11 +62,6 @@ def test_errors():
         PolynomialBasisFunction(ndim=0, rank=1)
     with pytest.raises(ValueError):
         PolynomialBasisFunction(ndim=1, rank=-1)
-
-@pytest.mark.parametrize("ndim", range(1, 5))
-def test_identity_basis_fn(ndim):
-    basis_fn = IdentityBasisFunction(ndim=ndim)
-    assert basis_fn.n_features == ndim
 
 def test_polynomial_1d():
     assert get_output_shape(wrapper=PolynomialWrapper, ndim=1, rank=0) == 1 # 0
