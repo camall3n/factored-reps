@@ -12,9 +12,11 @@ def get_config(overrides):
     return cfg
 
 def cleanup():
-    cfg = get_config(["experiment=pytest"])
-    dirname = _initialize_experiment_dir(cfg)
-    shutil.rmtree(dirname)
+    cfg = get_config(["experiment=pytest", "timestamp=false"])
+    seed_dir = os.path.abspath(_initialize_experiment_dir(cfg))
+    trial_dir = os.path.dirname(seed_dir)
+    experiment_dir = os.path.dirname(trial_dir)
+    shutil.rmtree(experiment_dir)
 
     journalfile = 'factored_rl/hyperparams/tuning/pytest.journal'
     if os.path.isfile(journalfile):

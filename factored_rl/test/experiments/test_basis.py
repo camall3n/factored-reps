@@ -4,7 +4,12 @@ from ..utils import get_config, cleanup
 from factored_rl.experiments.rl_vs_rep.run import main as rl_vs_rep
 from factored_rl.experiments.factorize.run import main as factorize
 
-def test_no_basis():
+@pytest.fixture(scope="module") # set scope to module
+def setup():
+    yield None # send None to each test
+    cleanup() # once all tests in the scope complete, run cleanup()
+
+def test_no_basis(setup):
     overrides = [
         "transform=identity",
         "experiment=pytest",
@@ -18,7 +23,7 @@ def test_no_basis():
     rl_vs_rep(cfg)
 
 @pytest.mark.parametrize("basis,rank", [('polynomial', 3), ('legendre', 3), ('fourier', 2)])
-def test_transform_basis(basis, rank):
+def test_transform_basis(setup, basis, rank):
     overrides = [
         "experiment=pytest",
         "timestamp=false",
@@ -33,7 +38,7 @@ def test_transform_basis(basis, rank):
     cfg = get_config(overrides)
     rl_vs_rep(cfg)
 
-def test_model_basis():
+def test_model_basis(setup):
     common = [
         "experiment=pytest",
         "timestamp=false",
@@ -54,5 +59,3 @@ def test_model_basis():
     ]
     factorize(get_config(common + train_rep_and_save))
     rl_vs_rep(get_config(common + load_and_train_rl))
-
-cleanup()
