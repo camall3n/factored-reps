@@ -121,6 +121,7 @@ class Identity(Module):
     def __init__(self):
         super().__init__()
         self.dummy = torch.nn.parameter.Parameter(torch.tensor(0.0))
+        self.freeze()
 
     def forward(self, args):
         return args
