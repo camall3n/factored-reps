@@ -59,7 +59,7 @@ def main(cfg: configs.Config):
             if arch not in ['wm', 'paired_ae', 'ae']:
                 raise RuntimeError(f'Cannot tune representation for architecture "{arch}"')
             cfg.trainer.rep_learning_rate = trial.suggest_float(
-                'trainer.rep_learning_rate',
+                'rep_lr',
                 low=2e-4,
                 high=5e-3,
                 log=True,
@@ -68,24 +68,13 @@ def main(cfg: configs.Config):
             cfg.model.param_scaling = trial.suggest_categorical('param_scaling', [2, 4, 8, 16])
 
             if arch in ['wm', 'paired_ae']:
-                cfg.loss.sparsity.name = trial.suggest_categorical(
-                    'loss.sparsity.name',
-                    ['sum_div_max', 'unit_pnorm'],
-                )
-                cfg.loss.actions = trial.suggest_float('loss.actions',
-                                                       low=1e-5,
-                                                       high=1e-3,
-                                                       log=True)
-                cfg.loss.effects = trial.suggest_float('loss.effects',
-                                                       low=1e-1,
-                                                       high=3e2,
-                                                       log=True)
+                cfg.loss.sparsity.name = trial.suggest_categorical('sparsity',
+                                                                   ['sum_div_max', 'unit_pnorm'])
+                cfg.loss.actions = trial.suggest_float('L_actions', low=1e-5, high=1e-3, log=True)
+                cfg.loss.effects = trial.suggest_float('L_effects', low=1e-1, high=3e2, log=True)
 
             if arch == 'wm':
-                cfg.loss.parents = trial.suggest_float('loss.parents',
-                                                       low=3e-5,
-                                                       high=4e-2,
-                                                       log=True)
+                cfg.loss.parents = trial.suggest_float('L_parents', low=3e-5, high=4e-2, log=True)
 
             if cfg.env.name == 'taxi':
                 cfg.env.depot_dropoff_only = True
@@ -101,11 +90,25 @@ def main(cfg: configs.Config):
 
         if cfg.tuner.tune_rl:
             cfg.trainer.rl_learning_rate = trial.suggest_float(
-                'trainer.rl_learning_rate',
+                'rl_lr',
                 low=3e-5,
                 high=3e-3,
                 log=True,
             )
+            if cfg.trainer.tune_dqn:
+                if cfg.agent.name != 'dqn':
+                    raise RuntimeError(f"Cannot tune DQN with agent '{cfg.agent.name}'")
+                cfg.model.qnet.n_hidden_layers = trial.suggest_int('n_hidden_layers',
+                                                                   low=1,
+                                                                   high=2)
+                cfg.agent.target_copy_alpha = trial.suggest_float('target_copy_alpha',
+                                                                  low=1e-4,
+                                                                  high=1.0,
+                                                                  log=True)
+                cfg.agent.epsilon_half_life_steps = trial.suggest_int('epsilon_half_life',
+                                                                      low=1000,
+                                                                      high=20000,
+                                                                      log=True)
 
         if cfg.env.name == 'taxi':
             cfg.env.depot_dropoff_only = True
@@ -114,10 +117,7 @@ def main(cfg: configs.Config):
 
         if cfg.tuner.tune_metric == 'rl':
             final_ep_results = results[-1]
-            score = min(
-                cfg.env.n_steps_per_episode,
-                final_ep_results['total_steps'] / (final_ep_results['total_reward'] + 1e-5),
-            )
+            score = final_ep_results['total_steps'] / (final_ep_results['total_reward'] + 1e-5)
         elif cfg.tuner.tune_metric == 'reconst':
             score = callback_metrics['loss/reconst']
         else:

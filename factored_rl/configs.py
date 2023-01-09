@@ -183,6 +183,7 @@ class LightningTrainerConfig(TrainerConfig):
 class TunerConfig:
     tune_rep: bool = True
     tune_rl: bool = False
+    tune_dqn: bool = False
     should_prune: bool = False
     tune_metric: str = 'rl' # 'rl' or 'reconst'
 
