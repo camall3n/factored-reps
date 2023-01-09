@@ -95,7 +95,7 @@ def main(cfg: configs.Config):
                 high=3e-3,
                 log=True,
             )
-            if cfg.trainer.tune_dqn:
+            if cfg.tuner.tune_dqn:
                 if cfg.agent.name != 'dqn':
                     raise RuntimeError(f"Cannot tune DQN with agent '{cfg.agent.name}'")
                 cfg.model.qnet.n_hidden_layers = trial.suggest_int('n_hidden_layers',
