@@ -9,6 +9,7 @@ import seaborn as sns
 
 # experiment_name = 'rl_vs_rep_02'
 experiment_names = ['gt_03', 'cnn_08']
+# experiment_names = ['poly_3', 'poly_4', 'leg_3', 'leg_4', 'four_3', 'four_4']
 
 def try_load(load_fn, dirname, filename_list):
     for filename in filename_list:
@@ -107,17 +108,17 @@ def plot_results(data):
                 data=subset,
                 y=y_axis,
                 x=x_axis,
-                style='arch',
+                style='experiment',
                 # units='trial',
                 # units='seed',
                 # estimator=None,
                 # style_order=['mlp', 'cnn'],
                 hue='rl_lr',
                 # hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
-                palette='colorblind',
+                # palette='colorblind',
             )
-            best_seed = dqn.query(f'trial=="trial_0140"')
-            ax.plot(best_seed[x_axis], best_seed[y_axis], 'r')
+            # best_seed = dqn.query(f'trial=="trial_0140"')
+            # ax.plot(best_seed[x_axis], best_seed[y_axis], 'r')
             text_offset = dqn.episode.max() / 100
             plt.hlines(expert_steps,
                        dqn.episode.min(),
@@ -159,7 +160,15 @@ def main():
     for experiment_name in experiment_names:
         exp_data = load_results(experiment_name)
         data = pd.concat((exp_data, data), ignore_index=True)
-    plot_results(data.query("agent!='dqn' or (arch=='enc' and rl_lr in [0.0002, 0.0003]) or arch=='qnet'"))
+    # plot_results(data.query("agent!='dqn' or (arch=='enc' and rl_lr in [0.0002, 0.0003]) or arch=='qnet'"))
+    plot_results(data.query("agent!='dqn' or (arch=='qnet' and (experiment=='rl_vs_rep_02' or (rl_lr < 0.001)))"))
+
+#%%
+final_episode_data = data.query("episode==9999").sort_values(by='experiment')
+ax = sns.scatterplot(data=final_episode_data, x='rl_lr', y='total_steps', hue='experiment', alpha=0.5)
+# ax.set_xscale('log')
+ax.legend(loc='lower right')
+#%%
 
 
 if __name__ == '__main__':

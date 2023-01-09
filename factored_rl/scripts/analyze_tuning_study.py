@@ -42,15 +42,10 @@ import pandas as pd
 df = pd.DataFrame(both_entries)
 
 sns.kdeplot(data=df, hue='sprites', x='trainer.rep_learning_rate', log_scale=True, cut=0)
-
 sns.kdeplot(data=df, hue='sprites', x='loss.actions', log_scale=True, cut=0)
-
 sns.kdeplot(data=df, hue='sprites', x='loss.effects', log_scale=True, cut=0)
-
 sns.kdeplot(data=df, hue='sprites', x='loss.parents', log_scale=True, cut=0)
-
 sns.histplot(data=df, hue='sprites', x='loss.sparsity.name')
-
 sns.kdeplot(data=df, hue='sprites', x='loss/reconst', log_scale=False, clip=[0,0.04], cut=0)
 
 import matplotlib as mpl
