@@ -8,8 +8,9 @@ import pandas as pd
 import seaborn as sns
 
 # experiment_name = 'rl_vs_rep_02'
-experiment_names = ['gt_03', 'cnn_08']
+experiment_names = ['gt_03', 'cnn_08', 'mlp_tune02']
 # experiment_names = ['poly_3', 'poly_4', 'leg_3', 'leg_4', 'four_3', 'four_4']
+experiment_names = ['mlp_tune02']
 
 def try_load(load_fn, dirname, filename_list):
     for filename in filename_list:
@@ -64,6 +65,8 @@ def load_results(experiment_name) -> pd.DataFrame:
             'agent': cfg.agent.name,
             'arch': arch,
             'rl_lr': cfg.trainer.get('rl_learning_rate', 0) if cfg.get('trainer', None) is not None else 0,
+            'epsilon_half_life': cfg.agent.epsilon_half_life_steps if cfg.agent.name == 'dqn' else 0,
+            'target_copy_alpha': cfg.agent.target_copy_alpha if cfg.agent.name == 'dqn' else 0,
             'seed': cfg.seed,
             'noise': noise,
             'max_steps': cfg.env.n_steps_per_episode,
@@ -163,8 +166,13 @@ def main():
     # plot_results(data.query("agent!='dqn' or (arch=='enc' and rl_lr in [0.0002, 0.0003]) or arch=='qnet'"))
     plot_results(data.query("agent!='dqn' or (arch=='qnet' and (experiment=='rl_vs_rep_02' or (rl_lr < 0.001)))"))
 
+
+
 #%%
-final_episode_data = data.query("episode==9999").sort_values(by='experiment')
+# plot_experiments = ['gt_03', 'rl_vs_rep_02', 'mlp_tune02', 'cnn_08']
+final_episode_data = data.query(f"episode==9999").sort_values(by='experiment')
+final_episode_data['experiment'].unique()
+# subset_data = final_episode_data.query("experiment=='mlp_tune02'")# or (rl_lr < 0.00065 and rl_lr > 0.00025 and epsilon_half_life < 5000 and epsilon_half_life > 2500 and target_copy_alpha > 0.03)")
 ax = sns.scatterplot(data=final_episode_data, x='rl_lr', y='total_steps', hue='experiment', alpha=0.5)
 # ax.set_xscale('log')
 ax.legend(loc='lower right')
