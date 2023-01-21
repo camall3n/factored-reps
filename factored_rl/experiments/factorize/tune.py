@@ -98,17 +98,29 @@ def main(cfg: configs.Config):
             if cfg.tuner.tune_dqn:
                 if cfg.agent.name != 'dqn':
                     raise RuntimeError(f"Cannot tune DQN with agent '{cfg.agent.name}'")
-                cfg.model.qnet.n_hidden_layers = trial.suggest_int('n_hidden_layers',
-                                                                   low=1,
-                                                                   high=2)
-                cfg.agent.target_copy_alpha = trial.suggest_float('target_copy_alpha',
-                                                                  low=1e-4,
-                                                                  high=1.0,
-                                                                  log=True)
-                cfg.agent.epsilon_half_life_steps = trial.suggest_int('epsilon_half_life',
-                                                                      low=1000,
-                                                                      high=20000,
-                                                                      log=True)
+                # cfg.model.qnet.n_hidden_layers = trial.suggest_int(
+                #     'n_hidden_layers',
+                #     low=1,
+                #     high=2,
+                # )
+                cfg.agent.target_copy_alpha = trial.suggest_float(
+                    'target_copy_alpha',
+                    low=1e-4,
+                    high=1.0,
+                    log=True,
+                )
+                cfg.agent.epsilon_half_life_steps = trial.suggest_int(
+                    'epsilon_half_life',
+                    low=1000,
+                    high=20000,
+                    log=True,
+                )
+                cfg.agent.updates_per_interaction = trial.suggest_int(
+                    'updates_per_interaction',
+                    low=1,
+                    high=128,
+                    log=True,
+                )
 
         if cfg.env.name == 'taxi':
             cfg.env.depot_dropoff_only = True

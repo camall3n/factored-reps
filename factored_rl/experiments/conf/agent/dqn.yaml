@@ -11,3 +11,4 @@ replay_warmup_steps: 500
 target_copy_alpha: 0.01
 target_copy_every_n_steps: ???
 target_copy_mode: 'soft'
+updates_per_interaction: 1

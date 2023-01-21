@@ -26,7 +26,7 @@ class DQNAgent():
         }
         self.replay = ReplayMemory(cfg.agent.replay_buffer_size, on_retrieve=on_retrieve)
 
-        self.n_training_steps = 0
+        self.n_env_interactions = 0
 
         encoder = model.encoder if hasattr(model, 'encoder') else Identity()
         q_net_template = QNetModule(encoder, model.basis, model.qnet)
@@ -53,31 +53,29 @@ class DQNAgent():
 
     def store(self, experience: dict):
         self.replay.push(experience)
+        self.n_env_interactions += 1
 
     def update(self):
-        if len(self.replay) < self.cfg.agent.replay_warmup_steps:
+        if len(self.replay) < max(self.cfg.trainer.batch_size, self.cfg.agent.replay_warmup_steps):
             return 0.0
 
-        if len(self.replay) >= self.cfg.trainer.batch_size:
-            fields = ['ob', 'action', 'reward', 'terminal', 'next_ob']
-            batch = self.replay.sample(self.cfg.trainer.batch_size, fields)
-            obs, actions, rewards, terminals, next_obs = batch
-        else:
-            return 0.0
+        fields = ['ob', 'action', 'reward', 'terminal', 'next_ob']
+        batch = self.replay.sample(self.cfg.trainer.batch_size, fields)
+        obs, actions, rewards, terminals, next_obs = batch
 
-        self.q.train()
-        self.optimizer.zero_grad()
-        q_values = self._get_q_predictions(obs, actions)
-        q_targets = self._get_q_targets(rewards, terminals, next_obs)
-        loss = torch.nn.functional.smooth_l1_loss(input=q_values, target=q_targets)
-        loss.backward()
-        self.optimizer.step()
-        self.n_training_steps += 1
+        for _ in range(self.cfg.agent.updates_per_interaction):
+            self.q.train()
+            self.optimizer.zero_grad()
+            q_values = self._get_q_predictions(obs, actions)
+            q_targets = self._get_q_targets(rewards, terminals, next_obs)
+            loss = torch.nn.functional.smooth_l1_loss(input=q_values, target=q_targets)
+            loss.backward()
+            self.optimizer.step()
 
         if self.cfg.agent.target_copy_mode == 'soft':
             self.q_target.soft_copy_from(self.q, self.cfg.agent.target_copy_alpha)
         else:
-            if self.n_training_steps % self.cfg.agent.target_copy_period == 0:
+            if self.n_env_interactions % self.cfg.agent.target_copy_period == 0:
                 self.q_target.hard_copy_from(self.q)
 
         return loss.detach().item()
@@ -86,7 +84,7 @@ class DQNAgent():
         if testing:
             epsilon = self.cfg.agent.epsilon_final
         else:
-            n_fractional_half_lives = self.n_training_steps / self.cfg.agent.epsilon_half_life_steps
+            n_fractional_half_lives = self.n_env_interactions / self.cfg.agent.epsilon_half_life_steps
             scale = self.cfg.agent.epsilon_initial - self.cfg.agent.epsilon_final
             epsilon = self.cfg.agent.epsilon_final + scale * math.pow(0.5, n_fractional_half_lives)
         return epsilon

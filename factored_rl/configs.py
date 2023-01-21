@@ -142,6 +142,7 @@ class DQNAgentConfig(AgentConfig):
     target_copy_alpha: float = MISSING # per-step EMA contribution from online network
     target_copy_every_n_steps: int = MISSING
     target_copy_mode: str = MISSING
+    updates_per_interaction: int = MISSING
 
 @dataclass
 class EnvConfig:
