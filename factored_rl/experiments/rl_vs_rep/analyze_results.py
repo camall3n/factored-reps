@@ -8,9 +8,9 @@ import pandas as pd
 import seaborn as sns
 
 # experiment_name = 'rl_vs_rep_02'
-experiment_names = ['gt_03', 'cnn_08', 'mlp_tune02']
+experiment_names = ['gt_03', 'cnn_08', 'gt_nupdates']
 # experiment_names = ['poly_3', 'poly_4', 'leg_3', 'leg_4', 'four_3', 'four_4']
-experiment_names = ['mlp_tune02']
+# experiment_names = []
 
 def try_load(load_fn, dirname, filename_list):
     for filename in filename_list:
@@ -120,7 +120,7 @@ def plot_results(data):
                 # units='seed',
                 # estimator=None,
                 # style_order=['mlp', 'cnn'],
-                hue='rl_lr',
+                hue='experiment',
                 # hue_order=['identity', 'rotate', 'permute_factors', 'permute_states', 'images'],
                 # palette='colorblind',
             )
@@ -167,8 +167,8 @@ def main():
     for experiment_name in experiment_names:
         exp_data = load_results(experiment_name)
         data = pd.concat((exp_data, data), ignore_index=True)
-    # plot_results(data.query("agent!='dqn' or (arch=='enc' and rl_lr in [0.0002, 0.0003]) or arch=='qnet'"))
-    plot_results(data.query("agent!='dqn' or (arch=='qnet' and (experiment=='rl_vs_rep_02' or (rl_lr < 0.001)))"))
+    plot_results(data.query("agent!='dqn' or (experiment=='cnn_08' and rl_lr in [0.0002, 0.0003]) or (experiment == 'gt_nupdates' and (updates_per_interaction > 4 and rl_lr < 2e-4 and epsilon_half_life < 4400 and epsilon_half_life > 2500 and target_copy_alpha < 0.1)) or (experiment == 'gt_03')"))
+    # plot_results(data.query("agent!='dqn' or (arch=='qnet' and (experiment=='rl_vs_rep_02' or (rl_lr < 0.001)))"))
 
 
 
@@ -177,9 +177,13 @@ def main():
 final_episode_data = data.query(f"episode==9999").sort_values(by='experiment')
 final_episode_data['experiment'].unique()
 # subset_data = final_episode_data.query("experiment=='mlp_tune02'")# or (rl_lr < 0.00065 and rl_lr > 0.00025 and epsilon_half_life < 5000 and epsilon_half_life > 2500 and target_copy_alpha > 0.03)")
-ax = sns.scatterplot(data=final_episode_data, x='rl_lr', y='total_steps', hue='experiment', alpha=0.5)
+#%%
+subset = final_episode_data
+subset = subset.query("experiment != 'gt_nupdates' or (updates_per_interaction > 20 and rl_lr < 2e-4 and epsilon_half_life < 4400 and epsilon_half_life > 2500 and target_copy_alpha < 0.1)")
+ax = sns.scatterplot(data=subset, x='rl_lr', y='total_steps', hue='experiment', alpha=0.5)
 # ax.set_xscale('log')
-ax.legend(loc='lower right')
+ax.set_xlim([-0.0002, 0.0032])
+ax.legend(loc='upper right')
 #%%
 
 
