@@ -18,11 +18,11 @@ class DQNAgent():
         on_retrieve = {
             '*': lambda x: torch.as_tensor(np.asarray(x)).to(cfg.model.device),
             'ob': lambda x: x.float(),
+            'action': lambda x: x.long(),
             'reward': lambda x: x.float(),
             'terminal': lambda x: x.bool(),
             'truncated': lambda x: x.bool(),
             'next_ob': lambda x: x.float(),
-            'action': lambda x: x.long()
         }
         self.replay = ReplayMemory(cfg.agent.replay_buffer_size, on_retrieve=on_retrieve)
 

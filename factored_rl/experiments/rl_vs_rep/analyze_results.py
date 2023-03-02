@@ -71,6 +71,10 @@ def load_results(experiment_name) -> pd.DataFrame:
             'noise': noise,
             'max_steps': cfg.env.n_steps_per_episode,
         }
+        try:
+            args['updates_per_interaction'] = cfg.agent.updates_per_interaction
+        except:
+            args['updates_per_interaction'] = 1
         for arg, value in args.items():
             results[arg] = value
         for column in ['steps', 'reward', 'total_steps', 'total_reward']:
