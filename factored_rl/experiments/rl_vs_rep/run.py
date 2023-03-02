@@ -74,12 +74,13 @@ def train_agent_on_env(agent, env, n_episodes: int, results_file: TextIO = None)
     results = []
     for episode in tqdm(range(n_episodes), desc='episodes'):
         ob, info = env.reset()
+        action = agent.act(ob)
         terminal, truncated = False, False
         ep_rewards = []
         ep_steps = 0
         while not (terminal or truncated):
-            action = agent.act(ob)
             next_ob, reward, terminal, truncated, info = env.step(action)
+            next_action = agent.act(next_ob)
             experience = {
                 'ob': ob,
                 'action': action,
@@ -87,6 +88,7 @@ def train_agent_on_env(agent, env, n_episodes: int, results_file: TextIO = None)
                 'terminal': terminal,
                 'truncated': truncated,
                 'next_ob': next_ob,
+                'next_action': next_action,
             }
             agent.store(experience)
 
@@ -95,6 +97,7 @@ def train_agent_on_env(agent, env, n_episodes: int, results_file: TextIO = None)
             ep_rewards.append(reward)
             ep_steps += 1
             ob = next_ob
+            action = next_action
             if terminal or truncated:
                 break
 
