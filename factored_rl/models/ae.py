@@ -184,7 +184,7 @@ class PairedAutoencoderModel(AutoencoderModel):
         action_mask = actions.unsqueeze(-1) #(N,A,1)
         action_effects = action_mask * effects.unsqueeze(dim=1) #(N,1,d)
         mean_action_effects = (action_effects.sum(dim=0, keepdim=True) /
-                               (action_mask.sum(dim=0, keepdim=True) + 1e-9)) #(A,d)
+                               (action_mask.sum(dim=0, keepdim=True) + 1e-9)) #(1,A,d)
         action_residuals = ((action_effects - mean_action_effects) * action_mask).sum(dim=1) #(N,d)
         return action_residuals
 
