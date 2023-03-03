@@ -61,7 +61,8 @@ class WorldModel(PairedAutoencoderModel):
         losses = {('loss/' + key): value for key, value in losses.items()}
         losses['loss/train_loss'] = loss
         self.log_dict(losses)
-        if self.global_step % self.cfg.trainer.log_every_n_steps == 0:
+        if self.cfg.trainer.log_every_n_steps > 0 and (self.global_step %
+                                                       self.cfg.trainer.log_every_n_steps == 0):
             self.log_images(obs, obs_hat, 'img/obs_reconst_diff')
             self.log_images(next_obs, next_obs_hat, 'img/next_obs_reconst_diff')
 
