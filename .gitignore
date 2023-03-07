@@ -6,6 +6,7 @@ venv/
 images/
 videos/
 results/
+factored_rl/hyperparams/tuning/
 **__pycache__
 **.pyc
 .onager
