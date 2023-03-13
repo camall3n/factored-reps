@@ -98,8 +98,6 @@ def train_agent_on_env(agent, env, n_episodes: int, results_file: TextIO = None)
             ep_steps += 1
             ob = next_ob
             action = next_action
-            if terminal or truncated:
-                break
 
         total_steps += ep_steps
         total_reward += sum(ep_rewards)
