@@ -30,8 +30,7 @@ def initialize_env(cfg: configs.Config, seed: int = None):
                            terminate_on_goal=True,
                            fixed_goal=cfg.env.fixed_goal,
                            hidden_goal=True,
-                           should_render=False,
-                           dimensions=GridworldEnv.dimensions_onehot)
+                           should_render=False)
     elif cfg.env.name == 'taxi':
         if cfg.script in ['factorize', 'disent_vs_rep']:
             cfg.env.depot_dropoff_only = False
@@ -44,7 +43,7 @@ def initialize_env(cfg: configs.Config, seed: int = None):
                       fixed_goal=cfg.env.fixed_goal,
                       depot_dropoff_only=cfg.env.depot_dropoff_only,
                       should_render=False,
-                      dimensions=TaxiEnv.dimensions_5x5_to_64x64)
+                      render_fast=cfg.env.render_fast)
     else:
         env = gym.make(cfg.env.name)
         # TODO: wrap env to support disent protocol
