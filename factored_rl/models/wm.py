@@ -165,3 +165,27 @@ class AttnPredictor(Module):
             attn_weights = attn_weights.squeeze(0) # (h,d)
 
         return effect, attn_weights
+
+class FactorCascade(Module):
+    def __init__(self, models: ModuleList, add_input_skip_connection: bool = False):
+        super().__init__()
+        self.models = models
+        self.add_input_skip_connection = add_input_skip_connection
+
+    def forward(self, x: torch.Tensor):
+        is_batched = (x.dim() == 2)
+        if not is_batched:
+            x = x.unsqueeze(0) # (B, d)
+
+        outputs = []
+        if self.add_input_skip_connection:
+            outputs.append(x)
+
+        for i, model in self.models:
+            x_masked = torch.concat((x[..., :i + 1], torch.zeros_like(x[..., i + 1:])), dim=-1)
+            outputs.append(model(x_masked)) # (B, k)
+
+        if not is_batched:
+            outputs = [output.squeeze(0) for output in outputs] # (k)
+
+        return sum(outputs), outputs
