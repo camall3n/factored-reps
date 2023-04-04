@@ -24,13 +24,20 @@ cfg = get_config([
     "transform.noise=false",
 ])
 env = initialize_env(cfg, cfg.seed).unwrapped
-data = next(iter(dl))
 
 for _ in range(100):
-    s, info = env.reset()
-    a = env.action_space.sample()
-    sp, _, _, _, info = env.step(a)
-    for
-data.keys()
+    state, info = env.reset()
+    action = env.action_space.sample()
+    next_state, _, _, _, info = env.step(action)
+    experience = {
+        'state': state,
+        'action': action,
+        'next_state': next_state,
+        'effect': next_state - state,
+    }
+    experience.update({f"s_{i}": s for i, s in enumerate(state)})
+    experience.update({f"s'_{i}": sp for i, sp in enumerate(next_state)})
+    experience
+
 
 data['state'][0]
